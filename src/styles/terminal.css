@@ -34,6 +34,25 @@
     @apply text-terminal-bright text-sm md:text-base mb-4 pb-2 border-b border-terminal-dim;
   }
 
+  .ascii-header {
+    @apply mb-4;
+  }
+
+  .ascii-art {
+    @apply text-terminal-bright font-mono;
+    text-shadow: 0 0 10px currentColor;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+    }
+    to {
+      text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+    }
+  }
+
   .terminal-output {
     @apply mb-2 leading-relaxed;
   }
@@ -159,6 +178,20 @@
 
     .terminal-header {
       @apply text-xs;
+    }
+
+    .ascii-art {
+      @apply text-xs;
+      font-size: 8px;
+      line-height: 1.1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .ascii-art {
+      @apply text-xs;
+      font-size: 10px;
+      line-height: 1.2;
     }
   }
 }
