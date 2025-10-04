@@ -62,6 +62,7 @@ interface Props {
           spellcheck="false"
           autofocus
         />
+        <span class="terminal-cursor"></span>
       </div>
     </div>
   </div>
@@ -78,6 +79,7 @@ interface Props {
   class TerminalController {
     private input: HTMLInputElement;
     private outputContainer: HTMLElement;
+    private cursor: HTMLElement;
     private commandHistory: string[] = [];
     private historyIndex: number = -1;
     private currentView: string = 'main';
@@ -85,11 +87,42 @@ interface Props {
     constructor() {
       this.input = document.getElementById('terminal-input') as HTMLInputElement;
       this.outputContainer = document.getElementById('output-container') as HTMLElement;
+      this.cursor = document.querySelector('.terminal-cursor') as HTMLElement;
 
       this.input.addEventListener('keydown', this.handleKeyDown.bind(this));
+      this.input.addEventListener('input', () => this.updateCursorPosition());
+      this.input.addEventListener('click', () => this.updateCursorPosition());
+      this.input.addEventListener('focus', () => this.updateCursorPosition());
 
       // Auto-focus en input
       document.addEventListener('click', () => this.input.focus());
+
+      // Inicializar posición del cursor
+      this.updateCursorPosition();
+    }
+
+    private updateCursorPosition(): void {
+      if (!this.cursor || !this.input) return;
+
+      const prompt = document.querySelector('.terminal-prompt') as HTMLElement;
+      if (!prompt) return;
+
+      // Crear un elemento temporal para medir el ancho del texto
+      const span = document.createElement('span');
+      span.style.visibility = 'hidden';
+      span.style.position = 'absolute';
+      span.style.whiteSpace = 'pre';
+      span.style.font = window.getComputedStyle(this.input).font;
+      span.textContent = this.input.value || '';
+      document.body.appendChild(span);
+
+      const textWidth = span.offsetWidth;
+      document.body.removeChild(span);
+
+      // Posicionar el cursor después del prompt y el texto
+      const promptWidth = prompt.offsetWidth;
+      const gapWidth = 8; // gap-2 = 8px
+      this.cursor.style.left = `${promptWidth + gapWidth + textWidth}px`;
     }
 
     private handleKeyDown(e: KeyboardEvent): void {

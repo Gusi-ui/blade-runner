@@ -105,15 +105,42 @@
 
   .terminal-input-line {
     @apply flex items-center gap-2;
+    position: relative;
   }
 
   .terminal-prompt {
     @apply text-terminal-bright;
+    flex-shrink: 0;
   }
 
   .terminal-input {
     @apply flex-1 border-none bg-transparent font-mono text-terminal-text outline-none;
-    caret-color: #00ff41;
+    caret-color: transparent;
+    position: relative;
+    z-index: 1;
+  }
+
+  .terminal-cursor {
+    position: absolute;
+    width: 10px;
+    height: 1.2em;
+    background-color: #00ff41;
+    left: 0;
+    animation: cursor-blink 1s step-end infinite;
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.8);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes cursor-blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0;
+    }
   }
 
   .typewriter {
