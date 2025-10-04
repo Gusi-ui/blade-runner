@@ -1,0 +1,304 @@
+---
+// Componente Calculadora Cósmica
+---
+
+<div id="calculator-component" class="hidden">
+  <div class="text-terminal-bright mb-4">
+    ╔═══════════════════════════════════════════════════════════╗
+    ║              CALCULADORA CÓSMICA                         ║
+    ╚═══════════════════════════════════════════════════════════╝
+  </div>
+
+  <div class="mb-6">
+    <div class="text-terminal-text mb-4">
+      Descubre tu edad en diferentes planetas y obtén datos astronómicos de tu fecha de nacimiento.
+    </div>
+
+    <div class="space-y-4 mb-6">
+      <div>
+        <label for="birthdate" class="block mb-2 text-terminal-dim">
+          Ingresa tu fecha de nacimiento:
+        </label>
+        <input
+          type="date"
+          id="birthdate"
+          class="terminal-input border border-terminal-dim px-3 py-2 rounded w-full md:w-auto"
+          max={new Date().toISOString().split('T')[0]}
+        />
+      </div>
+
+      <div class="flex gap-2">
+        <button id="calculator-submit" class="menu-item px-4 py-2">
+          Calcular
+        </button>
+        <button id="calculator-exit" class="menu-item px-4 py-2">
+          Volver al menú
+        </button>
+      </div>
+    </div>
+
+    <div id="calculator-results" class="hidden">
+      <!-- Resultados se mostrarán aquí -->
+    </div>
+
+    <div id="nasa-data" class="hidden mt-6">
+      <!-- Datos de NASA se mostrarán aquí -->
+    </div>
+  </div>
+</div>
+
+<script>
+  interface PlanetaryAge {
+    planet: string;
+    age: number;
+    orbitalPeriod: number;
+  }
+
+  interface NASAAPODResponse {
+    title: string;
+    explanation: string;
+    url: string;
+    date: string;
+    media_type: string;
+  }
+
+  class CosmicCalculator {
+    private terminal: any;
+    private nasaApiKey: string;
+
+    // Periodos orbitales en días terrestres
+    private planets = {
+      Mercurio: 87.97,
+      Venus: 224.70,
+      Tierra: 365.26,
+      Marte: 686.98,
+      Júpiter: 4332.59,
+      Saturno: 10759.22,
+      Urano: 30688.5,
+      Neptuno: 60182
+    };
+
+    constructor(terminal: any) {
+      this.terminal = terminal;
+      this.nasaApiKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
+    }
+
+    init(): void {
+      const submitBtn = document.getElementById('calculator-submit');
+      const exitBtn = document.getElementById('calculator-exit');
+
+      if (submitBtn) {
+        submitBtn.addEventListener('click', () => this.calculate());
+      }
+
+      if (exitBtn) {
+        exitBtn.addEventListener('click', () => this.exit());
+      }
+
+      const birthdateInput = document.getElementById('birthdate') as HTMLInputElement;
+      if (birthdateInput) {
+        birthdateInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            this.calculate();
+          }
+        });
+      }
+    }
+
+    private calculate(): void {
+      const birthdateInput = document.getElementById('birthdate') as HTMLInputElement;
+      const resultsDiv = document.getElementById('calculator-results');
+      const nasaDataDiv = document.getElementById('nasa-data');
+
+      if (!birthdateInput || !resultsDiv || !nasaDataDiv) return;
+
+      const birthdate = birthdateInput.value;
+
+      if (!birthdate) {
+        alert('Por favor ingresa una fecha de nacimiento válida.');
+        return;
+      }
+
+      const birthDate = new Date(birthdate);
+      const today = new Date();
+
+      if (birthDate > today) {
+        alert('La fecha de nacimiento no puede ser en el futuro.');
+        return;
+      }
+
+      // Calcular edades planetarias
+      const daysPassed = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
+      const ages: PlanetaryAge[] = [];
+
+      for (const [planet, orbitalPeriod] of Object.entries(this.planets)) {
+        const age = daysPassed / orbitalPeriod;
+        ages.push({ planet, age, orbitalPeriod });
+      }
+
+      // Mostrar resultados
+      this.displayResults(ages, birthDate, daysPassed);
+
+      // Obtener datos de NASA
+      this.fetchNASAData(birthdate);
+    }
+
+    private displayResults(ages: PlanetaryAge[], birthDate: Date, daysPassed: number): void {
+      const resultsDiv = document.getElementById('calculator-results');
+      if (!resultsDiv) return;
+
+      resultsDiv.classList.remove('hidden');
+
+      let html = `
+        <div class="border border-terminal-dim p-4 rounded">
+          <div class="text-terminal-bright text-lg mb-4">
+            █ TU EDAD EN EL SISTEMA SOLAR
+          </div>
+
+          <div class="mb-4 text-sm">
+            <div>Fecha de nacimiento: ${birthDate.toLocaleDateString('es-ES')}</div>
+            <div>Días vividos: ${daysPassed.toLocaleString('es-ES')}</div>
+            <div>Horas vividas: ${(daysPassed * 24).toLocaleString('es-ES')}</div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      `;
+
+      ages.forEach(({ planet, age, orbitalPeriod }) => {
+        html += `
+          <div class="border-l-2 border-terminal-dim pl-3">
+            <div class="text-terminal-text font-bold">${planet}</div>
+            <div class="text-2xl text-terminal-bright">${age.toFixed(2)}</div>
+            <div class="text-xs text-terminal-dim">años ${planet.toLowerCase()}ianos</div>
+            <div class="text-xs text-terminal-dim mt-1">
+              1 año = ${orbitalPeriod.toFixed(0)} días terrestres
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+
+      resultsDiv.innerHTML = html;
+    }
+
+    private async fetchNASAData(birthdate: string): Promise<void> {
+      const nasaDataDiv = document.getElementById('nasa-data');
+      if (!nasaDataDiv) return;
+
+      nasaDataDiv.classList.remove('hidden');
+      nasaDataDiv.innerHTML = '<div class="loading-dots">Cargando datos de NASA</div>';
+
+      try {
+        // Fetch APOD (Astronomy Picture of the Day) para la fecha de nacimiento
+        const apodResponse = await fetch(
+          `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}&date=${birthdate}`
+        );
+
+        if (apodResponse.ok) {
+          const apodData: NASAAPODResponse = await apodResponse.json();
+          this.displayNASAData(apodData);
+        } else {
+          nasaDataDiv.innerHTML = `
+            <div class="text-terminal-dim">
+              No hay datos de NASA disponibles para esta fecha.
+              ${this.nasaApiKey === 'DEMO_KEY' ? 'Configura tu API key de NASA para acceder a todos los datos.' : ''}
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error fetching NASA data:', error);
+        nasaDataDiv.innerHTML = '<div class="error-text">Error al cargar datos de NASA.</div>';
+      }
+    }
+
+    private displayNASAData(data: NASAAPODResponse): void {
+      const nasaDataDiv = document.getElementById('nasa-data');
+      if (!nasaDataDiv) return;
+
+      let html = `
+        <div class="border border-terminal-dim p-4 rounded">
+          <div class="text-terminal-bright text-lg mb-4">
+            █ IMAGEN ASTRONÓMICA DEL DÍA DE TU NACIMIENTO
+          </div>
+
+          <div class="mb-3">
+            <div class="text-terminal-text font-bold text-lg">${this.escapeHtml(data.title)}</div>
+            <div class="text-xs text-terminal-dim">${data.date}</div>
+          </div>
+
+          ${data.media_type === 'image' ? `
+            <div class="mb-4">
+              <a href="${data.url}" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="${data.url}"
+                  alt="${this.escapeHtml(data.title)}"
+                  class="w-full max-w-md mx-auto border border-terminal-dim rounded"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+          ` : `
+            <div class="mb-4 text-terminal-dim">
+              <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright underline">
+                Ver video/multimedia →
+              </a>
+            </div>
+          `}
+
+          <div class="text-sm">
+            ${this.escapeHtml(data.explanation)}
+          </div>
+        </div>
+      `;
+
+      nasaDataDiv.innerHTML = html;
+    }
+
+    private escapeHtml(text: string): string {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    private exit(): void {
+      this.terminal.printOutput('<div class="success-text">Volviendo al menú...</div>');
+      setTimeout(() => {
+        const event = new CustomEvent('loadView', { detail: { view: 'menu' } });
+        document.dispatchEvent(event);
+
+        // Ejecutar comando menu
+        const input = document.getElementById('terminal-input') as HTMLInputElement;
+        if (input) {
+          input.value = 'menu';
+          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        }
+      }, 500);
+    }
+  }
+
+  document.addEventListener('loadView', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail.view === 'calculator') {
+      const terminal = (window as any).terminal;
+      const calculatorComponent = document.getElementById('calculator-component');
+
+      if (terminal && calculatorComponent) {
+        terminal.printOutput(calculatorComponent.innerHTML);
+
+        // Inicializar calculadora
+        setTimeout(() => {
+          const calculator = new CosmicCalculator(terminal);
+          calculator.init();
+        }, 100);
+      }
+    }
+  });
+</script>
+
+<style>
+  /* Estilos adicionales si es necesario */
+</style>

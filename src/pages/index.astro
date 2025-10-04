@@ -1,0 +1,102 @@
+---
+import Terminal from '../components/Terminal.astro';
+import Menu from '../components/Menu.astro';
+import NewsFeed from '../components/NewsFeed.astro';
+import CV from '../components/CV.astro';
+import Projects from '../components/Projects.astro';
+import Games from '../components/Games.astro';
+import CosmicCalculator from '../components/CosmicCalculator.astro';
+import '../styles/terminal.css';
+
+const title = 'Blade Runner Terminal - Gusi';
+const description = 'Terminal retro-futurista interactiva estilo Blade Runner con noticias tech, juegos retro y calculadora cósmica.';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content={description}>
+  <meta name="author" content="Gusi">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content={title}>
+  <meta name="twitter:description" content={description}>
+
+  <title>{title}</title>
+
+  <!-- Preconnect para mejorar rendimiento -->
+  <link rel="preconnect" href="https://api.nasa.gov">
+  <link rel="preconnect" href="https://newsapi.org">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+  <!-- Componente Principal de Terminal -->
+  <Terminal />
+
+  <!-- Componentes Ocultos (se cargan dinámicamente) -->
+  <Menu />
+  <NewsFeed />
+  <CV />
+  <Projects />
+  <Games />
+  <CosmicCalculator />
+
+  <!-- Script global para manejo de eventos -->
+  <script>
+    // Asegurar que el input de terminal siempre esté enfocado
+    document.addEventListener('DOMContentLoaded', () => {
+      const terminalInput = document.getElementById('terminal-input') as HTMLInputElement;
+
+      if (terminalInput) {
+        terminalInput.focus();
+
+        // Re-enfocar cuando se hace clic en cualquier parte
+        document.addEventListener('click', (e) => {
+          // No re-enfocar si se hizo clic en un input, button o link
+          const target = e.target as HTMLElement;
+          if (
+            target.tagName !== 'INPUT' &&
+            target.tagName !== 'BUTTON' &&
+            target.tagName !== 'A' &&
+            !target.closest('button') &&
+            !target.closest('a')
+          ) {
+            terminalInput.focus();
+          }
+        });
+      }
+    });
+
+    // Prevenir zoom en dispositivos móviles al hacer doble tap
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+  </script>
+
+  <!-- Service Worker para PWA (opcional) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // Descomentado si implementas un service worker
+        // navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

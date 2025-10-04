@@ -1,0 +1,261 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
+---
+
+<div class="terminal-container">
+  <div class="terminal-screen crt-flicker">
+    <div class="terminal-header">
+      <div class="flex justify-between items-center">
+        <span>{title}</span>
+        <span class="text-terminal-dim text-xs">[SISTEMA OPERATIVO NEXUS-7]</span>
+      </div>
+      <div class="text-xs text-terminal-dim mt-1">
+        {new Date().toLocaleString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        })}
+      </div>
+    </div>
+
+    <div id="terminal-content" class="min-h-[calc(100vh-200px)]">
+      <div class="terminal-output">
+        <p class="text-terminal-bright mb-2">Inicializando sistema...</p>
+        <p class="mb-2">Cargando módulos del kernel...</p>
+        <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
+        <p class="success-text mb-4">✓ Sistema listo</p>
+        <p class="mb-2">Escribe 'ayuda' para ver comandos disponibles.</p>
+        <p class="mb-4">Escribe 'menu' para acceder al menú principal.</p>
+      </div>
+
+      <div id="output-container"></div>
+
+      <div class="terminal-input-line mt-4">
+        <span class="terminal-prompt">gusi@nexus:~$</span>
+        <input
+          type="text"
+          id="terminal-input"
+          class="terminal-input"
+          autocomplete="off"
+          spellcheck="false"
+          autofocus
+        />
+        <span class="terminal-cursor"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scanline effect -->
+  <div class="scanline"></div>
+</div>
+
+<script>
+  interface Command {
+    execute: (args: string[]) => void;
+  }
+
+  class TerminalController {
+    private input: HTMLInputElement;
+    private outputContainer: HTMLElement;
+    private commandHistory: string[] = [];
+    private historyIndex: number = -1;
+    private currentView: string = 'main';
+
+    constructor() {
+      this.input = document.getElementById('terminal-input') as HTMLInputElement;
+      this.outputContainer = document.getElementById('output-container') as HTMLElement;
+
+      this.input.addEventListener('keydown', this.handleKeyDown.bind(this));
+
+      // Auto-focus en input
+      document.addEventListener('click', () => this.input.focus());
+    }
+
+    private handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const command = this.input.value.trim();
+        if (command) {
+          this.executeCommand(command);
+          this.commandHistory.push(command);
+          this.historyIndex = this.commandHistory.length;
+          this.input.value = '';
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (this.historyIndex > 0) {
+          this.historyIndex--;
+          this.input.value = this.commandHistory[this.historyIndex];
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (this.historyIndex < this.commandHistory.length - 1) {
+          this.historyIndex++;
+          this.input.value = this.commandHistory[this.historyIndex];
+        } else {
+          this.historyIndex = this.commandHistory.length;
+          this.input.value = '';
+        }
+      }
+    }
+
+    private executeCommand(command: string): void {
+      this.printOutput(`<span class="text-terminal-bright">gusi@nexus:~$</span> ${command}`);
+
+      const [cmd, ...args] = command.toLowerCase().split(' ');
+
+      const commands: { [key: string]: Command } = {
+        'ayuda': {
+          execute: () => this.showHelp()
+        },
+        'help': {
+          execute: () => this.showHelp()
+        },
+        'menu': {
+          execute: () => this.showMenu()
+        },
+        'limpiar': {
+          execute: () => this.clear()
+        },
+        'clear': {
+          execute: () => this.clear()
+        },
+        'fecha': {
+          execute: () => this.printOutput(`Fecha actual: ${new Date().toLocaleString('es-ES')}`)
+        },
+        'whoami': {
+          execute: () => this.printOutput('gusi@nexus')
+        },
+        '1': {
+          execute: () => this.loadView('news')
+        },
+        '2': {
+          execute: () => this.loadView('cv')
+        },
+        '3': {
+          execute: () => this.loadView('projects')
+        },
+        '4': {
+          execute: () => this.loadView('games')
+        },
+        '5': {
+          execute: () => this.loadView('calculator')
+        },
+        'noticias': {
+          execute: () => this.loadView('news')
+        },
+        'curriculum': {
+          execute: () => this.loadView('cv')
+        },
+        'cv': {
+          execute: () => this.loadView('cv')
+        },
+        'proyectos': {
+          execute: () => this.loadView('projects')
+        },
+        'juegos': {
+          execute: () => this.loadView('games')
+        },
+        'calculadora': {
+          execute: () => this.loadView('calculator')
+        },
+        'salir': {
+          execute: () => {
+            this.printOutput('Cerrando sesión...');
+            setTimeout(() => {
+              this.clear();
+              this.printOutput('Hasta luego, humano.');
+              this.input.disabled = true;
+            }, 1000);
+          }
+        },
+        'exit': {
+          execute: () => commands['salir'].execute()
+        }
+      };
+
+      if (commands[cmd]) {
+        commands[cmd].execute(args);
+      } else if (cmd) {
+        this.printOutput(`<span class="error-text">Error: Comando '${cmd}' no reconocido. Escribe 'ayuda' para ver comandos disponibles.</span>`);
+      }
+
+      this.scrollToBottom();
+    }
+
+    private showHelp(): void {
+      const helpText = `
+<div class="text-terminal-bright">COMANDOS DISPONIBLES:</div>
+<div class="ml-4 mt-2">
+  <div><span class="text-terminal-bright">ayuda/help</span> - Muestra esta ayuda</div>
+  <div><span class="text-terminal-bright">menu</span> - Muestra el menú principal</div>
+  <div><span class="text-terminal-bright">limpiar/clear</span> - Limpia la pantalla</div>
+  <div><span class="text-terminal-bright">fecha</span> - Muestra la fecha actual</div>
+  <div><span class="text-terminal-bright">noticias</span> - Noticias de tecnología</div>
+  <div><span class="text-terminal-bright">curriculum/cv</span> - Currículum de Gusi</div>
+  <div><span class="text-terminal-bright">proyectos</span> - Proyectos de Gusi</div>
+  <div><span class="text-terminal-bright">juegos</span> - Juegos retro</div>
+  <div><span class="text-terminal-bright">calculadora</span> - Calculadora cósmica</div>
+  <div><span class="text-terminal-bright">salir/exit</span> - Salir del sistema</div>
+</div>
+      `;
+      this.printOutput(helpText);
+    }
+
+    private showMenu(): void {
+      const menuHtml = `
+<div class="text-terminal-bright text-center mb-4">
+╔═══════════════════════════════════════════════════════════╗
+║          MENÚ PRINCIPAL - NEXUS TERMINAL v1.0            ║
+╚═══════════════════════════════════════════════════════════╝
+</div>
+<div id="menu-container"></div>
+      `;
+      this.printOutput(menuHtml);
+
+      const event = new CustomEvent('loadMenu');
+      document.dispatchEvent(event);
+    }
+
+    private loadView(view: string): void {
+      this.currentView = view;
+      const event = new CustomEvent('loadView', { detail: { view } });
+      document.dispatchEvent(event);
+    }
+
+    private clear(): void {
+      this.outputContainer.innerHTML = '';
+    }
+
+    printOutput(html: string): void {
+      const div = document.createElement('div');
+      div.className = 'terminal-output mb-2';
+      div.innerHTML = html;
+      this.outputContainer.appendChild(div);
+    }
+
+    private scrollToBottom(): void {
+      const screen = document.querySelector('.terminal-screen');
+      if (screen) {
+        screen.scrollTop = screen.scrollHeight;
+      }
+    }
+  }
+
+  // Inicializar terminal
+  const terminal = new TerminalController();
+
+  // Exportar terminal globalmente para que otros componentes puedan usarlo
+  (window as any).terminal = terminal;
+</script>
+
+<style>
+  /* Estilos adicionales específicos del componente */
+</style>

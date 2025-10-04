@@ -1,0 +1,93 @@
+---
+// Componente de Juegos Retro
+---
+
+<div id="games-component" class="hidden">
+  <div class="text-terminal-bright mb-4">
+    ╔═══════════════════════════════════════════════════════════╗
+    ║                  JUEGOS RETRO                            ║
+    ╚═══════════════════════════════════════════════════════════╝
+  </div>
+
+  <div id="games-menu" class="space-y-4">
+    <div class="text-terminal-text mb-4">Selecciona un juego:</div>
+
+    <div class="menu-item" data-game="snake">
+      <span class="text-terminal-bright">[1]</span> Snake
+      <div class="text-xs text-terminal-dim ml-4">Clásico juego de la serpiente</div>
+    </div>
+
+    <div class="menu-item" data-game="hangman">
+      <span class="text-terminal-bright">[2]</span> El Ahorcado Cósmico
+      <div class="text-xs text-terminal-dim ml-4">Adivina palabras del espacio</div>
+    </div>
+
+    <div class="menu-item" data-game="tictactoe">
+      <span class="text-terminal-bright">[3]</span> Tres en Raya
+      <div class="text-xs text-terminal-dim ml-4">Contra la IA</div>
+    </div>
+
+    <div class="text-terminal-dim text-sm mt-4">
+      Escribe 'menu' para volver al menú principal.
+    </div>
+  </div>
+
+  <div id="game-container" class="hidden"></div>
+</div>
+
+<script src="../scripts/snake.ts"></script>
+<script src="../scripts/hangman.ts"></script>
+<script src="../scripts/tictactoe.ts"></script>
+
+<script>
+  document.addEventListener('loadView', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail.view === 'games') {
+      const terminal = (window as any).terminal;
+      const gamesComponent = document.getElementById('games-component');
+
+      if (terminal && gamesComponent) {
+        terminal.printOutput(gamesComponent.innerHTML);
+
+        // Añadir event listeners a las opciones de juegos
+        setTimeout(() => {
+          const menuItems = document.querySelectorAll('[data-game]');
+          menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+              const game = item.getAttribute('data-game');
+              if (game) {
+                loadGame(game);
+              }
+            });
+          });
+        }, 100);
+      }
+    }
+  });
+
+  function loadGame(game: string): void {
+    const terminal = (window as any).terminal;
+
+    switch (game) {
+      case 'snake':
+        if ((window as any).Snake) {
+          new (window as any).Snake(terminal);
+        }
+        break;
+      case 'hangman':
+        if ((window as any).Hangman) {
+          new (window as any).Hangman(terminal);
+        }
+        break;
+      case 'tictactoe':
+        if ((window as any).TicTacToe) {
+          new (window as any).TicTacToe(terminal);
+        }
+        break;
+    }
+  }
+</script>
+
+<style>
+  /* Estilos adicionales si es necesario */
+</style>

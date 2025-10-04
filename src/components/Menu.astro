@@ -1,0 +1,69 @@
+---
+// Componente de menú principal
+---
+
+<div id="menu-component" class="hidden">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+    <div class="menu-item" data-option="1">
+      <span class="text-terminal-bright">[1]</span> Noticias Tecnológicas
+      <div class="text-xs text-terminal-dim ml-4">Cosmos e Inteligencia Artificial</div>
+    </div>
+
+    <div class="menu-item" data-option="2">
+      <span class="text-terminal-bright">[2]</span> Currículum de Gusi
+      <div class="text-xs text-terminal-dim ml-4">Perfil profesional</div>
+    </div>
+
+    <div class="menu-item" data-option="3">
+      <span class="text-terminal-bright">[3]</span> Proyectos de Gusi
+      <div class="text-xs text-terminal-dim ml-4">Repositorios y trabajos</div>
+    </div>
+
+    <div class="menu-item" data-option="4">
+      <span class="text-terminal-bright">[4]</span> Juegos Retro
+      <div class="text-xs text-terminal-dim ml-4">Snake, Ahorcado, Tres en Raya</div>
+    </div>
+
+    <div class="menu-item" data-option="5">
+      <span class="text-terminal-bright">[5]</span> Calculadora Cósmica
+      <div class="text-xs text-terminal-dim ml-4">Edad planetaria y datos NASA</div>
+    </div>
+
+    <div class="menu-item" data-option="6">
+      <span class="text-terminal-bright">[6]</span> Salir
+      <div class="text-xs text-terminal-dim ml-4">Cerrar sesión</div>
+    </div>
+  </div>
+
+  <div class="text-terminal-dim text-sm mt-4">
+    Selecciona una opción escribiendo el número o el nombre del comando.
+  </div>
+</div>
+
+<script>
+  document.addEventListener('loadMenu', () => {
+    const menuContainer = document.getElementById('menu-container');
+    const menuComponent = document.getElementById('menu-component');
+
+    if (menuContainer && menuComponent) {
+      menuContainer.innerHTML = menuComponent.innerHTML;
+
+      // Añadir event listeners a las opciones del menú
+      const menuItems = menuContainer.querySelectorAll('.menu-item');
+      menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const option = item.getAttribute('data-option');
+          const input = document.getElementById('terminal-input') as HTMLInputElement;
+          if (input && option) {
+            input.value = option;
+            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+          }
+        });
+      });
+    }
+  });
+</script>
+
+<style>
+  /* Estilos adicionales para el menú si es necesario */
+</style>
