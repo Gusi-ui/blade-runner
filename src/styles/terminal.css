@@ -9,9 +9,33 @@
     box-sizing: border-box;
   }
 
+  html {
+    font-size: 16px;
+  }
+
   body {
     @apply overflow-hidden bg-terminal-bg font-mono text-terminal-text;
     text-shadow: 0 0 5px currentColor;
+    font-size: 1rem;
+  }
+
+  /* Tamaño base responsivo */
+  @media (max-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    html {
+      font-size: 16px;
+    }
   }
 }
 
@@ -46,9 +70,9 @@
   .ascii-art {
     @apply font-mono text-terminal-bright;
     text-shadow:
+      0 0 5px currentColor,
       0 0 10px currentColor,
-      0 0 20px currentColor,
-      0 0 30px currentColor;
+      0 0 15px currentColor;
     animation: glow 2s ease-in-out infinite alternate;
     white-space: pre;
     margin: 0;
@@ -56,21 +80,22 @@
     max-width: 100%;
     overflow: hidden;
     word-wrap: break-word;
-    line-height: 1.1;
+    line-height: 1.2;
+    font-size: 0.5rem;
   }
 
   @keyframes glow {
     from {
       text-shadow:
-        0 0 10px currentColor,
-        0 0 20px currentColor,
-        0 0 30px currentColor;
-    }
-    to {
-      text-shadow:
         0 0 5px currentColor,
         0 0 10px currentColor,
         0 0 15px currentColor;
+    }
+    to {
+      text-shadow:
+        0 0 3px currentColor,
+        0 0 6px currentColor,
+        0 0 9px currentColor;
     }
   }
 
@@ -207,64 +232,143 @@
   /* Responsive */
   @media (max-width: 480px) {
     .terminal-container {
-      @apply p-1;
+      @apply p-2;
     }
 
     .terminal-screen {
-      @apply p-2 text-xs;
+      @apply p-3;
+      font-size: 1rem;
     }
 
     .terminal-header {
-      @apply text-xs;
+      font-size: 0.9rem;
     }
 
     .ascii-art {
-      font-size: 3.5px;
-      line-height: 0.85;
-      transform: scale(0.75);
-      transform-origin: top center;
-    }
-
-    .ascii-title {
-      @apply -mx-2 overflow-x-auto;
-    }
-  }
-
-  @media (min-width: 481px) and (max-width: 640px) {
-    .ascii-art {
-      font-size: 5px;
-      line-height: 0.95;
-      transform: scale(0.85);
+      font-size: 0.52rem;
+      line-height: 1.12;
+      transform: scale(1.02);
       transform-origin: top center;
     }
 
     .ascii-title {
       @apply overflow-x-auto;
     }
+
+    .terminal-output {
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .terminal-input {
+      font-size: 1rem;
+    }
+
+    .terminal-prompt {
+      font-size: 1rem;
+    }
+
+    /* Tamaños de botones y elementos interactivos */
+    .menu-item {
+      font-size: 1rem;
+      padding: 0.65rem 0.9rem;
+    }
+
+    button {
+      font-size: 1rem;
+    }
+
+    input[type='text'],
+    input[type='date'] {
+      font-size: 1rem;
+    }
+  }
+
+  @media (min-width: 481px) and (max-width: 640px) {
+    .terminal-container {
+      @apply p-3;
+    }
+
+    .terminal-screen {
+      @apply p-4;
+      font-size: 1rem;
+    }
+
+    .terminal-header {
+      font-size: 0.95rem;
+    }
+
+    .ascii-art {
+      font-size: 0.58rem;
+      line-height: 1.18;
+      transform: scale(1.08);
+      transform-origin: top center;
+    }
+
+    .terminal-output {
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .terminal-input {
+      font-size: 1rem;
+    }
+
+    .terminal-prompt {
+      font-size: 1rem;
+    }
+
+    .menu-item {
+      font-size: 1rem;
+    }
   }
 
   @media (min-width: 641px) and (max-width: 768px) {
     .ascii-art {
-      font-size: 6px;
-      line-height: 1;
-      transform: scale(0.9);
+      font-size: 0.55rem;
+      line-height: 1.2;
+      transform: scale(1.1);
       transform-origin: top center;
+    }
+
+    .terminal-screen {
+      font-size: 1rem;
+    }
+
+    .terminal-output {
+      font-size: 1rem;
+      line-height: 1.6;
     }
   }
 
   @media (min-width: 769px) and (max-width: 1024px) {
     .ascii-art {
-      font-size: 7px;
-      line-height: 1.05;
-      transform: scale(0.95);
+      font-size: 0.6rem;
+      line-height: 1.2;
+      transform: scale(1.15);
+      transform-origin: top center;
+    }
+
+    .terminal-screen {
+      font-size: 1rem;
+    }
+  }
+
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    .ascii-art {
+      font-size: 0.65rem;
+      line-height: 1.2;
+      transform: scale(1.2);
       transform-origin: top center;
     }
   }
 
-  @media (min-width: 1025px) {
+  @media (min-width: 1441px) {
     .ascii-art {
-      font-size: 8px;
-      line-height: 1.1;
+      font-size: 0.75rem;
+      line-height: 1.25;
+      transform: scale(1.25);
+      transform-origin: top center;
     }
   }
 }
