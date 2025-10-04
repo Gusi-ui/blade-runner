@@ -38,9 +38,9 @@
     @apply mb-4;
   }
 
-  .ascii-art-container {
-    @apply overflow-x-auto;
-    max-width: 100%;
+  .ascii-title {
+    @apply w-full;
+    overflow: hidden;
   }
 
   .ascii-art {
@@ -49,7 +49,10 @@
     animation: glow 2s ease-in-out infinite alternate;
     white-space: pre;
     margin: 0;
-    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    word-wrap: break-word;
   }
 
   @keyframes glow {
@@ -189,26 +192,39 @@
     }
 
     .ascii-art {
-      font-size: 6px;
-      line-height: 1;
+      font-size: 4px;
+      line-height: 0.8;
+      transform: scale(0.8);
+      transform-origin: center;
     }
 
-    .ascii-art-container {
-      @apply -mx-2;
+    .ascii-title {
+      @apply -mx-1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .ascii-art {
+      font-size: 5px;
+      line-height: 0.9;
+      transform: scale(0.85);
+      transform-origin: center;
     }
   }
 
   @media (max-width: 768px) {
     .ascii-art {
-      font-size: 8px;
-      line-height: 1.1;
+      font-size: 6px;
+      line-height: 1;
+      transform: scale(0.9);
+      transform-origin: center;
     }
   }
 
   @media (max-width: 1024px) {
     .ascii-art {
-      font-size: 10px;
-      line-height: 1.2;
+      font-size: 8px;
+      line-height: 1.1;
     }
   }
 }
