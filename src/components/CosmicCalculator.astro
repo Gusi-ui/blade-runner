@@ -3,37 +3,32 @@
 ---
 
 <div id="calculator-component" class="hidden">
-  <div class="text-terminal-bright mb-4">
-    ╔═══════════════════════════════════════════════════════════╗
-    ║              CALCULADORA CÓSMICA                         ║
+  <div class="mb-4 text-terminal-bright">
+    ╔═══════════════════════════════════════════════════════════╗ ║ CALCULADORA CÓSMICA ║
     ╚═══════════════════════════════════════════════════════════╝
   </div>
 
   <div class="mb-6">
-    <div class="text-terminal-text mb-4">
+    <div class="mb-4 text-terminal-text">
       Descubre tu edad en diferentes planetas y obtén datos astronómicos de tu fecha de nacimiento.
     </div>
 
-    <div class="space-y-4 mb-6">
+    <div class="mb-6 space-y-4">
       <div>
-        <label for="birthdate" class="block mb-2 text-terminal-dim">
+        <label for="birthdate" class="mb-2 block text-terminal-dim">
           Ingresa tu fecha de nacimiento:
         </label>
         <input
           type="date"
           id="birthdate"
-          class="terminal-input border border-terminal-dim px-3 py-2 rounded w-full md:w-auto"
+          class="terminal-input w-full rounded border border-terminal-dim px-3 py-2 md:w-auto"
           max={new Date().toISOString().split('T')[0]}
         />
       </div>
 
       <div class="flex gap-2">
-        <button id="calculator-submit" class="menu-item px-4 py-2">
-          Calcular
-        </button>
-        <button id="calculator-exit" class="menu-item px-4 py-2">
-          Volver al menú
-        </button>
+        <button id="calculator-submit" class="menu-item px-4 py-2"> Calcular </button>
+        <button id="calculator-exit" class="menu-item px-4 py-2"> Volver al menú </button>
       </div>
     </div>
 
@@ -41,13 +36,15 @@
       <!-- Resultados se mostrarán aquí -->
     </div>
 
-    <div id="nasa-data" class="hidden mt-6">
+    <div id="nasa-data" class="mt-6 hidden">
       <!-- Datos de NASA se mostrarán aquí -->
     </div>
   </div>
 </div>
 
 <script>
+  import type { TerminalController } from '../types/terminal';
+
   interface PlanetaryAge {
     planet: string;
     age: number;
@@ -63,22 +60,22 @@
   }
 
   class CosmicCalculator {
-    private terminal: any;
+    private terminal: TerminalController;
     private nasaApiKey: string;
 
     // Periodos orbitales en días terrestres
     private planets = {
       Mercurio: 87.97,
-      Venus: 224.70,
+      Venus: 224.7,
       Tierra: 365.26,
       Marte: 686.98,
       Júpiter: 4332.59,
       Saturno: 10759.22,
       Urano: 30688.5,
-      Neptuno: 60182
+      Neptuno: 60182,
     };
 
-    constructor(terminal: any) {
+    constructor(terminal: TerminalController) {
       this.terminal = terminal;
       this.nasaApiKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
     }
@@ -97,7 +94,7 @@
 
       const birthdateInput = document.getElementById('birthdate') as HTMLInputElement;
       if (birthdateInput) {
-        birthdateInput.addEventListener('keydown', (e) => {
+        birthdateInput.addEventListener('keydown', e => {
           if (e.key === 'Enter') {
             this.calculate();
           }
@@ -128,7 +125,9 @@
       }
 
       // Calcular edades planetarias
-      const daysPassed = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysPassed = Math.floor(
+        (today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
       const ages: PlanetaryAge[] = [];
 
       for (const [planet, orbitalPeriod] of Object.entries(this.planets)) {
@@ -219,41 +218,45 @@
       const nasaDataDiv = document.getElementById('nasa-data');
       if (!nasaDataDiv) return;
 
-      let html = `
-        <div class="border border-terminal-dim p-4 rounded">
-          <div class="text-terminal-bright text-lg mb-4">
-            █ IMAGEN ASTRONÓMICA DEL DÍA DE TU NACIMIENTO
-          </div>
-
-          <div class="mb-3">
-            <div class="text-terminal-text font-bold text-lg">${this.escapeHtml(data.title)}</div>
-            <div class="text-xs text-terminal-dim">${data.date}</div>
-          </div>
-
-          ${data.media_type === 'image' ? `
-            <div class="mb-4">
-              <a href="${data.url}" target="_blank" rel="noopener noreferrer">
-                <img
-                  src="${data.url}"
-                  alt="${this.escapeHtml(data.title)}"
-                  class="w-full max-w-md mx-auto border border-terminal-dim rounded"
-                  loading="lazy"
-                />
-              </a>
-            </div>
-          ` : `
-            <div class="mb-4 text-terminal-dim">
-              <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright underline">
-                Ver video/multimedia →
-              </a>
-            </div>
-          `}
-
-          <div class="text-sm">
-            ${this.escapeHtml(data.explanation)}
-          </div>
+      const html = `
+      <div class="border border-terminal-dim p-4 rounded">
+        <div class="text-terminal-bright text-lg mb-4">
+          █ IMAGEN ASTRONÓMICA DEL DÍA DE TU NACIMIENTO
         </div>
-      `;
+
+        <div class="mb-3">
+          <div class="text-terminal-text font-bold text-lg">${this.escapeHtml(data.title)}</div>
+          <div class="text-xs text-terminal-dim">${data.date}</div>
+        </div>
+
+        ${
+          data.media_type === 'image'
+            ? `
+          <div class="mb-4">
+            <a href="${data.url}" target="_blank" rel="noopener noreferrer">
+              <img
+                src="${data.url}"
+                alt="${this.escapeHtml(data.title)}"
+                class="w-full max-w-md mx-auto border border-terminal-dim rounded"
+                loading="lazy"
+              />
+            </a>
+          </div>
+        `
+            : `
+          <div class="mb-4 text-terminal-dim">
+            <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright underline">
+              Ver video/multimedia →
+            </a>
+          </div>
+        `
+        }
+
+        <div class="text-sm">
+          ${this.escapeHtml(data.explanation)}
+        </div>
+      </div>
+    `;
 
       nasaDataDiv.innerHTML = html;
     }
@@ -283,7 +286,7 @@
   document.addEventListener('loadView', (e: Event) => {
     const customEvent = e as CustomEvent;
     if (customEvent.detail.view === 'calculator') {
-      const terminal = (window as any).terminal;
+      const terminal = window.terminal;
       const calculatorComponent = document.getElementById('calculator-component');
 
       if (terminal && calculatorComponent) {

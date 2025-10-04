@@ -1,4 +1,6 @@
 // Snake Game
+import type { TerminalController } from '../types/terminal';
+
 export class Snake {
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
@@ -10,9 +12,9 @@ export class Snake {
   private apple = { x: 10, y: 10 };
   private score = 0;
   private gameLoop?: number;
-  private terminal: any;
+  private terminal: TerminalController;
 
-  constructor(terminal: any) {
+  constructor(terminal: TerminalController) {
     this.terminal = terminal;
     this.init();
   }
@@ -66,7 +68,7 @@ export class Snake {
   }
 
   private setupControls(): void {
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       switch (e.key) {
         case 'ArrowUp':
         case 'w':
@@ -175,7 +177,7 @@ export class Snake {
   private placeApple(): void {
     this.apple = {
       x: Math.floor(Math.random() * this.tileCount),
-      y: Math.floor(Math.random() * this.tileCount)
+      y: Math.floor(Math.random() * this.tileCount),
     };
 
     // Asegurar que la manzana no esté en la serpiente
@@ -231,4 +233,4 @@ export class Snake {
 }
 
 // Exportar globalmente
-(window as any).Snake = Snake;
+(window as Window).Snake = Snake;

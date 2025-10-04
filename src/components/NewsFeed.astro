@@ -3,19 +3,16 @@
 ---
 
 <div id="news-component" class="hidden">
-  <div class="text-terminal-bright mb-4">
-    ╔═══════════════════════════════════════════════════════════╗
-    ║         NOTICIAS TECNOLÓGICAS - COSMOS E IA              ║
-    ╚═══════════════════════════════════════════════════════════╝
+  <div class="mb-4 text-terminal-bright">
+    ╔═══════════════════════════════════════════════════════════╗ ║ NOTICIAS TECNOLÓGICAS - COSMOS E
+    IA ║ ╚═══════════════════════════════════════════════════════════╝
   </div>
 
   <div id="news-content" class="mb-4">
     <div class="loading-dots">Cargando noticias</div>
   </div>
 
-  <div class="text-terminal-dim text-sm mt-4">
-    Escribe 'menu' para volver al menú principal.
-  </div>
+  <div class="mt-4 text-sm text-terminal-dim">Escribe 'menu' para volver al menú principal.</div>
 </div>
 
 <script>
@@ -88,7 +85,6 @@
         html += '</div>';
 
         newsContent.innerHTML = html;
-
       } catch (error) {
         console.error('Error fetching news:', error);
         newsContent.innerHTML = `
@@ -124,23 +120,27 @@
           title: 'Nuevos avances en inteligencia artificial generativa',
           description: 'Investigadores presentan mejoras significativas en modelos de lenguaje.',
           source: 'Tech News',
-          date: new Date().toLocaleDateString('es-ES')
+          date: new Date().toLocaleDateString('es-ES'),
         },
         {
           title: 'NASA descubre exoplaneta potencialmente habitable',
-          description: 'El telescopio James Webb identifica signos de agua en atmósfera planetaria.',
+          description:
+            'El telescopio James Webb identifica signos de agua en atmósfera planetaria.',
           source: 'Space Daily',
-          date: new Date().toLocaleDateString('es-ES')
+          date: new Date().toLocaleDateString('es-ES'),
         },
         {
           title: 'IA ayuda en descubrimientos astronómicos',
-          description: 'Algoritmos de machine learning identifican nuevos patrones en datos espaciales.',
+          description:
+            'Algoritmos de machine learning identifican nuevos patrones en datos espaciales.',
           source: 'Science Today',
-          date: new Date().toLocaleDateString('es-ES')
-        }
+          date: new Date().toLocaleDateString('es-ES'),
+        },
       ];
 
-      return demoArticles.map((article, index) => `
+      return demoArticles
+        .map(
+          (article, index) => `
         <div class="border-l-2 border-terminal-dim pl-4 py-2 mt-2">
           <div class="text-terminal-bright">${index + 1}. ${article.title}</div>
           <div class="text-sm mt-1">${article.description}</div>
@@ -148,7 +148,9 @@
             <span>${article.source}</span> | <span>${article.date}</span>
           </div>
         </div>
-      `).join('');
+      `
+        )
+        .join('');
     }
 
     private escapeHtml(text: string): string {
@@ -177,7 +179,7 @@
   document.addEventListener('loadView', (e: Event) => {
     const customEvent = e as CustomEvent;
     if (customEvent.detail.view === 'news') {
-      const terminal = (window as any).terminal;
+      const terminal = window.terminal;
       const newsComponent = document.getElementById('news-component');
 
       if (terminal && newsComponent) {

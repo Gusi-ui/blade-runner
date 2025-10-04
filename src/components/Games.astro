@@ -3,33 +3,30 @@
 ---
 
 <div id="games-component" class="hidden">
-  <div class="text-terminal-bright mb-4">
-    ╔═══════════════════════════════════════════════════════════╗
-    ║                  JUEGOS RETRO                            ║
+  <div class="mb-4 text-terminal-bright">
+    ╔═══════════════════════════════════════════════════════════╗ ║ JUEGOS RETRO ║
     ╚═══════════════════════════════════════════════════════════╝
   </div>
 
   <div id="games-menu" class="space-y-4">
-    <div class="text-terminal-text mb-4">Selecciona un juego:</div>
+    <div class="mb-4 text-terminal-text">Selecciona un juego:</div>
 
     <div class="menu-item" data-game="snake">
       <span class="text-terminal-bright">[1]</span> Snake
-      <div class="text-xs text-terminal-dim ml-4">Clásico juego de la serpiente</div>
+      <div class="ml-4 text-xs text-terminal-dim">Clásico juego de la serpiente</div>
     </div>
 
     <div class="menu-item" data-game="hangman">
       <span class="text-terminal-bright">[2]</span> El Ahorcado Cósmico
-      <div class="text-xs text-terminal-dim ml-4">Adivina palabras del espacio</div>
+      <div class="ml-4 text-xs text-terminal-dim">Adivina palabras del espacio</div>
     </div>
 
     <div class="menu-item" data-game="tictactoe">
       <span class="text-terminal-bright">[3]</span> Tres en Raya
-      <div class="text-xs text-terminal-dim ml-4">Contra la IA</div>
+      <div class="ml-4 text-xs text-terminal-dim">Contra la IA</div>
     </div>
 
-    <div class="text-terminal-dim text-sm mt-4">
-      Escribe 'menu' para volver al menú principal.
-    </div>
+    <div class="mt-4 text-sm text-terminal-dim">Escribe 'menu' para volver al menú principal.</div>
   </div>
 
   <div id="game-container" class="hidden"></div>
@@ -43,7 +40,7 @@
   document.addEventListener('loadView', (e: Event) => {
     const customEvent = e as CustomEvent;
     if (customEvent.detail.view === 'games') {
-      const terminal = (window as any).terminal;
+      const terminal = window.terminal;
       const gamesComponent = document.getElementById('games-component');
 
       if (terminal && gamesComponent) {
@@ -66,22 +63,24 @@
   });
 
   function loadGame(game: string): void {
-    const terminal = (window as any).terminal;
+    const terminal = window.terminal;
+
+    if (!terminal) return;
 
     switch (game) {
       case 'snake':
-        if ((window as any).Snake) {
-          new (window as any).Snake(terminal);
+        if (window.Snake) {
+          new window.Snake(terminal);
         }
         break;
       case 'hangman':
-        if ((window as any).Hangman) {
-          new (window as any).Hangman(terminal);
+        if (window.Hangman) {
+          new window.Hangman(terminal);
         }
         break;
       case 'tictactoe':
-        if ((window as any).TicTacToe) {
-          new (window as any).TicTacToe(terminal);
+        if (window.TicTacToe) {
+          new window.TicTacToe(terminal);
         }
         break;
     }

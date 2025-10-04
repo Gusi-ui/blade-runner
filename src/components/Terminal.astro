@@ -3,51 +3,57 @@ interface Props {
   title?: string;
 }
 
-const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
+// const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
 ---
 
 <div class="terminal-container">
   <div class="terminal-screen crt-flicker">
     <div class="terminal-header">
       <!-- ASCII Art Header -->
-      <div class="ascii-header text-terminal-bright text-center mb-4">
+      <div class="ascii-header mb-4 text-center text-terminal-bright">
         <div class="ascii-title">
-          <pre class="ascii-art font-mono">
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║    ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ██████╗ ███████╗██╗   ██╗        ║
-║   ██╔════╝ ██║   ██║██╔════╝██║   ██╔═══██╗██╔══██╗██╔════╝██║   ██║        ║
-║   ██║  ███╗██║   ██║███████╗██║   ██║   ██║██║  ██║█████╗  ██║   ██║        ║
-║   ██║   ██║██║   ██║╚════██║██║   ██║   ██║██║  ██║██╔══╝  ╚██╗ ██╔╝        ║
-║   ╚██████╔╝╚██████╔╝███████║██║   ╚██████╔╝██████╔╝███████╗ ╚████╔╝         ║
-║    ╚═════╝  ╚═════╝ ╚══════╝╚═╝    ╚═════╝ ╚═════╝ ╚══════╝  ╚═══╝          ║
-║                                                                              ║
-║                    ╔═══════════════════════════════════════╗                 ║
-║                    ║        BLADE RUNNER TERMINAL         ║                 ║
-║                    ║         [SISTEMA NEXUS-7]            ║                 ║
-║                    ╚═══════════════════════════════════════╝                 ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+          <pre
+            class="ascii-art font-mono">
+╔═════════════════════════════════════════════════════════╗
+║                                                         ║
+║     ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ███████╗██╗   ██╗ ║
+║    ██╔════╝ ██║   ██║██╔════╝██║    ██╔══██╗██╔════╝██║   ██║ ║
+║    ██║  ███╗██║   ██║███████╗██║    ██║  ██║█████╗  ██║   ██║ ║
+║    ██║   ██║██║   ██║╚════██║██║    ██║  ██║██╔══╝  ╚██╗ ██╔╝ ║
+║    ╚██████╔╝╚██████╔╝███████║██║ ██╗██████╔╝███████╗ ╚████╔╝  ║
+║     ╚═════╝  ╚═════╝ ╚══════╝╚═╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝   ║
+║                                                         ║
+║               ╔═══════════════════════════╗             ║
+║               ║   SISTEMA NEXUS-7        ║             ║
+║               ╚═══════════════════════════╝             ║
+║                                                         ║
+╚═════════════════════════════════════════════════════════╝
           </pre>
         </div>
       </div>
-      
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-terminal-dim gap-2">
-        <span>CONECTADO: {new Date().toLocaleString('es-ES', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        })}</span>
+
+      <div
+        class="flex flex-col items-start justify-between gap-2 text-xs text-terminal-dim sm:flex-row sm:items-center"
+      >
+        <span
+          >CONECTADO: {
+            new Date().toLocaleString('es-ES', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          }</span
+        >
         <span>STATUS: <span class="text-green-400">ONLINE</span></span>
       </div>
     </div>
 
     <div id="terminal-content" class="min-h-[calc(100vh-200px)]">
       <div class="terminal-output">
-        <p class="text-terminal-bright mb-2">Inicializando sistema...</p>
+        <p class="mb-2 text-terminal-bright">Inicializando sistema...</p>
         <p class="mb-2">Cargando módulos del kernel...</p>
         <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
         <p class="success-text mb-4">✓ Sistema listo</p>
@@ -132,61 +138,61 @@ const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
       const [cmd, ...args] = command.toLowerCase().split(' ');
 
       const commands: { [key: string]: Command } = {
-        'ayuda': {
-          execute: () => this.showHelp()
+        ayuda: {
+          execute: () => this.showHelp(),
         },
-        'help': {
-          execute: () => this.showHelp()
+        help: {
+          execute: () => this.showHelp(),
         },
-        'menu': {
-          execute: () => this.showMenu()
+        menu: {
+          execute: () => this.showMenu(),
         },
-        'limpiar': {
-          execute: () => this.clear()
+        limpiar: {
+          execute: () => this.clear(),
         },
-        'clear': {
-          execute: () => this.clear()
+        clear: {
+          execute: () => this.clear(),
         },
-        'fecha': {
-          execute: () => this.printOutput(`Fecha actual: ${new Date().toLocaleString('es-ES')}`)
+        fecha: {
+          execute: () => this.printOutput(`Fecha actual: ${new Date().toLocaleString('es-ES')}`),
         },
-        'whoami': {
-          execute: () => this.printOutput('gusi@nexus')
+        whoami: {
+          execute: () => this.printOutput('gusi@nexus'),
         },
         '1': {
-          execute: () => this.loadView('news')
+          execute: () => this.loadView('news'),
         },
         '2': {
-          execute: () => this.loadView('cv')
+          execute: () => this.loadView('cv'),
         },
         '3': {
-          execute: () => this.loadView('projects')
+          execute: () => this.loadView('projects'),
         },
         '4': {
-          execute: () => this.loadView('games')
+          execute: () => this.loadView('games'),
         },
         '5': {
-          execute: () => this.loadView('calculator')
+          execute: () => this.loadView('calculator'),
         },
-        'noticias': {
-          execute: () => this.loadView('news')
+        noticias: {
+          execute: () => this.loadView('news'),
         },
-        'curriculum': {
-          execute: () => this.loadView('cv')
+        curriculum: {
+          execute: () => this.loadView('cv'),
         },
-        'cv': {
-          execute: () => this.loadView('cv')
+        cv: {
+          execute: () => this.loadView('cv'),
         },
-        'proyectos': {
-          execute: () => this.loadView('projects')
+        proyectos: {
+          execute: () => this.loadView('projects'),
         },
-        'juegos': {
-          execute: () => this.loadView('games')
+        juegos: {
+          execute: () => this.loadView('games'),
         },
-        'calculadora': {
-          execute: () => this.loadView('calculator')
+        calculadora: {
+          execute: () => this.loadView('calculator'),
         },
-        'salir': {
+        salir: {
           execute: () => {
             this.printOutput('Cerrando sesión...');
             setTimeout(() => {
@@ -194,17 +200,19 @@ const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
               this.printOutput('Hasta luego, humano.');
               this.input.disabled = true;
             }, 1000);
-          }
+          },
         },
-        'exit': {
-          execute: () => commands['salir'].execute([])
-        }
+        exit: {
+          execute: () => commands['salir'].execute([]),
+        },
       };
 
       if (commands[cmd]) {
         commands[cmd].execute(args);
       } else if (cmd) {
-        this.printOutput(`<span class="error-text">Error: Comando '${cmd}' no reconocido. Escribe 'ayuda' para ver comandos disponibles.</span>`);
+        this.printOutput(
+          `<span class="error-text">Error: Comando '${cmd}' no reconocido. Escribe 'ayuda' para ver comandos disponibles.</span>`
+        );
       }
 
       this.scrollToBottom();
@@ -273,7 +281,7 @@ const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
   const terminal = new TerminalController();
 
   // Exportar terminal globalmente para que otros componentes puedan usarlo
-  (window as any).terminal = terminal;
+  window.terminal = terminal;
 </script>
 
 <style>

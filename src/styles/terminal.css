@@ -10,19 +10,19 @@
   }
 
   body {
-    @apply bg-terminal-bg text-terminal-text font-mono overflow-hidden;
+    @apply overflow-hidden bg-terminal-bg font-mono text-terminal-text;
     text-shadow: 0 0 5px currentColor;
   }
 }
 
 @layer components {
   .terminal-container {
-    @apply w-full h-screen p-4 md:p-6 lg:p-8 overflow-hidden;
+    @apply h-screen w-full overflow-hidden p-4 md:p-6 lg:p-8;
     background: radial-gradient(ellipse at center, #001a00 0%, #000000 100%);
   }
 
   .terminal-screen {
-    @apply w-full h-full border-2 border-terminal-dim rounded-lg p-4 overflow-y-auto;
+    @apply h-full w-full overflow-y-auto rounded-lg border-2 border-terminal-dim p-4;
     background: rgba(0, 0, 0, 0.8);
     box-shadow:
       inset 0 0 20px rgba(0, 255, 65, 0.1),
@@ -31,7 +31,7 @@
   }
 
   .terminal-header {
-    @apply text-terminal-bright text-sm md:text-base mb-4 pb-2 border-b border-terminal-dim;
+    @apply mb-4 border-b border-terminal-dim pb-2 text-sm text-terminal-bright md:text-base;
   }
 
   .ascii-header {
@@ -44,8 +44,11 @@
   }
 
   .ascii-art {
-    @apply text-terminal-bright font-mono;
-    text-shadow: 0 0 10px currentColor;
+    @apply font-mono text-terminal-bright;
+    text-shadow:
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 30px currentColor;
     animation: glow 2s ease-in-out infinite alternate;
     white-space: pre;
     margin: 0;
@@ -53,14 +56,21 @@
     max-width: 100%;
     overflow: hidden;
     word-wrap: break-word;
+    line-height: 1.1;
   }
 
   @keyframes glow {
     from {
-      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+      text-shadow:
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 30px currentColor;
     }
     to {
-      text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+      text-shadow:
+        0 0 5px currentColor,
+        0 0 10px currentColor,
+        0 0 15px currentColor;
     }
   }
 
@@ -77,18 +87,23 @@
   }
 
   .terminal-input {
-    @apply flex-1 bg-transparent border-none outline-none text-terminal-text font-mono;
+    @apply flex-1 border-none bg-transparent font-mono text-terminal-text outline-none;
     caret-color: #00ff41;
   }
 
   .terminal-cursor {
-    @apply inline-block w-2 h-5 bg-terminal-bright align-middle;
+    @apply inline-block h-5 w-2 bg-terminal-bright align-middle;
     animation: blink 1s step-end infinite;
   }
 
   @keyframes blink {
-    from, to { opacity: 1; }
-    50% { opacity: 0; }
+    from,
+    to {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
   }
 
   .typewriter {
@@ -103,11 +118,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 255, 65, 0) 50%,
-      rgba(0, 255, 65, 0.02) 51%
-    );
+    background: linear-gradient(to bottom, rgba(0, 255, 65, 0) 50%, rgba(0, 255, 65, 0.02) 51%);
     background-size: 100% 4px;
     pointer-events: none;
     z-index: 9999;
@@ -118,13 +129,19 @@
   }
 
   @keyframes flicker {
-    0% { opacity: 0.97; }
-    50% { opacity: 1; }
-    100% { opacity: 0.97; }
+    0% {
+      opacity: 0.97;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.97;
+    }
   }
 
   .menu-item {
-    @apply cursor-pointer hover:text-terminal-bright hover:bg-terminal-dim hover:bg-opacity-20 p-2 rounded transition-colors duration-200;
+    @apply cursor-pointer rounded p-2 transition-colors duration-200 hover:bg-terminal-dim hover:bg-opacity-20 hover:text-terminal-bright;
   }
 
   .menu-item:hover::before {
@@ -150,7 +167,7 @@
   }
 
   .terminal-screen::-webkit-scrollbar-thumb {
-    @apply bg-terminal-dim border border-terminal-text;
+    @apply border border-terminal-text bg-terminal-dim;
   }
 
   .terminal-screen::-webkit-scrollbar-thumb:hover {
@@ -159,7 +176,7 @@
 
   /* Canvas para juegos */
   .game-canvas {
-    @apply border-2 border-terminal-text mx-auto my-4;
+    @apply mx-auto my-4 border-2 border-terminal-text;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
   }
@@ -171,10 +188,20 @@
   }
 
   @keyframes dots {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
+    0%,
+    20% {
+      content: '';
+    }
+    40% {
+      content: '.';
+    }
+    60% {
+      content: '..';
+    }
+    80%,
+    100% {
+      content: '...';
+    }
   }
 
   /* Responsive */
@@ -192,36 +219,49 @@
     }
 
     .ascii-art {
-      font-size: 4px;
-      line-height: 0.8;
-      transform: scale(0.8);
-      transform-origin: center;
+      font-size: 3.5px;
+      line-height: 0.85;
+      transform: scale(0.75);
+      transform-origin: top center;
     }
 
     .ascii-title {
-      @apply -mx-1;
+      @apply -mx-2 overflow-x-auto;
     }
   }
 
-  @media (max-width: 640px) {
+  @media (min-width: 481px) and (max-width: 640px) {
     .ascii-art {
       font-size: 5px;
-      line-height: 0.9;
+      line-height: 0.95;
       transform: scale(0.85);
-      transform-origin: center;
+      transform-origin: top center;
+    }
+
+    .ascii-title {
+      @apply overflow-x-auto;
     }
   }
 
-  @media (max-width: 768px) {
+  @media (min-width: 641px) and (max-width: 768px) {
     .ascii-art {
       font-size: 6px;
       line-height: 1;
       transform: scale(0.9);
-      transform-origin: center;
+      transform-origin: top center;
     }
   }
 
-  @media (max-width: 1024px) {
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .ascii-art {
+      font-size: 7px;
+      line-height: 1.05;
+      transform: scale(0.95);
+      transform-origin: top center;
+    }
+  }
+
+  @media (min-width: 1025px) {
     .ascii-art {
       font-size: 8px;
       line-height: 1.1;

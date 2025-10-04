@@ -1,4 +1,6 @@
 // Hangman Game - Cosmic Theme
+import type { TerminalController } from '../types/terminal';
+
 export class Hangman {
   private words = [
     { word: 'NEBULOSA', hint: 'Nube interestelar de polvo y gas' },
@@ -10,7 +12,7 @@ export class Hangman {
     { word: 'CONSTELACION', hint: 'Patrón de estrellas en el cielo' },
     { word: 'AGUJERO NEGRO', hint: 'Región del espacio con gravedad extrema' },
     { word: 'SUPERNOVA', hint: 'Explosión estelar' },
-    { word: 'ASTEROIDE', hint: 'Roca espacial menor' }
+    { word: 'ASTEROIDE', hint: 'Roca espacial menor' },
   ];
 
   private currentWord = '';
@@ -18,9 +20,9 @@ export class Hangman {
   private guessedLetters: string[] = [];
   private wrongGuesses = 0;
   private maxWrongGuesses = 6;
-  private terminal: any;
+  private terminal: TerminalController;
 
-  constructor(terminal: any) {
+  constructor(terminal: TerminalController) {
     this.terminal = terminal;
     this.init();
   }
@@ -84,7 +86,7 @@ export class Hangman {
 
       if (input) {
         input.focus();
-        input.addEventListener('keydown', (e) => {
+        input.addEventListener('keydown', e => {
           if (e.key === 'Enter') {
             this.makeGuess();
           }
@@ -172,7 +174,7 @@ export class Hangman {
    ║  / \\
    ║
   ═╩═══
-      `
+      `,
     ];
 
     return stages[this.wrongGuesses];
@@ -230,9 +232,9 @@ export class Hangman {
   }
 
   private checkWin(): boolean {
-    return this.currentWord.split('').every(letter =>
-      letter === ' ' || this.guessedLetters.includes(letter)
-    );
+    return this.currentWord
+      .split('')
+      .every(letter => letter === ' ' || this.guessedLetters.includes(letter));
   }
 
   private win(): void {
@@ -309,4 +311,4 @@ export class Hangman {
 }
 
 // Exportar globalmente
-(window as any).Hangman = Hangman;
+(window as Window).Hangman = Hangman;

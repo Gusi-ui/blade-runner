@@ -1,11 +1,13 @@
 // Tic Tac Toe Game with AI
+import type { TerminalController } from '../types/terminal';
+
 export class TicTacToe {
   private board: string[] = ['', '', '', '', '', '', '', '', ''];
   private currentPlayer = 'X';
   private gameOver = false;
-  private terminal: any;
+  private terminal: TerminalController;
 
-  constructor(terminal: any) {
+  constructor(terminal: TerminalController) {
     this.terminal = terminal;
     this.init();
   }
@@ -47,7 +49,9 @@ export class TicTacToe {
 
     for (let i = 0; i < 9; i++) {
       const value = this.board[i] || ' ';
-      const cellClass = this.gameOver ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-terminal-dim';
+      const cellClass = this.gameOver
+        ? 'cursor-not-allowed'
+        : 'cursor-pointer hover:bg-terminal-dim';
 
       html += `
         <div
@@ -67,7 +71,7 @@ export class TicTacToe {
     const cells = document.querySelectorAll('[data-cell]');
 
     cells.forEach(cell => {
-      cell.addEventListener('click', (e) => {
+      cell.addEventListener('click', e => {
         const index = parseInt((e.currentTarget as HTMLElement).getAttribute('data-cell') || '0');
         this.makeMove(index);
       });
@@ -186,14 +190,17 @@ export class TicTacToe {
 
   private checkWinner(player: string): boolean {
     const winPatterns = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Horizontales
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Verticales
-      [0, 4, 8], [2, 4, 6]             // Diagonales
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8], // Horizontales
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8], // Verticales
+      [0, 4, 8],
+      [2, 4, 6], // Diagonales
     ];
 
-    return winPatterns.some(pattern =>
-      pattern.every(index => this.board[index] === player)
-    );
+    return winPatterns.some(pattern => pattern.every(index => this.board[index] === player));
   }
 
   private isBoardFull(): boolean {
@@ -229,4 +236,4 @@ export class TicTacToe {
 }
 
 // Exportar globalmente
-(window as any).TicTacToe = TicTacToe;
+(window as Window).TicTacToe = TicTacToe;
