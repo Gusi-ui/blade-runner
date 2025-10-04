@@ -14,7 +14,7 @@
   }
 
   body {
-    @apply overflow-hidden bg-terminal-bg font-mono text-terminal-text;
+    @apply bg-terminal-bg font-mono text-terminal-text;
     text-shadow: 0 0 5px currentColor;
     font-size: 1rem;
   }
@@ -41,17 +41,19 @@
 
 @layer components {
   .terminal-container {
-    @apply h-screen w-full overflow-hidden p-4 md:p-6 lg:p-8;
+    @apply w-full p-4 md:p-6 lg:p-8;
     background: radial-gradient(ellipse at center, #001a00 0%, #000000 100%);
+    min-height: 100vh;
   }
 
   .terminal-screen {
-    @apply h-full w-full overflow-y-auto rounded-lg border-2 border-terminal-dim p-4;
+    @apply w-full rounded-lg border-2 border-terminal-dim p-4;
     background: rgba(0, 0, 0, 0.8);
     box-shadow:
       inset 0 0 20px rgba(0, 255, 65, 0.1),
       0 0 30px rgba(0, 255, 65, 0.2);
     backdrop-filter: blur(2px);
+    min-height: 100vh;
   }
 
   .terminal-header {
@@ -126,6 +128,7 @@
     height: 1.2em;
     background-color: #00ff41;
     left: 0;
+    top: 0;
     animation: cursor-blink 1s step-end infinite;
     box-shadow: 0 0 8px rgba(0, 255, 65, 0.8);
     pointer-events: none;
@@ -174,6 +177,64 @@
     }
     100% {
       opacity: 0.97;
+    }
+  }
+
+  /* Contenedor del título responsivo */
+  .section-title {
+    @apply font-mono text-terminal-bright;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    margin: 0 0 1.5rem 0;
+    border: 2px solid currentColor;
+    border-radius: 4px;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: rgba(0, 255, 65, 0.05);
+    box-shadow:
+      inset 0 0 20px rgba(0, 255, 65, 0.1),
+      0 0 10px rgba(0, 255, 65, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .section-title::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.8), transparent);
+    animation: scan 3s linear infinite;
+  }
+
+  @keyframes scan {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .section-title::after {
+    content: '▸';
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    opacity: 0.6;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 480px) {
+    .section-title {
+      padding: 0.6rem 0.75rem;
+      font-size: clamp(0.85rem, 2.5vw, 1rem);
     }
   }
 
@@ -244,11 +305,11 @@
   /* Responsive */
   @media (max-width: 480px) {
     .terminal-container {
-      @apply p-2;
+      @apply p-1;
     }
 
     .terminal-screen {
-      @apply p-3;
+      @apply p-2;
       font-size: 1rem;
     }
 
@@ -298,11 +359,11 @@
 
   @media (min-width: 481px) and (max-width: 640px) {
     .terminal-container {
-      @apply p-3;
+      @apply p-2;
     }
 
     .terminal-screen {
-      @apply p-4;
+      @apply p-3;
       font-size: 1rem;
     }
 
@@ -368,18 +429,18 @@
 
   @media (min-width: 1025px) and (max-width: 1440px) {
     .ascii-art {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       line-height: 1.2;
-      transform: scale(1.2);
+      transform: scale(1);
       transform-origin: top center;
     }
   }
 
   @media (min-width: 1441px) {
     .ascii-art {
-      font-size: 0.75rem;
-      line-height: 1.25;
-      transform: scale(1.25);
+      font-size: 0.8rem;
+      line-height: 1.2;
+      transform: scale(1);
       transform-origin: top center;
     }
   }
