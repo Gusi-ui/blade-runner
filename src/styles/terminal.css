@@ -38,10 +38,18 @@
     @apply mb-4;
   }
 
+  .ascii-art-container {
+    @apply overflow-x-auto;
+    max-width: 100%;
+  }
+
   .ascii-art {
     @apply text-terminal-bright font-mono;
     text-shadow: 0 0 10px currentColor;
     animation: glow 2s ease-in-out infinite alternate;
+    white-space: pre;
+    margin: 0;
+    min-width: 0;
   }
 
   @keyframes glow {
@@ -169,7 +177,7 @@
   /* Responsive */
   @media (max-width: 480px) {
     .terminal-container {
-      @apply p-2;
+      @apply p-1;
     }
 
     .terminal-screen {
@@ -181,15 +189,24 @@
     }
 
     .ascii-art {
-      @apply text-xs;
-      font-size: 8px;
-      line-height: 1.1;
+      font-size: 6px;
+      line-height: 1;
+    }
+
+    .ascii-art-container {
+      @apply -mx-2;
     }
   }
 
   @media (max-width: 768px) {
     .ascii-art {
-      @apply text-xs;
+      font-size: 8px;
+      line-height: 1.1;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .ascii-art {
       font-size: 10px;
       line-height: 1.2;
     }

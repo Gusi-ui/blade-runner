@@ -11,7 +11,8 @@ const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
     <div class="terminal-header">
       <!-- ASCII Art Header -->
       <div class="ascii-header text-terminal-bright text-center mb-4">
-        <pre class="ascii-art text-xs md:text-sm font-mono leading-tight">
+        <div class="ascii-art-container">
+          <pre class="ascii-art font-mono">
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
 ║    ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ██████╗ ███████╗██╗   ██╗        ║
@@ -29,15 +30,16 @@ const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
 ║                    ╚═════╝ ╚══════╝  ╚═══╝                                   ║
 ║                                                                              ║
 ║                    ╔═══════════════════════════════════════╗                 ║
-║                    ║        CYBERPUNK TERMINAL v2.0        ║                 ║
+║                    ║        BLADE RUNNER TERMINAL         ║                 ║
 ║                    ║         [SISTEMA NEXUS-7]            ║                 ║
 ║                    ╚═══════════════════════════════════════╝                 ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
-        </pre>
+          </pre>
+        </div>
       </div>
       
-      <div class="flex justify-between items-center text-xs text-terminal-dim">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-terminal-dim gap-2">
         <span>CONECTADO: {new Date().toLocaleString('es-ES', {
           year: 'numeric',
           month: '2-digit',
