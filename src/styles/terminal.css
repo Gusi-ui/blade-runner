@@ -124,16 +124,30 @@
 
   .terminal-cursor {
     position: absolute;
-    width: 10px;
+    width: 2px;
     height: 1.2em;
-    background-color: transparent;
+    background-color: #00ff41;
     left: 0;
     top: 0;
-    animation: none;
-    box-shadow: none;
+    animation: blink 1s infinite;
     pointer-events: none;
-    z-index: 0;
-    border-left: 2px solid #00ff41;
+    z-index: 10;
+    opacity: 0;
+  }
+
+  .terminal-input:focus + .terminal-cursor {
+    opacity: 1;
+  }
+
+  @keyframes blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0;
+    }
   }
 
   @keyframes cursor-blink {
