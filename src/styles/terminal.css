@@ -117,7 +117,7 @@
 
   .terminal-input {
     @apply flex-1 border-none bg-transparent font-mono text-terminal-text outline-none;
-    caret-color: transparent;
+    caret-color: #00ff41;
     position: relative;
     z-index: 1;
   }
@@ -126,13 +126,14 @@
     position: absolute;
     width: 10px;
     height: 1.2em;
-    background-color: #00ff41;
+    background-color: transparent;
     left: 0;
     top: 0;
-    animation: cursor-blink 1s step-end infinite;
-    box-shadow: 0 0 8px rgba(0, 255, 65, 0.8);
+    animation: none;
+    box-shadow: none;
     pointer-events: none;
     z-index: 0;
+    border-left: 2px solid #00ff41;
   }
 
   @keyframes cursor-blink {
@@ -143,6 +144,26 @@
     51%,
     100% {
       opacity: 0;
+    }
+  }
+
+  /* Hangman game cursor */
+  .hangman-cursor {
+    font-size: 1.2em;
+    font-weight: bold;
+    animation: hangman-cursor-blink 1s ease-in-out infinite;
+  }
+
+  @keyframes hangman-cursor-blink {
+    0%,
+    50% {
+      opacity: 1;
+      transform: translateY(-50%) scaleY(1);
+    }
+    52%,
+    100% {
+      opacity: 0.3;
+      transform: translateY(-50%) scaleY(0.8);
     }
   }
 
@@ -178,6 +199,262 @@
     100% {
       opacity: 0.97;
     }
+  }
+
+  /* Glitch effects */
+  .glitch {
+    position: relative;
+    animation: glitch-skew 1s linear infinite;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+  }
+
+  .glitch::before {
+    animation: glitch-anim-1 0.5s infinite;
+    color: #ff0000;
+    z-index: -1;
+  }
+
+  .glitch::after {
+    animation: glitch-anim-2 0.5s infinite;
+    color: #00ffff;
+    z-index: -2;
+  }
+
+  @keyframes glitch-skew {
+    0%,
+    100% {
+      transform: skew(0deg);
+    }
+    10% {
+      transform: skew(-2deg);
+    }
+    20% {
+      transform: skew(2deg);
+    }
+    30% {
+      transform: skew(-1deg);
+    }
+    40% {
+      transform: skew(1deg);
+    }
+    50% {
+      transform: skew(0deg);
+    }
+  }
+
+  @keyframes glitch-anim-1 {
+    0%,
+    100% {
+      transform: translate(0);
+    }
+    20% {
+      transform: translate(-2px, 2px);
+    }
+    40% {
+      transform: translate(-2px, -2px);
+    }
+    60% {
+      transform: translate(2px, 2px);
+    }
+    80% {
+      transform: translate(2px, -2px);
+    }
+  }
+
+  @keyframes glitch-anim-2 {
+    0%,
+    100% {
+      transform: translate(0);
+    }
+    20% {
+      transform: translate(2px, -2px);
+    }
+    40% {
+      transform: translate(2px, 2px);
+    }
+    60% {
+      transform: translate(-2px, -2px);
+    }
+    80% {
+      transform: translate(-2px, 2px);
+    }
+  }
+
+  /* Cyberpunk particles */
+  .particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -10;
+  }
+
+  .particle {
+    position: absolute;
+    background: #00ff41;
+    border-radius: 50%;
+    animation: float 6s linear infinite;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(100vh) rotate(0deg);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  /* Mechanical key sound trigger */
+  .key-press {
+    animation: key-sound 0.1s ease-out;
+  }
+
+  @keyframes key-sound {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(0.95);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Smooth transitions between modes */
+  .mode-transition {
+    animation: mode-fade-in 0.5s ease-in-out;
+  }
+
+  @keyframes mode-fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Custom scrollbar for smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+
+  /* Hover effects for interactive elements */
+  .interactive-hover {
+    transition: all 0.3s ease;
+  }
+
+  .interactive-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 255, 65, 0.2);
+  }
+
+  /* Loading spinner for dynamic content */
+  .loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #00ff41;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s ease-in-out infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Accessibility improvements */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Focus styles for keyboard navigation */
+  .terminal-input:focus,
+  .menu-item:focus,
+  button:focus {
+    outline: 2px solid #00ff41;
+    outline-offset: 2px;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .terminal-screen {
+      border-width: 3px;
+    }
+
+    .terminal-input {
+      background: #ffffff;
+      color: #000000;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .glitch,
+    .particles,
+    .crt-flicker,
+    .scanline,
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Performance optimizations */
+  .terminal-content {
+    contain: layout style;
+  }
+
+  .game-canvas {
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+  }
+
+  /* Lazy loading for images */
+  img[loading='lazy'] {
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  img[loading='lazy'].loaded {
+    opacity: 1;
   }
 
   /* Contenedor del título responsivo */

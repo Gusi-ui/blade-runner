@@ -11,8 +11,11 @@ export class Snake {
   private velocityY = 0;
   private apple = { x: 10, y: 10 };
   private score = 0;
+  private level = 1;
+  private highScore = 0;
   private gameLoop?: number;
   private terminal: TerminalController;
+  private speed = 100;
 
   constructor(terminal: TerminalController) {
     this.terminal = terminal;
@@ -20,6 +23,7 @@ export class Snake {
   }
 
   private init(): void {
+    this.loadHighScore();
     this.terminal.printOutput(`
       <div class="text-terminal-bright mb-4">
         ═══════════════════════════════════════════════════════════
@@ -27,7 +31,10 @@ export class Snake {
         ═══════════════════════════════════════════════════════════
       </div>
       <div class="mb-2">Controles: Flechas del teclado o WASD</div>
-      <div class="mb-4">Puntuación: <span id="snake-score">0</span></div>
+      <div class="mb-4">
+        <div>Puntuación: <span id="snake-score">0</span> | Nivel: <span id="snake-level">1</span></div>
+        <div class="text-xs text-terminal-dim">Récord: <span id="snake-high-score">${this.highScore}</span></div>
+      </div>
       <div class="flex justify-center">
         <canvas id="snake-canvas" class="game-canvas" width="400" height="400"></canvas>
       </div>
@@ -63,8 +70,30 @@ export class Snake {
     this.velocityX = 0;
     this.velocityY = 0;
     this.score = 0;
+    this.level = 1;
+    this.speed = 100;
     this.placeApple();
     this.updateScore();
+    this.updateLevel();
+  }
+
+  private loadHighScore(): void {
+    const saved = localStorage.getItem('snake-high-score');
+    this.highScore = saved ? parseInt(saved) : 0;
+  }
+
+  private saveHighScore(): void {
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      localStorage.setItem('snake-high-score', this.highScore.toString());
+    }
+  }
+
+  private updateLevel(): void {
+    const levelEl = document.getElementById('snake-level');
+    const highScoreEl = document.getElementById('snake-high-score');
+    if (levelEl) levelEl.textContent = this.level.toString();
+    if (highScoreEl) highScoreEl.textContent = this.highScore.toString();
   }
 
   private setupControls(): void {
@@ -114,7 +143,18 @@ export class Snake {
     this.gameLoop = window.setInterval(() => {
       this.update();
       this.draw();
-    }, 100);
+    }, this.speed);
+  }
+
+  private showLevelUp(): void {
+    // Mostrar mensaje de nivel completado
+    this.ctx.fillStyle = 'rgba(0, 255, 65, 0.8)';
+    this.ctx.font = '20px monospace';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(`¡Nivel ${this.level}!`, this.canvas.width / 2, this.canvas.height / 2);
+    setTimeout(() => {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }, 1000);
   }
 
   private update(): void {
@@ -139,8 +179,18 @@ export class Snake {
 
     // Verificar si comió manzana
     if (head.x === this.apple.x && head.y === this.apple.y) {
-      this.score += 10;
+      this.score += 10 * this.level;
       this.updateScore();
+
+      // Subir de nivel cada 50 puntos
+      const newLevel = Math.floor(this.score / 50) + 1;
+      if (newLevel > this.level) {
+        this.level = newLevel;
+        this.speed = Math.max(50, 100 - this.level * 5);
+        this.updateLevel();
+        this.showLevelUp();
+      }
+
       this.placeApple();
     } else {
       this.snake.pop();
@@ -201,15 +251,31 @@ export class Snake {
       clearInterval(this.gameLoop);
     }
 
+    this.saveHighScore();
+
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.ctx.fillStyle = '#00ff41';
     this.ctx.font = '30px monospace';
     this.ctx.textAlign = 'center';
-    this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 20);
+    this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 40);
     this.ctx.font = '20px monospace';
-    this.ctx.fillText(`Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
+    this.ctx.fillText(
+      `Puntuación: ${this.score}`,
+      this.canvas.width / 2,
+      this.canvas.height / 2 - 10
+    );
+    this.ctx.fillText(
+      `Nivel alcanzado: ${this.level}`,
+      this.canvas.width / 2,
+      this.canvas.height / 2 + 10
+    );
+    this.ctx.fillText(
+      `Récord: ${this.highScore}`,
+      this.canvas.width / 2,
+      this.canvas.height / 2 + 30
+    );
   }
 
   private restart(): void {

@@ -13,8 +13,22 @@ interface Props {
       <div class="ascii-header mb-4 text-center text-terminal-bright">
         <div class="ascii-title">
           <pre
-            class="ascii-art font-mono">
-╔═════════════════════════════════════════════════════════╗
+            class="ascii-art glitch font-mono"
+            data-text="╠═════════════════════════════════════════════════════════╣
+║                                                         ║
+║     ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ███████╗██╗   ██╗ ║
+║    ██╔════╝ ██║   ██║██╔════╝██║    ██╔══██╗██╔════╝██║   ██║ ║
+║    ██║  ███╗██║   ██║███████╗██║    ██║  ██║█████╗  ██║   ██║ ║
+║    ██║   ██║██║   ██║╚════██║██║    ██║  ██║██╔══╝  ╚██╗ ██╔╝ ║
+║    ╚██████╔╝╚██████╔╝███████║██║ ██╗██████╔╝███████╗ ╚████╔╝  ║
+║     ╚═════╝  ╚═════╝ ╚══════╝╚═╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝   ║
+║                                                         ║
+║               ╔═══════════════════════════╗             ║
+║               ║   SISTEMA NEXUS-7        ║             ║
+║               ╚═══════════════════════════╝             ║
+║                                                         ║
+╚═════════════════════════════════════════════════════════╝">
+╠═════════════════════════════════════════════════════════╣
 ║                                                         ║
 ║     ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ███████╗██╗   ██╗ ║
 ║    ██╔════╝ ██║   ██║██╔════╝██║    ██╔══██╗██╔════╝██║   ██║ ║
@@ -28,7 +42,7 @@ interface Props {
 ║               ╚═══════════════════════════╝             ║
 ║                                                         ║
 ╚═════════════════════════════════════════════════════════╝
-          </pre>
+         </pre>
         </div>
       </div>
 
@@ -41,7 +55,7 @@ interface Props {
     </div>
 
     <div id="terminal-content" class="min-h-[calc(100vh-200px)]">
-      <div class="terminal-output">
+      <div class="terminal-output" role="log" aria-live="polite" aria-label="Salida de la terminal">
         <p class="mb-2 text-terminal-bright">Inicializando sistema...</p>
         <p class="mb-2">Cargando módulos del kernel...</p>
         <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
@@ -50,10 +64,16 @@ interface Props {
         <p class="mb-4">Escribe 'menu' para acceder al menú principal.</p>
       </div>
 
-      <div id="output-container"></div>
+      <div
+        id="output-container"
+        role="log"
+        aria-live="polite"
+        aria-label="Contenido dinámico de la terminal"
+      >
+      </div>
 
       <div class="terminal-input-line mt-4">
-        <span class="terminal-prompt">gusi@nexus:~$</span>
+        <span class="terminal-prompt" aria-label="Prompt del sistema">gusi@nexus:~$</span>
         <input
           type="text"
           id="terminal-input"
@@ -61,8 +81,10 @@ interface Props {
           autocomplete="off"
           spellcheck="false"
           autofocus
+          aria-label="Entrada de comandos de terminal"
+          aria-describedby="terminal-help"
         />
-        <span class="terminal-cursor"></span>
+        <span class="terminal-cursor" aria-hidden="true"></span>
       </div>
     </div>
   </div>
@@ -83,6 +105,7 @@ interface Props {
     private commandHistory: string[] = [];
     private historyIndex: number = -1;
     private currentView: string = 'main';
+    private keySound: HTMLAudioElement;
 
     constructor() {
       this.input = document.getElementById('terminal-input') as HTMLInputElement;
@@ -223,6 +246,9 @@ interface Props {
         calculadora: {
           execute: () => this.loadView('calculator'),
         },
+        pi: {
+          execute: () => this.loadView('pi'),
+        },
         salir: {
           execute: () => {
             this.printOutput('Cerrando sesión...');
@@ -235,6 +261,9 @@ interface Props {
         },
         exit: {
           execute: () => commands['salir'].execute([]),
+        },
+        config: {
+          execute: () => this.showConfig(),
         },
       };
 
@@ -262,6 +291,8 @@ interface Props {
   <div><span class="text-terminal-bright">proyectos</span> - Proyectos de Gusi</div>
   <div><span class="text-terminal-bright">juegos</span> - Juegos retro</div>
   <div><span class="text-terminal-bright">calculadora</span> - Calculadora cósmica</div>
+  <div><span class="text-terminal-bright">pi</span> - Integración con Pi Network</div>
+  <div><span class="text-terminal-bright">config</span> - Opciones de personalización</div>
   <div><span class="text-terminal-bright">salir/exit</span> - Salir del sistema</div>
 </div>
       `;
@@ -270,15 +301,121 @@ interface Props {
 
     private showMenu(): void {
       const menuHtml = `
-<div class="section-title">
-  Menú Principal - Nexus Terminal v1.0
-</div>
-<div id="menu-container"></div>
+ <div class="section-title">
+   Menú Principal - Nexus Terminal v1.0
+ </div>
+ <div id="menu-container"></div>
       `;
       this.printOutput(menuHtml);
 
       const event = new CustomEvent('loadMenu');
       document.dispatchEvent(event);
+    }
+
+    private showConfig(): void {
+      const configHtml = `
+ <div class="section-title">
+   Configuración del Sistema
+ </div>
+ <div class="space-y-4">
+   <div class="border-l-2 border-terminal-dim pl-4 py-2">
+     <div class="text-terminal-bright">Opciones de Personalización</div>
+     <div class="mt-2 space-y-2">
+       <div class="menu-item" data-config="theme">Tema de Color</div>
+       <div class="menu-item" data-config="effects">Efectos Visuales</div>
+       <div class="menu-item" data-config="sound">Sonido de Teclas</div>
+       <div class="menu-item" data-config="reset">Restaurar Predeterminados</div>
+     </div>
+   </div>
+   <div class="text-sm text-terminal-dim">Selecciona una opción para personalizar.</div>
+ </div>
+      `;
+      this.printOutput(configHtml);
+
+      // Agregar event listeners para opciones de configuración
+      setTimeout(() => {
+        const configItems = document.querySelectorAll('[data-config]');
+        configItems.forEach(item => {
+          item.addEventListener('click', () => {
+            const config = item.getAttribute('data-config');
+            this.handleConfig(config);
+          });
+        });
+      }, 100);
+    }
+
+    private handleConfig(config: string | null): void {
+      switch (config) {
+        case 'theme':
+          this.printOutput(`
+ <div class="border border-terminal-dim p-4 rounded">
+   <div class="text-terminal-bright">Temas Disponibles:</div>
+   <div class="mt-2 space-y-2">
+     <div class="menu-item" data-theme="classic">Clásico (Verde Matrix)</div>
+     <div class="menu-item" data-theme="cyberpunk">Cyberpunk (Azul Neón)</div>
+     <div class="menu-item" data-theme="retro">Retro (Ámbar)</div>
+   </div>
+ </div>
+          `);
+          setTimeout(() => {
+            const themeItems = document.querySelectorAll('[data-theme]');
+            themeItems.forEach(item => {
+              item.addEventListener('click', () => {
+                const theme = item.getAttribute('data-theme');
+                this.applyTheme(theme);
+              });
+            });
+          }, 100);
+          break;
+        case 'effects':
+          this.printOutput(`
+ <div class="border border-terminal-dim p-4 rounded">
+   <div class="text-terminal-bright">Efectos Visuales:</div>
+   <div class="mt-2 space-y-2">
+     <div class="menu-item" data-effect="glitch">Efectos Glitch: <span id="glitch-status">Activado</span></div>
+     <div class="menu-item" data-effect="particles">Partículas: <span id="particles-status">Activado</span></div>
+     <div class="menu-item" data-effect="scanlines">Líneas de Escaneo: <span id="scanlines-status">Activado</span></div>
+   </div>
+ </div>
+          `);
+          break;
+        case 'sound':
+          this.printOutput(`
+ <div class="border border-terminal-dim p-4 rounded">
+   <div class="text-terminal-bright">Configuración de Sonido:</div>
+   <div class="mt-2">
+     <div class="menu-item" data-sound="mechanical">Sonido Mecánico: <span id="sound-status">Activado</span></div>
+     <div class="text-sm text-terminal-dim mt-2">Los sonidos se reproducen en navegadores compatibles.</div>
+   </div>
+ </div>
+          `);
+          break;
+        case 'reset':
+          this.printOutput(
+            '<div class="success-text">Configuración restaurada a valores predeterminados.</div>'
+          );
+          this.applyTheme('classic');
+          break;
+      }
+    }
+
+    private applyTheme(theme: string | null): void {
+      const body = document.body;
+      body.classList.remove('theme-classic', 'theme-cyberpunk', 'theme-retro');
+
+      switch (theme) {
+        case 'cyberpunk':
+          body.classList.add('theme-cyberpunk');
+          this.printOutput('<div class="success-text">Tema Cyberpunk aplicado.</div>');
+          break;
+        case 'retro':
+          body.classList.add('theme-retro');
+          this.printOutput('<div class="success-text">Tema Retro aplicado.</div>');
+          break;
+        default:
+          body.classList.add('theme-classic');
+          this.printOutput('<div class="success-text">Tema Clásico aplicado.</div>');
+      }
     }
 
     private loadView(view: string): void {
@@ -332,6 +469,12 @@ interface Props {
   updateDateTime();
   setInterval(updateDateTime, 1000);
 </script>
+
+<!-- Área de ayuda accesible -->
+<div id="terminal-help" class="sr-only">
+  Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, menu, noticias, juegos, etc.
+  Navegación: Usa las flechas arriba/abajo para historial, Enter para ejecutar comandos.
+</div>
 
 <style>
   /* Estilos adicionales específicos del componente */

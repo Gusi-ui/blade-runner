@@ -6,11 +6,11 @@
   <div class="section-title">Juegos Retro</div>
 
   <div id="games-menu" class="space-y-4">
-    <div class="mb-4 text-terminal-text">Selecciona un juego:</div>
+    <div class="mb-4 text-terminal-text">Selecciona un juego retro:</div>
 
-    <div class="menu-item" data-game="snake">
-      <span class="text-terminal-bright">[1]</span> Snake
-      <div class="ml-4 text-xs text-terminal-dim">Clásico juego de la serpiente</div>
+    <div class="menu-item" data-game="tetris">
+      <span class="text-terminal-bright">[1]</span> Tetris
+      <div class="ml-4 text-xs text-terminal-dim">Juego de bloques clásico</div>
     </div>
 
     <div class="menu-item" data-game="hangman">
@@ -29,7 +29,7 @@
   <div id="game-container" class="hidden"></div>
 </div>
 
-<script src="../scripts/snake.ts"></script>
+<script src="../scripts/tetris.ts"></script>
 <script src="../scripts/hangman.ts"></script>
 <script src="../scripts/tictactoe.ts"></script>
 
@@ -65,9 +65,9 @@
     if (!terminal) return;
 
     switch (game) {
-      case 'snake':
-        if (window.Snake) {
-          new window.Snake(terminal);
+      case 'tetris':
+        if (window.Tetris) {
+          new window.Tetris(terminal);
         }
         break;
       case 'hangman':

@@ -53,39 +53,61 @@ export class Hangman {
       </div>
       <div class="mb-4">
         <div class="text-terminal-dim mb-2">Pista: ${this.currentHint}</div>
-        <pre class="text-terminal-text mb-4">${hangmanArt}</pre>
-        <div class="text-2xl tracking-widest mb-4 text-center">${wordDisplay}</div>
-        <div class="text-sm text-terminal-dim mb-2">
+        <div class="hangman-art text-terminal-text mb-4"><pre>${hangmanArt}</pre></div>
+        <div class="hangman-word-display text-2xl tracking-widest mb-4 text-center">${wordDisplay}</div>
+        <div class="hangman-attempts text-sm text-terminal-dim mb-2">
           Intentos restantes: ${this.maxWrongGuesses - this.wrongGuesses}
         </div>
-        <div class="text-sm mb-4">
+        <div class="hangman-letters text-sm mb-4">
           Letras usadas: ${this.guessedLetters.length > 0 ? this.guessedLetters.join(', ') : 'Ninguna'}
         </div>
       </div>
       <div id="hangman-input-container">
-        <div class="mb-2">Ingresa una letra:</div>
-        <div class="flex gap-2">
-          <input
-            type="text"
-            id="hangman-input"
-            class="terminal-input border border-terminal-dim px-2 py-1 w-20"
-            maxlength="1"
-            autocomplete="off"
-          />
+        <div class="mb-2 text-terminal-bright">Ingresa una letra:</div>
+        <div class="flex gap-2 items-center">
+          <div class="relative">
+            <input
+              type="text"
+              id="hangman-input"
+              class="terminal-input border-2 border-terminal-bright bg-transparent px-3 py-2 w-20 text-center text-lg font-bold text-terminal-bright focus:border-terminal-bright focus:outline-none"
+              maxlength="1"
+              autocomplete="off"
+              placeholder="_"
+            />
+            <div class="hangman-cursor absolute right-1 top-1/2 transform -translate-y-1/2 text-terminal-bright animate-pulse">|</div>
+          </div>
           <button id="hangman-submit" class="menu-item px-4 py-1">Enviar</button>
           <button id="hangman-exit" class="menu-item px-4 py-1">Salir</button>
         </div>
+        <div class="mt-2 text-xs text-terminal-dim">El campo de entrada está delimitado con borde brillante</div>
       </div>
       <div id="hangman-message" class="mt-4"></div>
     `);
 
     setTimeout(() => {
       const input = document.getElementById('hangman-input') as HTMLInputElement;
+      const cursor = document.querySelector('.hangman-cursor');
       const submitBtn = document.getElementById('hangman-submit');
       const exitBtn = document.getElementById('hangman-exit');
 
       if (input) {
         input.focus();
+
+        // Show cursor when focused
+        input.addEventListener('focus', () => {
+          if (cursor) cursor.classList.remove('opacity-0');
+        });
+
+        // Hide cursor when not focused
+        input.addEventListener('blur', () => {
+          if (cursor && !input.value) cursor.classList.add('opacity-0');
+        });
+
+        // Hide cursor when typing
+        input.addEventListener('input', () => {
+          if (cursor) cursor.classList.add('opacity-0');
+        });
+
         input.addEventListener('keydown', e => {
           if (e.key === 'Enter') {
             this.makeGuess();
@@ -225,10 +247,32 @@ export class Hangman {
       }
     }
 
-    // Re-renderizar
-    setTimeout(() => {
-      this.render();
-    }, 1000);
+    // Actualizar solo las partes necesarias en lugar de re-renderizar todo
+    this.updateGameDisplay();
+  }
+
+  private updateGameDisplay(): void {
+    const wordDisplayEl = document.querySelector('.hangman-word-display');
+    const hangmanArtEl = document.querySelector('.hangman-art');
+    const attemptsEl = document.querySelector('.hangman-attempts');
+    const lettersEl = document.querySelector('.hangman-letters');
+
+    if (wordDisplayEl) {
+      wordDisplayEl.textContent = this.getWordDisplay();
+    }
+
+    if (hangmanArtEl) {
+      hangmanArtEl.innerHTML = `<pre>${this.getHangmanArt()}</pre>`;
+    }
+
+    if (attemptsEl) {
+      attemptsEl.textContent = (this.maxWrongGuesses - this.wrongGuesses).toString();
+    }
+
+    if (lettersEl) {
+      lettersEl.textContent =
+        this.guessedLetters.length > 0 ? this.guessedLetters.join(', ') : 'Ninguna';
+    }
   }
 
   private checkWin(): boolean {

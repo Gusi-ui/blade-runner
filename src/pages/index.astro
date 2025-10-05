@@ -6,6 +6,7 @@ import CV from '../components/CV.astro';
 import Projects from '../components/Projects.astro';
 import Games from '../components/Games.astro';
 import CosmicCalculator from '../components/CosmicCalculator.astro';
+import PiNetwork from '../components/PiNetwork.astro';
 import '../styles/terminal.css';
 
 const title = 'Blade Runner Terminal - Gusi';
@@ -42,6 +43,9 @@ const description =
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
+    <!-- Cyberpunk particles -->
+    <div class="particles" id="particles"></div>
+
     <!-- Componente Principal de Terminal -->
     <Terminal />
 
@@ -52,6 +56,7 @@ const description =
     <Projects />
     <Games />
     <CosmicCalculator />
+    <PiNetwork />
 
     <!-- Script global para manejo de eventos -->
     <script>
@@ -77,6 +82,9 @@ const description =
             }
           });
         }
+
+        // Generar partículas cyberpunk
+        generateParticles();
       });
 
       // Prevenir zoom en dispositivos móviles al hacer doble tap
@@ -92,6 +100,22 @@ const description =
         },
         false
       );
+
+      function generateParticles(): void {
+        const particlesContainer = document.getElementById('particles');
+        if (!particlesContainer) return;
+
+        for (let i = 0; i < 50; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          particle.style.left = Math.random() * 100 + '%';
+          particle.style.width = Math.random() * 3 + 1 + 'px';
+          particle.style.height = particle.style.width;
+          particle.style.animationDelay = Math.random() * 6 + 's';
+          particle.style.animationDuration = Math.random() * 4 + 6 + 's';
+          particlesContainer.appendChild(particle);
+        }
+      }
     </script>
 
     <!-- Service Worker para PWA (opcional) -->
