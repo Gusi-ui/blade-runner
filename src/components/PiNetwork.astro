@@ -121,8 +121,8 @@
         setTimeout(() => {
           resolve({
             user: {
-              uid: 'pi_' + Math.random().toString(36).substr(2, 9),
-              username: 'pi_user_' + Math.random().toString(36).substr(2, 5),
+              uid: 'pi_' + Math.random().toString(36).substring(2, 11),
+              username: 'pi_user_' + Math.random().toString(36).substring(2, 7),
               roles: ['user'],
               accessToken: 'mock_token_' + this.piApiKey.substring(0, 10),
             },
@@ -173,7 +173,7 @@
       }, 3000);
     }
 
-    private updateUI(): void {
+    updateUI(): void {
       const authDiv = document.getElementById('pi-auth');
       const walletDiv = document.getElementById('pi-wallet');
       const txDiv = document.getElementById('pi-transactions');

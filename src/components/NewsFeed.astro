@@ -44,7 +44,7 @@
     private updateInterval: number = 300000; // 5 minutos
     private intervalId?: number;
     private allNews: NewsArticle[] = [];
-    private filteredNews: NewsArticle[] = [];
+    private _filteredNews: NewsArticle[] = [];
     private currentFilter: string = 'all';
 
     constructor() {
