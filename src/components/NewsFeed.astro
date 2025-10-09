@@ -3,15 +3,15 @@
 ---
 
 <div id="news-component" class="hidden">
-  <div class="section-title glitch" data-text="Noticias Tecnológicas - Cosmos e IA">
-    Noticias Tecnológicas - Cosmos e IA
+  <div class="section-title glitch" data-text="Noticias Tecnológicas - IA y Cosmos">
+    Noticias Tecnológicas - IA y Cosmos
   </div>
 
   <div class="mb-4">
     <div class="mb-4 flex gap-2">
       <button id="filter-ai" class="menu-item px-3 py-1 text-xs">IA</button>
       <button id="filter-cosmos" class="menu-item px-3 py-1 text-xs">Cosmos</button>
-      <button id="filter-all" class="menu-item px-3 py-1 text-xs">Todo</button>
+      <button id="filter-all" class="menu-item px-3 py-1 text-xs">Todas</button>
       <button id="refresh-news" class="menu-item px-3 py-1 text-xs">Actualizar</button>
     </div>
 
@@ -39,22 +39,30 @@
     };
   }
 
+  declare global {
+    interface Window {
+      newsFeed: NewsFeed;
+    }
+  }
+
   class NewsFeed {
     private newsApiKey: string;
-    private updateInterval: number = 300000; // 5 minutos
+    private updateInterval: number = 60000; // 1 minuto para actualizaciones más frecuentes
     private intervalId?: number;
-    private allNews: NewsArticle[] = [];
+    public allNews: NewsArticle[] = [];
     private _filteredNews: NewsArticle[] = [];
     private currentFilter: string = 'all';
+    private demoNewsPool: NewsArticle[] = [];
+    private lastShownIndices: number[] = [];
 
     constructor() {
       // For static deployment, try multiple ways to get the API key
       this.newsApiKey =
         import.meta.env.PUBLIC_NEWS_API_KEY ||
         (import.meta.env.DEV ? 'demo' : '70c9a2ca8a4e4626aefdde0160236677');
-      console.log('NewsAPI Key loaded:', this.newsApiKey ? 'Key present' : 'No key found');
-      console.log('Environment check - DEV:', import.meta.env.DEV);
-      console.log('PUBLIC_NEWS_API_KEY:', import.meta.env.PUBLIC_NEWS_API_KEY);
+
+      // Inicializar pool de noticias demo
+      this.initializeDemoNewsPool();
     }
 
     async fetchNews(): Promise<void> {
@@ -196,9 +204,9 @@
                 const date = new Date(article.publishedAt).toLocaleDateString('es-ES');
                 return `
                 <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim hover:bg-opacity-10 transition-colors">
-                  <div class="text-terminal-bright">${index + 1}. ${this.escapeHtml(article.title)}</div>
-                  <div class="text-sm mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
-                  <div class="text-xs text-terminal-dim mt-2">
+                  <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
+                  <div class="text-base mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
+                  <div class="text-sm text-terminal-dim mt-2">
                     <span>${article.source.name}</span> |
                     <span>${date}</span> |
                     <a href="${article.url}" target="_blank" rel="noopener noreferrer"
@@ -218,9 +226,9 @@
           const date = new Date(article.publishedAt).toLocaleDateString('es-ES');
           html += `
             <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim hover:bg-opacity-10 transition-colors">
-              <div class="text-terminal-bright">${index + 1}. ${this.escapeHtml(article.title)}</div>
-              <div class="text-sm mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
-              <div class="text-xs text-terminal-dim mt-2">
+              <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
+              <div class="text-base mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
+              <div class="text-sm text-terminal-dim mt-2">
                 <span>${article.source.name}</span> |
                 <span>${date}</span> |
                 <a href="${article.url}" target="_blank" rel="noopener noreferrer"
@@ -278,15 +286,15 @@
         newsContent.innerHTML = `
           <div class="error-text">Error al cargar noticias reales.</div>
           <div class="mt-4 text-terminal-dim">
-            <p>Debug Info:</p>
+            <p>Información de depuración:</p>
             <ul class="mt-2 ml-4 list-disc">
-              <li>API Key: ${this.newsApiKey.substring(0, 10)}...</li>
-              <li>Key length: ${this.newsApiKey.length}</li>
-              <li>Check browser console (F12) for detailed logs</li>
+              <li>Clave API: ${this.newsApiKey.substring(0, 10)}...</li>
+              <li>Longitud de clave: ${this.newsApiKey.length}</li>
+              <li>Revisa la consola del navegador (F12) para logs detallados</li>
             </ul>
             <p class="mt-2">Posibles causas:</p>
             <ul class="mt-2 ml-4 list-disc">
-              <li>Plan gratuito de NewsAPI tiene límites diarios</li>
+              <li>El plan gratuito de NewsAPI tiene límites diarios</li>
               <li>Algunas consultas pueden no devolver resultados</li>
               <li>La clave API puede haber excedido el límite de uso</li>
             </ul>
@@ -374,105 +382,149 @@
       }
     }
 
-    private getEnhancedDemoArticles(query: string): NewsArticle[] {
-      const demoArticles: NewsArticle[] = [
+    private initializeDemoNewsPool(): void {
+      this.demoNewsPool = [
+        // Noticias de IA y Tecnología
         {
-          title: '🚀 NASA anuncia nuevo telescopio espacial James Webb',
+          title: '🤖 GPT-5 promete avances revolucionarios en comprensión del lenguaje natural',
           description:
-            'El telescopio más avanzado de la humanidad revela imágenes inéditas del universo profundo, mostrando galaxias formadas poco después del Big Bang. Los científicos están emocionados con los descubrimientos sobre la formación del universo temprano.',
-          url: 'https://www.nasa.gov',
-          publishedAt: new Date().toISOString(),
-          source: { name: 'NASA News' },
+            'OpenAI anuncia la próxima generación de modelos de lenguaje con capacidades sin precedentes en razonamiento y comprensión contextual.',
+          url: 'https://openai.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'AI Weekly' },
         },
         {
-          title: '🤖 Inteligencia Artificial revoluciona la medicina',
+          title: '🧠 Neuralink logra avance histórico en interfaces cerebro-computadora',
           description:
-            'Nuevos algoritmos de IA pueden diagnosticar enfermedades con mayor precisión que los médicos humanos, abriendo nuevas posibilidades en el tratamiento temprano. La tecnología está siendo implementada en hospitales de todo el mundo.',
-          url: 'https://techcrunch.com',
-          publishedAt: new Date().toISOString(),
-          source: { name: 'Tech Today' },
-        },
-        {
-          title: '🌌 Descubren planeta similar a la Tierra en zona habitable',
-          description:
-            'Astrónomos encuentran un exoplaneta con condiciones similares a nuestro planeta, relanzando la búsqueda de vida extraterrestre. El planeta orbita una estrella similar al Sol a una distancia óptima.',
-          url: 'https://space.com',
-          publishedAt: new Date().toISOString(),
-          source: { name: 'Space Daily' },
-        },
-        {
-          title: '💡 Avances en energía nuclear para viajes espaciales',
-          description:
-            'Científicos desarrollan nuevos sistemas de propulsión que podrían llevar humanos a Marte en tiempo récord. La tecnología representa un avance significativo en la exploración espacial.',
-          url: 'https://sciencemag.org',
-          publishedAt: new Date().toISOString(),
-          source: { name: 'Science Magazine' },
-        },
-        {
-          title: '🧠 Neuralink comienza pruebas clínicas en humanos',
-          description:
-            'La interfaz cerebro-computadora de Elon Musk muestra resultados prometedores en pacientes con parálisis. Los implantes permiten controlar dispositivos con el pensamiento.',
+            'Primer paciente humano controla exitosamente el cursor de una computadora con el pensamiento, marcando una nueva era en neurotecnología.',
           url: 'https://neuralink.com',
-          publishedAt: new Date().toISOString(),
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
           source: { name: 'Future Tech' },
         },
         {
-          title: '🔬 Científicos crean materiales inspirados en la naturaleza',
+          title: '💻 Computación cuántica alcanza viabilidad comercial',
           description:
-            'Nuevos materiales biomiméticos podrían revolucionar la construcción y la tecnología. Inspirados en estructuras naturales, estos materiales son más resistentes y ligeros.',
-          url: 'https://nature.com',
-          publishedAt: new Date().toISOString(),
-          source: { name: 'Nature Journal' },
+            'IBM y Google anuncian procesadores cuánticos capaces de resolver problemas del mundo real más rápido que las computadoras clásicas.',
+          url: 'https://quantum.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Quantum Today' },
         },
         {
-          title: '🌐 La computación cuántica alcanza nuevo hito',
+          title: '🔐 Nuevo sistema de IA detecta amenazas cibernéticas en tiempo real',
           description:
-            'Investigadores logran mantener la coherencia cuántica durante más tiempo, acercándonos a computadoras cuánticas prácticas. Este avance podría transformar la criptografía y la investigación científica.',
-          url: 'https://quantum-journal.org',
-          publishedAt: new Date().toISOString(),
-          source: { name: 'Quantum Computing Today' },
+            'Algoritmos de aprendizaje automático ahora predicen y previenen brechas de seguridad antes de que ocurran, revolucionando la ciberseguridad.',
+          url: 'https://cybersec.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Security Now' },
         },
         {
-          title: '🛰️ Satélites de próxima generación mejoran la conectividad global',
+          title: '🎮 Herramientas de desarrollo de juegos con IA transforman la industria',
           description:
-            'Una nueva constelación de satélites promete internet de alta velocidad en todo el mundo, incluyendo áreas remotas. La tecnología podría transformar la educación y el comercio en países en desarrollo.',
-          url: 'https://spacenews.com',
-          publishedAt: new Date().toISOString(),
+            'Nuevas herramientas de IA generativa permiten a los desarrolladores crear mundos de juego complejos en horas en lugar de meses.',
+          url: 'https://gamedev.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Game Developer' },
+        },
+        // Noticias de Espacio y Cosmos
+        {
+          title: '🚀 SpaceX lanza exitosamente primera misión tripulada a Marte',
+          description:
+            'Misión histórica marca el primer paso de la humanidad hacia convertirse en una especie multiplanetaria, con la tripulación esperada en 7 meses.',
+          url: 'https://spacex.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
           source: { name: 'Space News' },
         },
+        {
+          title: '🌌 James Webb descubre exoplaneta potencialmente habitable',
+          description:
+            'El telescopio detecta biofirmas en la atmósfera de un planeta a 120 años luz de distancia, reavivando la búsqueda de vida extraterrestre.',
+          url: 'https://nasa.gov',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'NASA News' },
+        },
+        {
+          title: '🛸 Avance revolucionario en teoría de viaje más rápido que la luz',
+          description:
+            'Físicos proponen nuevo concepto de motor warp que podría hacer posible el viaje interestelar en nuestra vida.',
+          url: 'https://physics.org',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Physics Today' },
+        },
+        {
+          title: '🪐 Anillos de Saturno revelan secretos sobre formación del sistema solar',
+          description:
+            'Nuevos datos de la misión Cassini proporcionan información sobre cómo se formaron planetas y lunas hace miles de millones de años.',
+          url: 'https://jpl.nasa.gov',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'JPL News' },
+        },
+        {
+          title: '☄️ Empresa de minería de asteroides anuncia primera operación comercial',
+          description:
+            'Compañía privada planea extraer metales raros de asteroides cercanos a la Tierra, potencialmente valorados en billones de dólares.',
+          url: 'https://asteroidmining.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Mining Weekly' },
+        },
+        {
+          title:
+            '🔭 Nuevo conjunto de telescopios detecta misteriosas señales del espacio profundo',
+          description:
+            'Astrónomos captan ráfagas de radio repetitivas desde galaxia distante, despertando renovado interés en programas SETI.',
+          url: 'https://seti.org',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'SETI Institute' },
+        },
+        {
+          title: '🌍 Planeta similar a la Tierra encontrado en sistema estelar cercano',
+          description:
+            'Proxima Centauri b muestra signos de agua líquida y atmósfera estable, convirtiéndolo en objetivo principal para futura exploración.',
+          url: 'https://exoplanets.org',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Exoplanet News' },
+        },
+        // Noticias Mixtas de Tecnología y Ciencia
+        {
+          title: '⚡ Reactor de fusión logra ganancia neta de energía',
+          description:
+            'Científicos producen más energía de la consumida por primera vez, acercando la energía limpia e ilimitada a la realidad.',
+          url: 'https://iter.org',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Energy Today' },
+        },
+        {
+          title: '🧬 Avance de CRISPR permite prevención de enfermedades antes del nacimiento',
+          description:
+            'Tecnología de edición genética elimina exitosamente enfermedades hereditarias en embriones humanos con 100% de precisión.',
+          url: 'https://crispr.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'BioTech News' },
+        },
+        {
+          title: '🌐 Cobertura global de internet alcanza 100% con red de satélites',
+          description:
+            'Últimas regiones de la Tierra obtienen acceso a internet de alta velocidad, transformando educación y comercio mundial.',
+          url: 'https://starlink.com',
+          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+          source: { name: 'Tech Global' },
+        },
       ];
+    }
 
-      // Filter articles based on query to make them more relevant
-      if (
-        query.toLowerCase().includes('space') ||
-        query.toLowerCase().includes('nasa') ||
-        query.toLowerCase().includes('cosmos')
-      ) {
-        return demoArticles.filter(
-          article =>
-            article.title.toLowerCase().includes('nasa') ||
-            article.title.toLowerCase().includes('espacial') ||
-            article.title.toLowerCase().includes('planeta') ||
-            article.title.toLowerCase().includes('satélite') ||
-            article.title.toLowerCase().includes('telescopio')
-        );
-      } else if (
-        query.toLowerCase().includes('tech') ||
-        query.toLowerCase().includes('artificial intelligence') ||
-        query.toLowerCase().includes('software')
-      ) {
-        return demoArticles.filter(
-          article =>
-            article.title.toLowerCase().includes('inteligencia artificial') ||
-            article.title.toLowerCase().includes('neuralink') ||
-            article.title.toLowerCase().includes('computación cuántica') ||
-            article.title.toLowerCase().includes('tecnología')
-        );
-      }
+    private getRandomDemoArticles(count: number = 5): NewsArticle[] {
+      // Crear una copia del pool y mezclarla
+      const shuffled = [...this.demoNewsPool].sort(() => Math.random() - 0.5);
 
-      // Return random selection for other queries
-      const shuffled = [...demoArticles].sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, 5);
+      // Actualizar las fechas para que parezcan recientes
+      return shuffled.slice(0, count).map(article => ({
+        ...article,
+        publishedAt: new Date(Date.now() - Math.random() * 3600000 * 24).toISOString(), // Últimas 24 horas
+      }));
+    }
+
+    private getEnhancedDemoArticles(_query: string): NewsArticle[] {
+      // Usar el pool dinámico en lugar de artículos estáticos
+      return this.getRandomDemoArticles(5);
     }
 
     private getDemoNews(): string {
@@ -712,7 +764,7 @@
   const newsFeed = new NewsFeed();
 
   // Exponer el newsFeed globalmente para debugging
-  (window as any).newsFeed = newsFeed;
+  window.newsFeed = newsFeed;
 
   document.addEventListener('loadView', (e: Event) => {
     const customEvent = e as CustomEvent;
@@ -721,7 +773,15 @@
       const newsComponent = document.getElementById('news-component');
 
       if (terminal && newsComponent) {
+        // Detener actualizaciones anteriores
+        newsFeed.stopAutoUpdate();
+
+        // Limpiar noticias anteriores para forzar recarga
+        newsFeed.allNews = [];
+
         terminal.printOutput(newsComponent.innerHTML);
+
+        // Iniciar actualizaciones con carga inmediata
         newsFeed.startAutoUpdate();
 
         // Agregar event listeners para filtros y actualización
@@ -741,7 +801,11 @@
             filterAllBtn.addEventListener('click', () => newsFeed.setFilter('all'));
           }
           if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => newsFeed.refreshNews());
+            refreshBtn.addEventListener('click', () => {
+              // Limpiar cache y recargar
+              newsFeed.allNews = [];
+              newsFeed.refreshNews();
+            });
           }
         }, 100);
       }

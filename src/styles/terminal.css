@@ -19,6 +19,22 @@
     font-size: 1rem;
   }
 
+  /* Asegurar tamaño mínimo de fuente de 0.9rem en todo el contenido */
+  p,
+  div,
+  span,
+  a,
+  li,
+  td,
+  th,
+  label,
+  input,
+  button,
+  textarea,
+  select {
+    font-size: clamp(0.9rem, 1em, 2rem);
+  }
+
   /* Tamaño base responsivo */
   @media (max-width: 640px) {
     html {
@@ -117,14 +133,14 @@
 
   .terminal-input {
     @apply flex-1 border-none bg-transparent font-mono text-terminal-text outline-none;
-    caret-color: #00ff41;
+    caret-color: transparent;
     position: relative;
     z-index: 1;
   }
 
   .terminal-cursor {
     position: absolute;
-    width: 2px;
+    width: 8px;
     height: 1.2em;
     background-color: #00ff41;
     left: 0;
@@ -418,7 +434,10 @@
   }
 
   /* Focus styles for keyboard navigation */
-  .terminal-input:focus,
+  .terminal-input:focus {
+    outline: none;
+  }
+
   .menu-item:focus,
   button:focus {
     outline: 2px solid #00ff41;
