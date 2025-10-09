@@ -3,355 +3,391 @@
 ---
 
 <div id="projects-component" class="hidden">
-  <div class="section-title">Proyectos Debussy</div>
+  <div class="section-title">Proyectos de Gusi</div>
 
   <div class="space-y-6">
     <!-- Proyecto 1: Blade Runner Terminal -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ Blade Runner Terminal</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/cyberpunk-terminal-interface.svg"
             alt="Terminal cyberpunk retro-futurista con interfaz verde sobre negro estilo Blade Runner"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Terminal interactivo estilo cyberpunk con efectos visuales CRT"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Activo</span>
-      </div>
-      <div class="mb-3">
-        Terminal retro-futurista interactiva construida con Astro. Simula una interfaz de línea de
-        comandos con estética cyberpunk inspirada en Blade Runner, incluyendo efectos visuales CRT,
-        integración de APIs externas y mini-juegos clásicos.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> Astro, TypeScript, Tailwind CSS, NASA API,
-        NewsAPI
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Web:</span>
-        <a
-          href="https://gusi.dev/"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          gusi.dev →
-        </a>
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">GitHub:</span>
-        <a
-          href="https://github.com/Gusi-ui/blade-runner"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          github.com/Gusi-ui/blade-runner →
-        </a>
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ Blade Runner Terminal</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Activo</span>
+          </div>
+          <div class="mb-3">
+            Terminal retro-futurista interactiva construida con Astro. Simula una interfaz de línea
+            de comandos con estética cyberpunk inspirada en Blade Runner, incluyendo efectos
+            visuales CRT, integración de APIs externas y mini-juegos clásicos.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> Astro, TypeScript, Tailwind CSS, NASA
+            API, NewsAPI
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Web:</span>
+            <a
+              href="https://gusi.dev/"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              gusi.dev →
+            </a>
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">GitHub:</span>
+            <a
+              href="https://github.com/Gusi-ui/blade-runner"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              github.com/Gusi-ui/blade-runner →
+            </a>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Proyecto 2: Portfolio Personal -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ Portfolio Personal</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/developer-portfolio.svg"
             alt="Portfolio developer con diseño moderno y gradientes vibrantes - José Martínez Gusi"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Portfolio profesional de desarrollador full stack con métricas de proyectos"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Activo</span>
-      </div>
-      <div class="mb-3">
-        Portfolio profesional de desarrollador freelance especializado en experiencias digitales
-        excepcionales. Diseño moderno con gradientes vibrantes, métricas de proyectos completados y
-        servicios de desarrollo web y aplicaciones móviles.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> HTML5, CSS3, JavaScript, Diseño Responsivo
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Web:</span>
-        <a
-          href="https://alamia.es/"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          alamia.es →
-        </a>
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">GitHub:</span>
-        <a
-          href="https://github.com/Gusi-ui/Gusi-ui"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          github.com/Gusi-ui/Gusi-ui →
-        </a>
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ Portfolio Personal</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Activo</span>
+          </div>
+          <div class="mb-3">
+            Portfolio profesional de desarrollador freelance especializado en experiencias digitales
+            excepcionales. Diseño moderno con gradientes vibrantes, métricas de proyectos
+            completados y servicios de desarrollo web y aplicaciones móviles.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> HTML5, CSS3, JavaScript, Diseño Responsivo
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Web:</span>
+            <a
+              href="https://alamia.es/"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              alamia.es →
+            </a>
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">GitHub:</span>
+            <a
+              href="https://github.com/Gusi-ui/Gusi-ui"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              github.com/Gusi-ui/Gusi-ui →
+            </a>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Proyecto 3: Dashboard Analytics -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ Analytics Pro Dashboard</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/analytics-dashboard.svg"
             alt="Dashboard de analytics con gráficos y métricas empresariales - Analytics Pro"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Dashboard empresarial con métricas de usuarios, ingresos y conversiones"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Activo</span>
-      </div>
-      <div class="mb-3">
-        Dashboard avanzado para análisis de métricas empresariales. Visualización en tiempo real de
-        usuarios, ingresos, pedidos y tasas de conversión. Incluye gráficos interactivos de
-        tendencias mensuales y navegación intuitiva para administración de datos.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> React, JavaScript, Chart.js, Analytics API
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Demo:</span>
-        <a
-          href="https://alamia.es/proyectos-ejemplo/dashboard-analytics/index.html"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          Ver Dashboard →
-        </a>
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ Analytics Pro Dashboard</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Activo</span>
+          </div>
+          <div class="mb-3">
+            Dashboard avanzado para análisis de métricas empresariales. Visualización en tiempo real
+            de usuarios, ingresos, pedidos y tasas de conversión. Incluye gráficos interactivos de
+            tendencias mensuales y navegación intuitiva para administración de datos.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> React, JavaScript, Chart.js, Analytics
+            API
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">Demo:</span>
+            <a
+              href="https://alamia.es/proyectos-ejemplo/dashboard-analytics/index.html"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              Ver Dashboard →
+            </a>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Proyecto 4: MediCitas -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ MediCitas - Gestión de Citas</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/medical-appointments.svg"
             alt="Plataforma de gestión de citas médicas con interfaz profesional - MediCitas"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Sistema inteligente para gestión de citas médicas con más de 25,000 citas realizadas"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Activo</span>
-      </div>
-      <div class="mb-3">
-        Plataforma integral para gestión inteligente de citas médicas. Sistema completo para
-        agendar, consultar y administrar citas con interfaz intuitiva. Incluye estadísticas de
-        pacientes, doctores y citas completadas con diseño médico profesional.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> React, Node.js, Base de Datos, API REST
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Demo:</span>
-        <a
-          href="https://alamia.es/proyectos-ejemplo/gestion-citas/index.html"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          Ver Plataforma →
-        </a>
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ MediCitas - Gestión de Citas</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Activo</span>
+          </div>
+          <div class="mb-3">
+            Plataforma integral para gestión inteligente de citas médicas. Sistema completo para
+            agendar, consultar y administrar citas con interfaz intuitiva. Incluye estadísticas de
+            pacientes, doctores y citas completadas con diseño médico profesional.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> React, Node.js, Base de Datos, API REST
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">Demo:</span>
+            <a
+              href="https://alamia.es/proyectos-ejemplo/gestion-citas/index.html"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              Ver Plataforma →
+            </a>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Proyecto 5: Web Administrator -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ Portal Administrativo</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/admin-portal.svg"
             alt="Portal administrativo con sistema de login seguro para equipos internos"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Sistema administrativo seguro con autenticación y control de acceso"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Activo</span>
-      </div>
-      <div class="mb-3">
-        Sistema de acceso administrativo seguro para equipos internos. Portal exclusivo para gestión
-        de usuarios autorizados con interfaz moderna y sistema de autenticación robusto. Diseñado
-        para entornos profesionales que requieren control de acceso.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> React, Autenticación, Seguridad, UI/UX
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Web:</span>
-        <a
-          href="https://web-administrador.vercel.app/"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          Acceso Administrativo →
-        </a>
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">GitHub:</span>
-        <a
-          href="https://github.com/Gusi-ui/web-administra"
-          target="_blank"
-          class="text-terminal-text underline hover:text-terminal-bright"
-        >
-          github.com/Gusi-ui/web-administra →
-        </a>
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ Portal Administrativo</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Activo</span>
+          </div>
+          <div class="mb-3">
+            Sistema de acceso administrativo seguro para equipos internos. Portal exclusivo para
+            gestión de usuarios autorizados con interfaz moderna y sistema de autenticación robusto.
+            Diseñado para entornos profesionales que requieren control de acceso.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> React, Autenticación, Seguridad, UI/UX
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Web:</span>
+            <a
+              href="https://web-administrador.vercel.app/"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              Acceso Administrativo →
+            </a>
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">GitHub:</span>
+            <a
+              href="https://github.com/Gusi-ui/web-administra"
+              target="_blank"
+              class="text-terminal-text underline hover:text-terminal-bright"
+            >
+              github.com/Gusi-ui/web-administra →
+            </a>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Proyecto 6: E-commerce Platform -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ E-commerce Platform</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/ecommerce-platform.svg"
             alt="Plataforma e-commerce con catálogo de productos y carrito de compras moderno"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Tienda online moderna con React, Node.js y procesamiento de pagos con Stripe"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Planificado</span>
-      </div>
-      <div class="mb-3">
-        Plataforma de comercio electrónico moderna con catálogo de productos, carrito de compras,
-        procesamiento de pagos integrado con Stripe y dashboard administrativo completo. Incluye
-        gestión de inventario, órdenes y análisis de ventas en tiempo real.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> React, Node.js, Stripe API, PostgreSQL, JWT
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Características:</span> Catálogo dinámico, Pagos seguros, Admin
-        dashboard, Analytics
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ E-commerce Platform</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Planificado</span>
+          </div>
+          <div class="mb-3">
+            Plataforma de comercio electrónico moderna con catálogo de productos, carrito de
+            compras, procesamiento de pagos integrado con Stripe y dashboard administrativo
+            completo. Incluye gestión de inventario, órdenes y análisis de ventas en tiempo real.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> React, Node.js, Stripe API, PostgreSQL,
+            JWT
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">Características:</span> Catálogo dinámico, Pagos seguros,
+            Admin dashboard, Analytics
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Proyecto 7: API Developer Portal -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ API Developer Portal</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/api-developer-portal.svg"
             alt="Portal developer para gestión y documentación de APIs con herramientas interactivas"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Portal completo para desarrolladores con documentación automática y testing de APIs"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Planificado</span>
-      </div>
-      <div class="mb-3">
-        Portal completo para gestión y documentación de APIs. Plataforma interactiva para
-        desarrolladores con documentación automática, entorno de pruebas integrado, sistema de
-        autenticación y monitoreo de uso de APIs en tiempo real.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> Astro, React, Node.js, OpenAPI, JWT, Redis
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Características:</span> Documentación interactiva, Testing interface,
-        Rate limiting, Analytics
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ API Developer Portal</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Planificado</span>
+          </div>
+          <div class="mb-3">
+            Portal completo para gestión y documentación de APIs. Plataforma interactiva para
+            desarrolladores con documentación automática, entorno de pruebas integrado, sistema de
+            autenticación y monitoreo de uso de APIs en tiempo real.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> Astro, React, Node.js, OpenAPI, JWT,
+            Redis
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">Características:</span> Documentación interactiva, Testing
+            interface, Rate limiting, Analytics
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Proyecto 8: Content Management System -->
     <section class="rounded border border-terminal-dim p-4">
-      <div class="mb-2 text-lg text-terminal-bright">█ CMS Headless</div>
-      <div class="mb-3 flex justify-center">
-        <div class="project-image-container">
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <!-- Image Column -->
+        <div class="project-image-container order-1 lg:order-1">
           <img
             src="/images/projects/cms-headless.svg"
             alt="Sistema de gestión de contenido con interfaz de administración moderna - CMS Headless"
-            class="project-image"
+            class="project-image h-auto w-full"
             loading="lazy"
             onload="this.style.opacity = '1'; this.classList.add('loaded')"
             style="opacity: 0; transition: opacity 0.3s ease-in-out;"
             onerror="this.style.opacity = '0.5'; this.parentElement.classList.add('error')"
             title="Sistema de gestión de contenido headless con editor visual drag-and-drop"
-            width="400"
-            height="200"
+            width="600"
+            height="300"
           />
         </div>
-      </div>
-      <div class="mb-2 text-sm text-terminal-dim">
-        Estado: <span class="text-terminal-text">Planificado</span>
-      </div>
-      <div class="mb-3">
-        Sistema de gestión de contenido headless con interfaz administrativa React y frontend Astro.
-        Editor visual drag-and-drop, soporte multi-idioma, optimización SEO automática y gestión
-        avanzada de medios digitales para sitios web modernos.
-      </div>
-      <div class="mb-2 text-sm">
-        <span class="text-terminal-dim">Tecnologías:</span> React, Astro, Node.js, GraphQL, Cloud Storage
-      </div>
-      <div class="text-sm">
-        <span class="text-terminal-dim">Características:</span> Editor visual, Multi-idioma, SEO automático,
-        Media management
+        <!-- Content Column -->
+        <div class="order-2 lg:order-2">
+          <div class="mb-2 text-lg text-terminal-bright">█ CMS Headless</div>
+          <div class="mb-2 text-sm text-terminal-dim">
+            Estado: <span class="text-terminal-text">Planificado</span>
+          </div>
+          <div class="mb-3">
+            Sistema de gestión de contenido headless con interfaz administrativa React y frontend
+            Astro. Editor visual drag-and-drop, soporte multi-idioma, optimización SEO automática y
+            gestión avanzada de medios digitales para sitios web modernos.
+          </div>
+          <div class="mb-2 text-sm">
+            <span class="text-terminal-dim">Tecnologías:</span> React, Astro, Node.js, GraphQL, Cloud
+            Storage
+          </div>
+          <div class="text-sm">
+            <span class="text-terminal-dim">Características:</span> Editor visual, Multi-idioma, SEO
+            automático, Media management
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -372,8 +408,8 @@
     {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      "name": "Proyectos Debussy - Portfolio de Desarrollo Web",
-      "description": "Colección de proyectos desarrollados por Debussy showcasing expertise in modern web technologies including Astro, React, Node.js, and API development",
+      "name": "Proyectos de Gusi - Portfolio de Desarrollo Web",
+      "description": "Colección de proyectos desarrollados por Gusi showcasing expertise in modern web technologies including Astro, React, Node.js, and API development",
       "url": "https://gusi.dev/projects",
       "numberOfItems": 8,
       "itemListElement": [
@@ -570,7 +606,9 @@
       const projectsComponent = document.getElementById('projects-component');
       if (terminal && projectsComponent) {
         setTimeout(() => {
-          terminal.printOutput(projectsComponent.innerHTML);
+          (terminal as { printOutput: (html: string) => void }).printOutput(
+            projectsComponent.innerHTML
+          );
         }, 200);
       }
     }
@@ -582,7 +620,7 @@
     if (customEvent.detail.view === 'projects') {
       console.log('Projects: loadView event received for projects');
 
-      const terminal = (window as any).terminal;
+      const terminal = (window as { terminal?: unknown }).terminal;
       const projectsComponent = document.getElementById('projects-component');
 
       if (terminal && projectsComponent) {
@@ -593,7 +631,9 @@
 
         // Then display the projects content in the terminal
         setTimeout(() => {
-          terminal.printOutput(projectsComponent.innerHTML);
+          (terminal as { printOutput: (html: string) => void }).printOutput(
+            projectsComponent.innerHTML
+          );
           console.log('Projects: Content displayed in terminal');
         }, 150);
       } else {
@@ -604,13 +644,15 @@
 
         // Fallback: try again after a longer delay
         setTimeout(() => {
-          const retryTerminal = (window as any).terminal;
+          const retryTerminal = (window as { terminal?: unknown }).terminal;
           const retryComponent = document.getElementById('projects-component');
 
           if (retryTerminal && retryComponent) {
             console.log('Projects: Retry successful, displaying projects');
             new ProjectImageLoader();
-            retryTerminal.printOutput(retryComponent.innerHTML);
+            (retryTerminal as { printOutput: (html: string) => void }).printOutput(
+              retryComponent.innerHTML
+            );
           } else {
             console.error('Projects: Failed to load projects after retry');
           }
@@ -668,17 +710,17 @@
     opacity: 0.5;
   }
 
-  /* Responsive image sizing */
+  /* Responsive image sizing for new layout */
   @media (max-width: 640px) {
     .project-image-container img {
-      max-height: 150px;
+      max-height: 200px;
       object-fit: cover;
     }
   }
 
   @media (min-width: 641px) {
     .project-image-container img {
-      max-height: 200px;
+      max-height: 300px;
       object-fit: cover;
     }
   }
@@ -747,40 +789,57 @@
     opacity: 1 !important;
   }
 
-  /* Responsive image sizing improvements */
+  /* Grid layout improvements */
+  .grid {
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .grid {
+      gap: 2rem;
+    }
+  }
+
+  /* Ensure proper image aspect ratio */
+  .project-image-container img {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+  }
+
+  /* Responsive image sizing improvements for new layout */
   @media (max-width: 480px) {
     .project-image-container {
-      height: 120px;
+      height: 150px;
     }
 
     .project-image-container img {
-      height: 120px;
-      width: auto;
-      max-width: 100%;
+      height: 150px;
+      width: 100%;
+      object-fit: cover;
     }
   }
 
   @media (min-width: 481px) and (max-width: 768px) {
     .project-image-container {
-      height: 160px;
+      height: 200px;
     }
 
     .project-image-container img {
-      height: 160px;
-      width: auto;
-      max-width: 100%;
+      height: 200px;
+      width: 100%;
+      object-fit: cover;
     }
   }
 
   @media (min-width: 769px) {
     .project-image-container {
-      height: 200px;
+      height: 300px;
     }
 
     .project-image-container img {
-      height: 200px;
-      width: auto;
-      max-width: 100%;
+      height: 300px;
+      width: 100%;
+      object-fit: cover;
     }
   }
 </style>
