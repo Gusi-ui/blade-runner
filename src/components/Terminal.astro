@@ -117,17 +117,35 @@ interface Props {
       this.input.addEventListener('click', () => this.updateCursorPosition());
       this.input.addEventListener('focus', () => this.updateCursorPosition());
 
-      // Auto-focus en input
-      document.addEventListener('click', () => this.input.focus());
+      // Auto-focus en input solo si no hay otro input activo (juegos)
+      document.addEventListener('click', e => {
+        const target = e.target as HTMLElement;
+        // No hacer focus si se clickea en un input de juego o botón
+        if (
+          target.tagName === 'INPUT' ||
+          target.tagName === 'BUTTON' ||
+          target.closest('input') ||
+          target.closest('button')
+        ) {
+          return;
+        }
+        this.input.focus();
+      });
 
       // Inicializar posición del cursor después de que el DOM esté listo
       setTimeout(() => {
         this.updateCursorPosition();
       }, 100);
 
-      // Actualizar posición del cursor periódicamente para asegurar correcta posición
+      // Actualizar posición del cursor periódicamente solo si el input del terminal está activo
       setInterval(() => {
-        if (document.activeElement === this.input) {
+        const activeElement = document.activeElement;
+        // Solo actualizar si el input del terminal está enfocado y no hay otro input activo
+        if (
+          activeElement === this.input &&
+          !document.querySelector('input[id^="hangman-input"]:focus') &&
+          !document.querySelector('input[id^="tictactoe-"]:focus')
+        ) {
           this.updateCursorPosition();
         }
       }, 100);
@@ -159,6 +177,16 @@ interface Props {
     }
 
     private handleKeyDown(e: KeyboardEvent): void {
+      // No procesar si hay un input de juego activo
+      const activeElement = document.activeElement;
+      if (
+        activeElement &&
+        activeElement !== this.input &&
+        (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')
+      ) {
+        return;
+      }
+
       if (e.key === 'Enter') {
         e.preventDefault();
         const command = this.input.value.trim();

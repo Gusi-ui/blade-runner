@@ -117,8 +117,25 @@ export class Tetris {
       <div class="flex justify-center mb-4">
         <canvas id="tetris-canvas" class="game-canvas" width="300" height="600"></canvas>
       </div>
+      
+      <!-- Controles táctiles para móviles -->
+      <div class="flex flex-col items-center gap-2 mb-4 md:hidden">
+        <div class="text-sm text-terminal-bright mb-1">Controles Táctiles:</div>
+        <div class="flex gap-2">
+          <button id="tetris-btn-left" class="menu-item px-4 py-2 text-lg">←</button>
+          <button id="tetris-btn-rotate" class="menu-item px-4 py-2 text-lg">↻</button>
+          <button id="tetris-btn-right" class="menu-item px-4 py-2 text-lg">→</button>
+        </div>
+        <div class="flex gap-2">
+          <button id="tetris-btn-down" class="menu-item px-4 py-2">Bajar ↓</button>
+          <button id="tetris-btn-drop" class="menu-item px-4 py-2">Caída</button>
+        </div>
+      </div>
+      
       <div class="text-center">
-        <div class="text-sm text-terminal-dim mb-2">Controles: ← → ↓ para mover, ↑ para rotar, ESPACIO para caída rápida</div>
+        <div class="text-sm text-terminal-dim mb-2 hidden md:block">
+          Controles: ← → ↓ para mover, ↑ para rotar, ESPACIO para caída rápida
+        </div>
         <button id="tetris-restart" class="menu-item inline-block px-4 py-2">Reiniciar</button>
         <button id="tetris-exit" class="menu-item inline-block px-4 py-2 ml-2">Salir</button>
       </div>
@@ -141,7 +158,38 @@ export class Tetris {
       if (exitBtn) {
         exitBtn.addEventListener('click', () => this.exit());
       }
+
+      // Configurar controles táctiles para móviles
+      this.setupTouchControls();
     }, 100);
+  }
+
+  private setupTouchControls(): void {
+    const btnLeft = document.getElementById('tetris-btn-left');
+    const btnRight = document.getElementById('tetris-btn-right');
+    const btnRotate = document.getElementById('tetris-btn-rotate');
+    const btnDown = document.getElementById('tetris-btn-down');
+    const btnDrop = document.getElementById('tetris-btn-drop');
+
+    if (btnLeft) {
+      btnLeft.addEventListener('click', () => this.movePiece(-1, 0));
+    }
+
+    if (btnRight) {
+      btnRight.addEventListener('click', () => this.movePiece(1, 0));
+    }
+
+    if (btnRotate) {
+      btnRotate.addEventListener('click', () => this.rotatePiece());
+    }
+
+    if (btnDown) {
+      btnDown.addEventListener('click', () => this.movePiece(0, 1));
+    }
+
+    if (btnDrop) {
+      btnDrop.addEventListener('click', () => this.dropPiece());
+    }
   }
 
   private getRandomPiece(): TetrisPiece {

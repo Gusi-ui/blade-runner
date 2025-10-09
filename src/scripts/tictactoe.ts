@@ -72,6 +72,7 @@ export class TicTacToe {
 
     cells.forEach(cell => {
       cell.addEventListener('click', e => {
+        e.stopPropagation(); // Prevenir propagación
         const index = parseInt((e.currentTarget as HTMLElement).getAttribute('data-cell') || '0');
         this.makeMove(index);
       });
@@ -81,11 +82,17 @@ export class TicTacToe {
     const exitBtn = document.getElementById('tictactoe-exit');
 
     if (restartBtn) {
-      restartBtn.addEventListener('click', () => this.restart());
+      restartBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.restart();
+      });
     }
 
     if (exitBtn) {
-      exitBtn.addEventListener('click', () => this.exit());
+      exitBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.exit();
+      });
     }
   }
 
@@ -96,6 +103,9 @@ export class TicTacToe {
 
     // Jugador hace su movimiento
     this.board[index] = 'X';
+
+    // Actualizar solo la celda modificada
+    this.updateCell(index);
 
     // Verificar si el jugador ganó
     if (this.checkWinner('X')) {
@@ -122,6 +132,9 @@ export class TicTacToe {
     if (bestMove !== -1) {
       this.board[bestMove] = 'O';
 
+      // Actualizar solo la celda modificada
+      this.updateCell(bestMove);
+
       // Verificar si la IA ganó
       if (this.checkWinner('O')) {
         this.endGame('La IA ganó. ¡Intenta de nuevo!');
@@ -135,7 +148,19 @@ export class TicTacToe {
       }
 
       this.currentPlayer = 'X';
-      this.render();
+    }
+  }
+
+  private updateCell(index: number): void {
+    const cell = document.querySelector(`[data-cell="${index}"]`);
+    if (cell) {
+      cell.textContent = this.board[index] || ' ';
+    }
+  }
+
+  private updateBoard(): void {
+    for (let i = 0; i < 9; i++) {
+      this.updateCell(i);
     }
   }
 
@@ -209,7 +234,13 @@ export class TicTacToe {
 
   private endGame(message: string): void {
     this.gameOver = true;
-    this.render();
+
+    // Deshabilitar todas las celdas
+    const cells = document.querySelectorAll('[data-cell]');
+    cells.forEach(cell => {
+      cell.classList.remove('cursor-pointer', 'hover:bg-terminal-dim');
+      cell.classList.add('cursor-not-allowed');
+    });
 
     const messageEl = document.getElementById('tictactoe-message');
     if (messageEl) {
@@ -223,7 +254,23 @@ export class TicTacToe {
     this.board = ['', '', '', '', '', '', '', '', ''];
     this.currentPlayer = 'X';
     this.gameOver = false;
-    this.render();
+
+    // Limpiar mensaje
+    const messageEl = document.getElementById('tictactoe-message');
+    if (messageEl) {
+      messageEl.innerHTML = '';
+    }
+
+    // Reactivar y limpiar todas las celdas
+    const cells = document.querySelectorAll('[data-cell]');
+    cells.forEach(cell => {
+      cell.textContent = ' ';
+      cell.classList.remove('cursor-not-allowed');
+      cell.classList.add('cursor-pointer', 'hover:bg-terminal-dim');
+    });
+
+    // Actualizar el tablero visualmente
+    this.updateBoard();
   }
 
   private exit(): void {

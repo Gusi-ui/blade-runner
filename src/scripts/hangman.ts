@@ -91,6 +91,7 @@ export class Hangman {
       const exitBtn = document.getElementById('hangman-exit');
 
       if (input) {
+        // Dar focus al input del juego
         input.focus();
 
         // Show cursor when focused
@@ -103,15 +104,27 @@ export class Hangman {
           if (cursor && !input.value) cursor.classList.add('opacity-0');
         });
 
-        // Hide cursor when typing
-        input.addEventListener('input', () => {
-          if (cursor) cursor.classList.add('opacity-0');
-        });
-
+        // Manejar teclas - prevenir que lleguen al terminal
         input.addEventListener('keydown', e => {
+          e.stopPropagation();
           if (e.key === 'Enter') {
+            e.preventDefault();
             this.makeGuess();
           }
+        });
+
+        // Prevenir que eventos de teclas lleguen al terminal
+        input.addEventListener('keypress', e => {
+          e.stopPropagation();
+        });
+
+        input.addEventListener('keyup', e => {
+          e.stopPropagation();
+        });
+
+        input.addEventListener('input', e => {
+          e.stopPropagation();
+          if (cursor) cursor.classList.add('opacity-0');
         });
       }
 
