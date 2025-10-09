@@ -1,0 +1,52 @@
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cmsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#047857;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#cmsGrad)"/>
+  <rect x="50" y="50" width="700" height="300" fill="rgba(255,255,255,0.05)" stroke="#10b981" stroke-width="2" rx="10"/>
+
+  <!-- Header -->
+  <text x="400" y="80" font-family="system-ui, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">📝 CMS HEADLESS</text>
+
+  <!-- Content Editor -->
+  <rect x="100" y="110" width="300" height="200" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="2" rx="8"/>
+  <text x="250" y="135" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" fill="#10b981" text-anchor="middle">Editor Visual</text>
+
+  <!-- Drag and Drop Area -->
+  <rect x="120" y="150" width="260" height="140" fill="rgba(16,185,129,0.05)" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" rx="4"/>
+  <text x="250" y="190" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.7)" text-anchor="middle">Arrastra elementos aquí</text>
+  <text x="250" y="210" font-family="system-ui, sans-serif" font-size="10" fill="rgba(255,255,255,0.5)" text-anchor="middle">o haz clic para seleccionar</text>
+
+  <!-- Element Palette -->
+  <rect x="420" y="110" width="100" height="200" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="2" rx="8"/>
+  <text x="470" y="135" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="#10b981" text-anchor="middle">Elementos</text>
+
+  <rect x="430" y="150" width="80" height="25" fill="#10b981" rx="3"/>
+  <text x="470" y="167" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">Texto</text>
+
+  <rect x="430" y="185" width="80" height="25" fill="#10b981" rx="3"/>
+  <text x="470" y="202" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">Imagen</text>
+
+  <rect x="430" y="220" width="80" height="25" fill="#10b981" rx="3"/>
+  <text x="470" y="237" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">Video</text>
+
+  <rect x="430" y="255" width="80" height="25" fill="#10b981" rx="3"/>
+  <text x="470" y="272" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">Lista</text>
+
+  <!-- Preview Area -->
+  <rect x="540" y="110" width="160" height="200" fill="rgba(255,255,255,0.05)" stroke="#10b981" stroke-width="2" rx="8"/>
+  <text x="620" y="135" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="#10b981" text-anchor="middle">Vista Previa</text>
+  <rect x="550" y="150" width="140" height="140" fill="rgba(16,185,129,0.05)" stroke="#10b981" stroke-width="1" rx="4"/>
+  <rect x="570" y="170" width="100" height="20" fill="#10b981" rx="2"/>
+  <text x="620" y="185" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">Título</text>
+  <rect x="560" y="200" width="120" height="60" fill="rgba(16,185,129,0.1)" rx="2"/>
+
+  <!-- Features -->
+  <text x="150" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">Editor visual</text>
+  <text x="280" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">Multi-idioma</text>
+  <text x="400" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">SEO automático</text>
+  <text x="520" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">Media management</text>
+</svg>

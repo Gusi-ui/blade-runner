@@ -1,0 +1,64 @@
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dashGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e3a8a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#dashGrad)"/>
+  <rect x="50" y="50" width="700" height="300" fill="rgba(255,255,255,0.05)" stroke="#3b82f6" stroke-width="2" rx="10"/>
+
+  <!-- Header -->
+  <text x="400" y="40" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">ANALYTICS PRO</text>
+  <rect x="100" y="60" width="80" height="25" fill="#3b82f6" rx="4"/>
+  <text x="140" y="77" font-family="system-ui, sans-serif" font-size="12" fill="white" text-anchor="middle">Dashboard</text>
+
+  <!-- Stats Cards -->
+  <rect x="100" y="100" width="140" height="80" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="2" rx="8"/>
+  <circle cx="130" cy="125" r="15" fill="#3b82f6"/>
+  <text x="130" y="130" font-family="system-ui, sans-serif" font-size="12" fill="white" text-anchor="middle">👥</text>
+  <text x="170" y="120" font-family="monospace" font-size="18" font-weight="bold" fill="#3b82f6">12,847</text>
+  <text x="170" y="140" font-family="system-ui, sans-serif" font-size="10" fill="rgba(255,255,255,0.7)">Usuarios Totales</text>
+  <text x="170" y="155" font-family="system-ui, sans-serif" font-size="10" fill="#10b981">↗ +12.5%</text>
+
+  <rect x="260" y="100" width="140" height="80" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="2" rx="8"/>
+  <circle cx="290" cy="125" r="15" fill="#3b82f6"/>
+  <text x="290" y="130" font-family="system-ui, sans-serif" font-size="12" fill="white" text-anchor="middle">💰</text>
+  <text x="330" y="120" font-family="monospace" font-size="18" font-weight="bold" fill="#3b82f6">€89,432</text>
+  <text x="330" y="140" font-family="system-ui, sans-serif" font-size="10" fill="rgba(255,255,255,0.7)">Ingresos</text>
+  <text x="330" y="155" font-family="system-ui, sans-serif" font-size="10" fill="#10b981">↗ +8.2%</text>
+
+  <rect x="420" y="100" width="140" height="80" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="2" rx="8"/>
+  <circle cx="450" cy="125" r="15" fill="#3b82f6"/>
+  <text x="450" y="130" font-family="system-ui, sans-serif" font-size="12" fill="white" text-anchor="middle">🛒</text>
+  <text x="490" y="120" font-family="monospace" font-size="18" font-weight="bold" fill="#3b82f6">3,247</text>
+  <text x="490" y="140" font-family="system-ui, sans-serif" font-size="10" fill="rgba(255,255,255,0.7)">Pedidos</text>
+  <text x="490" y="155" font-family="system-ui, sans-serif" font-size="10" fill="#ef4444">↘ -1.2%</text>
+
+  <rect x="580" y="100" width="120" height="80" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="2" rx="8"/>
+  <circle cx="610" cy="125" r="15" fill="#3b82f6"/>
+  <text x="610" y="130" font-family="system-ui, sans-serif" font-size="12" fill="white" text-anchor="middle">📊</text>
+  <text x="640" y="120" font-family="monospace" font-size="18" font-weight="bold" fill="#3b82f6">3.8%</text>
+  <text x="640" y="140" font-family="system-ui, sans-serif" font-size="10" fill="rgba(255,255,255,0.7)">Conversión</text>
+  <text x="640" y="155" font-family="system-ui, sans-serif" font-size="10" fill="#10b981">↗ +0.3%</text>
+
+  <!-- Chart Area -->
+  <rect x="100" y="200" width="600" height="140" fill="rgba(0,0,0,0.3)" stroke="#3b82f6" stroke-width="1" rx="4"/>
+  <text x="400" y="220" font-family="system-ui, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)" text-anchor="middle">Ingresos por Mes</text>
+
+  <!-- Simple Chart Line -->
+  <polyline points="120,300 180,280 240,290 300,270 360,260 420,250 480,240 540,230 600,220 660,210"
+    stroke="#3b82f6" stroke-width="3" fill="none" opacity="0.8"/>
+
+  <!-- Chart Dots -->
+  <circle cx="120" cy="300" r="3" fill="#3b82f6"/>
+  <circle cx="180" cy="280" r="3" fill="#3b82f6"/>
+  <circle cx="240" cy="290" r="3" fill="#3b82f6"/>
+  <circle cx="300" cy="270" r="3" fill="#3b82f6"/>
+  <circle cx="360" cy="260" r="3" fill="#3b82f6"/>
+  <circle cx="420" cy="250" r="3" fill="#3b82f6"/>
+  <circle cx="480" cy="240" r="3" fill="#3b82f6"/>
+  <circle cx="540" cy="230" r="3" fill="#3b82f6"/>
+  <circle cx="600" cy="220" r="3" fill="#3b82f6"/>
+  <circle cx="660" cy="210" r="3" fill="#3b82f6"/>
+</svg>

@@ -1,0 +1,42 @@
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5b21b6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#shopGrad)"/>
+  <rect x="50" y="50" width="700" height="300" fill="rgba(255,255,255,0.05)" stroke="#8b5cf6" stroke-width="2" rx="10"/>
+
+  <!-- Header -->
+  <text x="400" y="80" font-family="system-ui, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">🛒 E-COMMERCE PLATFORM</text>
+
+  <!-- Product Grid -->
+  <rect x="100" y="110" width="150" height="100" fill="rgba(255,255,255,0.1)" stroke="#8b5cf6" stroke-width="2" rx="8"/>
+  <rect x="270" y="110" width="150" height="100" fill="rgba(255,255,255,0.1)" stroke="#8b5cf6" stroke-width="2" rx="8"/>
+  <rect x="440" y="110" width="150" height="100" fill="rgba(255,255,255,0.1)" stroke="#8b5cf6" stroke-width="2" rx="8"/>
+
+  <!-- Product Images -->
+  <rect x="120" y="130" width="110" height="60" fill="rgba(139,92,246,0.2)" rx="4"/>
+  <rect x="290" y="130" width="110" height="60" fill="rgba(139,92,246,0.2)" rx="4"/>
+  <rect x="460" y="130" width="110" height="60" fill="rgba(139,92,246,0.2)" rx="4"/>
+
+  <!-- Shopping Cart -->
+  <rect x="320" y="250" width="160" height="80" fill="rgba(139,92,246,0.1)" stroke="#8b5cf6" stroke-width="2" rx="8"/>
+  <circle cx="340" cy="270" r="8" fill="#8b5cf6"/>
+  <text x="340" y="275" font-family="system-ui, sans-serif" font-size="8" fill="white" text-anchor="middle">1</text>
+  <circle cx="360" cy="270" r="8" fill="#8b5cf6"/>
+  <text x="360" y="275" font-family="system-ui, sans-serif" font-size="8" fill="white" text-anchor="middle">2</text>
+  <circle cx="380" cy="270" r="8" fill="#8b5cf6"/>
+  <text x="380" y="275" font-family="system-ui, sans-serif" font-size="8" fill="white" text-anchor="middle">3</text>
+
+  <text x="400" y="295" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" fill="#8b5cf6" text-anchor="middle">€299.99</text>
+  <rect x="340" y="305" width="120" height="20" fill="#8b5cf6" rx="4"/>
+  <text x="400" y="318" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">COMPRAR</text>
+
+  <!-- Features -->
+  <text x="150" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">Catálogo dinámico</text>
+  <text x="300" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">Pagos seguros</text>
+  <text x="450" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">Admin dashboard</text>
+  <text x="600" y="340" font-family="system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">Analytics</text>
+</svg>
