@@ -59,6 +59,8 @@
       apodContent.innerHTML = '<div class="loading-dots">Cargando imagen astronómica</div>';
 
       try {
+        // Siempre usar fecha actual para asegurar la imagen más reciente, a menos que sea aleatoria
+        const today = new Date().toISOString().split('T')[0];
         let url = `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}`;
 
         if (random) {
@@ -69,9 +71,12 @@
             startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime());
           const randomDate = new Date(randomTime).toISOString().split('T')[0];
           url += `&date=${randomDate}`;
+        } else {
+          // Usar fecha de hoy para obtener la imagen más reciente
+          url += `&date=${today}`;
         }
 
-        console.log('Fetching APOD from NASA...');
+        console.log('Fetching APOD from NASA...', url);
         const response = await fetch(url);
 
         if (!response.ok) {
