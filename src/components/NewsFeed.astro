@@ -50,10 +50,8 @@
     private updateInterval: number = 60000; // 1 minuto para actualizaciones más frecuentes
     private intervalId?: number;
     public allNews: NewsArticle[] = [];
-    private _filteredNews: NewsArticle[] = [];
     private currentFilter: string = 'all';
     private demoNewsPool: NewsArticle[] = [];
-    private lastShownIndices: number[] = [];
 
     constructor() {
       // For static deployment, try multiple ways to get the API key

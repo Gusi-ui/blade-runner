@@ -65,6 +65,25 @@
     publishedAt?: string;
   }
 
+  interface WikipediaPage {
+    displaytitle?: string;
+    description?: string;
+    extract?: string;
+    content_urls?: {
+      desktop?: {
+        page?: string;
+      };
+    };
+  }
+
+  interface WikipediaEvent {
+    year: number;
+    text: string;
+    month?: number;
+    day?: number;
+    pages: WikipediaPage[];
+  }
+
   class CosmicCalculator {
     private terminal: TerminalController;
     private nasaApiKey: string;
@@ -851,7 +870,7 @@
         const data = await response.json();
 
         // Filtrar eventos relevantes a tecnología, ciencia o astronomía
-        const relevantEvents = this.filterTechScienceEvents(data.selected || [], birthYear);
+        const relevantEvents = await this.filterTechScienceEvents(data.selected || [], birthYear);
 
         if (relevantEvents.length === 0) {
           // Si no hay eventos de tecnología ese día, usar eventos generales del año
@@ -869,7 +888,7 @@
     }
 
     private async filterTechScienceEvents(
-      events: unknown[],
+      events: WikipediaEvent[],
       birthYear: number
     ): Promise<TechNewsEvent[]> {
       const techKeywords = [
@@ -925,7 +944,7 @@
         const isTechRelated = techKeywords.some(keyword => text.includes(keyword.toLowerCase()));
 
         // También verificar las páginas relacionadas
-        const hasTechPages = pages.some((page: Record<string, unknown>) => {
+        const hasTechPages = pages.some((page: WikipediaPage) => {
           const title = page.displaytitle?.toLowerCase() || '';
           const description = page.description?.toLowerCase() || '';
           return techKeywords.some(
@@ -1149,127 +1168,6 @@
         source: 'Historia Tecnológica',
         url: '#',
         publishedAt: `${birthYear}-01-01`,
-      }));
-    }
-
-    private generateHistoricalTechNews(year: number, month: number): TechNewsEvent[] {
-      const techEvents: { [key: string]: TechNewsEvent[] } = {
-        '1990': [
-          {
-            title: '🌐 Tim Berners-Lee crea la World Wide Web',
-            description:
-              'El científico británico desarrolla el primer navegador web y servidor, revolucionando la comunicación global.',
-            source: 'Tech History',
-          },
-          {
-            title: '💾 Microsoft lanza Windows 3.0',
-            description:
-              'Nueva versión del sistema operativo que populariza la interfaz gráfica en computadoras personales.',
-            source: 'Computing News',
-          },
-        ],
-        '1995': [
-          {
-            title: '🔍 Nace Yahoo!',
-            description:
-              'Jerry Yang y David Filo crean uno de los primeros directorios web, marcando el inicio de los motores de búsqueda.',
-            source: 'Internet Archive',
-          },
-          {
-            title: '☕ Java es presentado por Sun Microsystems',
-            description:
-              'Lenguaje de programación que revoluciona el desarrollo de aplicaciones multiplataforma.',
-            source: 'Developer News',
-          },
-        ],
-        '2000': [
-          {
-            title: '🔎 Google se convierte en el buscador más popular',
-            description:
-              'El motor de búsqueda supera a sus competidores con su algoritmo PageRank.',
-            source: 'Search Engine History',
-          },
-          {
-            title: '📱 Se lanza el primer teléfono con cámara',
-            description: 'Sharp J-SH04 introduce la fotografía móvil al mercado japonés.',
-            source: 'Mobile Tech',
-          },
-        ],
-        '2005': [
-          {
-            title: '📹 YouTube es fundado',
-            description:
-              'Plataforma que transformará la forma en que consumimos video en internet.',
-            source: 'Media History',
-          },
-          {
-            title: '🗺️ Google Maps revoluciona la navegación',
-            description: 'Servicio de mapas interactivos cambia la forma de explorar el mundo.',
-            source: 'Geo Tech',
-          },
-        ],
-        '2010': [
-          {
-            title: '📱 Apple presenta el iPad',
-            description: 'Dispositivo que crea la categoría de tablets modernas.',
-            source: 'Apple News',
-          },
-          {
-            title: '📸 Instagram es lanzado',
-            description:
-              'Red social de fotografía que alcanza 100,000 usuarios en su primera semana.',
-            source: 'Social Media',
-          },
-        ],
-        '2015': [
-          {
-            title: '🤖 AlphaGo derrota al campeón de Go',
-            description: 'IA de DeepMind marca un hito en inteligencia artificial.',
-            source: 'AI Research',
-          },
-          {
-            title: '🚗 Tesla Autopilot es introducido',
-            description: 'Sistema de conducción semiautónoma en vehículos de producción.',
-            source: 'Auto Tech',
-          },
-        ],
-        '2020': [
-          {
-            title: '🧬 Vacunas COVID-19 con tecnología mRNA',
-            description: 'Desarrollo récord de vacunas usando nueva tecnología genética.',
-            source: 'BioTech News',
-          },
-          {
-            title: '🚀 SpaceX lanza misión tripulada',
-            description: 'Primera empresa privada en llevar astronautas a la ISS.',
-            source: 'Space News',
-          },
-        ],
-      };
-
-      // Buscar eventos del año más cercano
-      const yearKey = Object.keys(techEvents)
-        .map(y => parseInt(y))
-        .sort((a, b) => Math.abs(year - a) - Math.abs(year - b))[0]
-        .toString();
-
-      const events = techEvents[yearKey] || [
-        {
-          title: `🖥️ Avances tecnológicos en ${year}`,
-          description: `Durante este año, la tecnología continuó evolucionando con importantes desarrollos en computación y comunicaciones.`,
-          source: 'Tech History',
-        },
-        {
-          title: `🌍 Internet en ${year}`,
-          description: `La red global continuó expandiéndose, conectando más personas y transformando la sociedad.`,
-          source: 'Internet Archive',
-        },
-      ];
-
-      return events.map(event => ({
-        ...event,
-        url: '#',
-        publishedAt: `${year}-${month.toString().padStart(2, '0')}-15`,
       }));
     }
 

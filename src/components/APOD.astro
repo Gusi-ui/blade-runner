@@ -46,7 +46,6 @@
     private nasaApiKey: string;
     private updateInterval: number = 3600000; // 1 hora
     private intervalId?: number;
-    private currentData?: APODData;
 
     constructor() {
       this.nasaApiKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
@@ -104,7 +103,6 @@
         }
 
         const data: APODData = await response.json();
-        this.currentData = data;
 
         // Traducir la explicación al español
         await this.displayAPOD(data);

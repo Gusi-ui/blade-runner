@@ -104,8 +104,6 @@ interface Props {
     private cursor: HTMLElement;
     private commandHistory: string[] = [];
     private historyIndex: number = -1;
-    private _currentView: string = 'main';
-    private _keySound?: HTMLAudioElement;
 
     constructor() {
       this.input = document.getElementById('terminal-input') as HTMLInputElement;
@@ -459,7 +457,6 @@ interface Props {
     }
 
     private loadView(view: string): void {
-      this._currentView = view;
       const event = new CustomEvent('loadView', { detail: { view } });
       document.dispatchEvent(event);
     }
