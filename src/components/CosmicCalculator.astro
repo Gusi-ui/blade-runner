@@ -379,11 +379,7 @@
       const apodStartDate = new Date('1995-06-16');
 
       // Si la fecha es anterior a APOD o la clave es demo, usar contenido alternativo directamente
-      if (
-        birthDate < apodStartDate ||
-        this.nasaApiKey === 'DEMO_KEY' ||
-        this.nasaApiKey === 'tu_clave_real_de_nasa_aqui'
-      ) {
+      if (birthDate < apodStartDate || this.nasaApiKey === 'DEMO_KEY') {
         this.displayAlternativeAstronomyData(birthdate);
         return;
       }

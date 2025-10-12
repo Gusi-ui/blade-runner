@@ -1,0 +1,402 @@
+---
+// Componente APOD - Astronomy Picture of the Day de NASA
+---
+
+<div id="apod-component" class="hidden">
+  <div class="section-title glitch" data-text="Imagen Astronómica del Día - NASA">
+    Imagen Astronómica del Día - NASA
+  </div>
+
+  <div class="mb-4">
+    <div id="apod-content" class="mb-4">
+      <div class="loading-dots">Cargando imagen astronómica del día</div>
+    </div>
+
+    <div class="mb-4 flex gap-2">
+      <button id="apod-refresh" class="menu-item px-3 py-1 text-xs">Actualizar</button>
+      <button id="apod-random" class="menu-item px-3 py-1 text-xs">Imagen Aleatoria</button>
+    </div>
+
+    <div class="text-xs text-terminal-dim">
+      <span id="apod-last-update">Última actualización: Nunca</span>
+    </div>
+  </div>
+
+  <div class="mt-4 text-sm text-terminal-dim">Escribe 'menu' para volver al menú principal.</div>
+</div>
+
+<script>
+  interface APODData {
+    title: string;
+    explanation: string;
+    url: string;
+    hdurl?: string;
+    date: string;
+    media_type: string;
+    copyright?: string;
+  }
+
+  declare global {
+    interface Window {
+      apodViewer: APODViewer;
+    }
+  }
+
+  class APODViewer {
+    private nasaApiKey: string;
+    private updateInterval: number = 3600000; // 1 hora
+    private intervalId?: number;
+    private currentData?: APODData;
+
+    constructor() {
+      this.nasaApiKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
+    }
+
+    async fetchAPOD(random: boolean = false): Promise<void> {
+      const apodContent = document.getElementById('apod-content');
+      if (!apodContent) return;
+
+      apodContent.innerHTML = '<div class="loading-dots">Cargando imagen astronómica</div>';
+
+      try {
+        let url = `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}`;
+
+        if (random) {
+          // Generar una fecha aleatoria entre 1995-06-16 y hoy
+          const startDate = new Date('1995-06-16');
+          const endDate = new Date();
+          const randomTime =
+            startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime());
+          const randomDate = new Date(randomTime).toISOString().split('T')[0];
+          url += `&date=${randomDate}`;
+        }
+
+        console.log('Fetching APOD from NASA...');
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status}`);
+        }
+
+        const data: APODData = await response.json();
+        this.currentData = data;
+
+        // Traducir la explicación al español
+        await this.displayAPOD(data);
+        this.updateLastUpdateTime();
+      } catch (error) {
+        console.error('Error fetching APOD:', error);
+        this.displayError();
+      }
+    }
+
+    private async displayAPOD(data: APODData): Promise<void> {
+      const apodContent = document.getElementById('apod-content');
+      if (!apodContent) return;
+
+      // Traducir el texto al español usando la API de traducción
+      const translatedExplanation = await this.translateToSpanish(data.explanation);
+      const translatedTitle = await this.translateToSpanish(data.title);
+
+      let html = `
+        <div class="border border-terminal-bright p-4 rounded">
+          <div class="mb-4">
+            <div class="text-terminal-bright text-xl font-bold mb-2">
+              ${this.escapeHtml(translatedTitle)}
+            </div>
+            <div class="text-sm text-terminal-dim">
+              ${this.formatDate(data.date)}
+              ${data.copyright ? `<span class="ml-2">© ${this.escapeHtml(data.copyright)}</span>` : ''}
+            </div>
+          </div>
+      `;
+
+      if (data.media_type === 'image') {
+        html += `
+          <div class="mb-4">
+            <a href="${data.hdurl || data.url}" target="_blank" rel="noopener noreferrer">
+              <img
+                src="${data.url}"
+                alt="${this.escapeHtml(translatedTitle)}"
+                class="w-full max-w-2xl mx-auto border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-pointer"
+                loading="lazy"
+              />
+            </a>
+            <div class="text-center text-xs text-terminal-dim mt-2">
+              Haz clic en la imagen para ver en alta resolución
+            </div>
+          </div>
+        `;
+      } else if (data.media_type === 'video') {
+        html += `
+          <div class="mb-4">
+            <div class="aspect-video max-w-2xl mx-auto border-2 border-terminal-dim rounded overflow-hidden">
+              <iframe
+                src="${data.url}"
+                class="w-full h-full"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+        `;
+      }
+
+      html += `
+          <div class="mt-4">
+            <div class="text-terminal-bright font-semibold mb-2 text-base">📖 Explicación:</div>
+            <div class="text-base leading-relaxed">
+              ${this.escapeHtml(translatedExplanation)}
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim">
+            <div class="text-terminal-dim text-xs">
+              <strong>Título original:</strong> ${this.escapeHtml(data.title)}
+            </div>
+          </div>
+        </div>
+      `;
+
+      apodContent.innerHTML = html;
+    }
+
+    private async translateToSpanish(text: string): Promise<string> {
+      try {
+        // Usar Google Translate API a través de un proxy público
+        // Esto evita problemas de CORS y es más confiable
+        const chunks = this.splitTextIntoChunks(text, 4500);
+        const translatedChunks: string[] = [];
+
+        for (const chunk of chunks) {
+          const translated = await this.translateSinglePart(chunk);
+          translatedChunks.push(translated);
+          // Pequeña pausa entre peticiones para evitar rate limiting
+          if (chunks.length > 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+
+        return translatedChunks.join(' ');
+      } catch (error) {
+        console.warn('Translation failed, using original text:', error);
+        return text;
+      }
+    }
+
+    private splitTextIntoChunks(text: string, maxLength: number): string[] {
+      if (text.length <= maxLength) {
+        return [text];
+      }
+
+      const chunks: string[] = [];
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      let currentChunk = '';
+
+      for (const sentence of sentences) {
+        if ((currentChunk + sentence).length > maxLength && currentChunk.length > 0) {
+          chunks.push(currentChunk.trim());
+          currentChunk = sentence;
+        } else {
+          currentChunk += sentence;
+        }
+      }
+
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk.trim());
+      }
+
+      return chunks;
+    }
+
+    private async translateSinglePart(text: string): Promise<string> {
+      const maxRetries = 3;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          // Método 1: Usar translate.googleapis.com sin autenticación (limitado pero funcional)
+          const googleResponse = await fetch(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text)}`
+          );
+
+          if (googleResponse.ok) {
+            const data = await googleResponse.json();
+            if (data && data[0] && Array.isArray(data[0])) {
+              const translatedText = data[0].map((item: any) => item[0]).join('');
+              if (translatedText && translatedText.trim()) {
+                console.log('✓ Traducción exitosa con Google Translate');
+                return translatedText;
+              }
+            }
+          }
+
+          // Método 2: Fallback a LibreTranslate
+          const libreResponse = await fetch('https://libretranslate.com/translate', {
+            method: 'POST',
+            body: JSON.stringify({
+              q: text,
+              source: 'en',
+              target: 'es',
+              format: 'text',
+            }),
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (libreResponse.ok) {
+            const data = await libreResponse.json();
+            if (data.translatedText) {
+              console.log('✓ Traducción exitosa con LibreTranslate');
+              return data.translatedText;
+            }
+          }
+
+          // Método 3: Fallback a MyMemory
+          const myMemoryResponse = await fetch(
+            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`
+          );
+
+          if (myMemoryResponse.ok) {
+            const data = await myMemoryResponse.json();
+            if (data.responseStatus === 200 && data.responseData?.translatedText) {
+              console.log('✓ Traducción exitosa con MyMemory');
+              return data.responseData.translatedText;
+            }
+          }
+
+          // Si llegamos aquí y no es el último intento, esperamos antes de reintentar
+          if (attempt < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+          }
+        } catch (error) {
+          console.warn(`Intento ${attempt + 1} de traducción falló:`, error);
+          if (attempt < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+          }
+        }
+      }
+
+      console.warn('Todos los métodos de traducción fallaron, usando texto original');
+      return text;
+    }
+
+    private displayError(): void {
+      const apodContent = document.getElementById('apod-content');
+      if (!apodContent) return;
+
+      const isDemoKey =
+        this.nasaApiKey === 'DEMO_KEY' || this.nasaApiKey === 'tu_clave_real_de_nasa_aqui';
+
+      if (isDemoKey) {
+        apodContent.innerHTML = `
+          <div class="border border-terminal-dim p-4 rounded">
+            <div class="error-text mb-4">⚠️ Clave API de NASA requerida</div>
+            <div class="text-terminal-text">
+              <p class="mb-2">Para ver la imagen astronómica del día real necesitas:</p>
+              <ol class="ml-4 list-decimal space-y-1">
+                <li>Obtener una clave API gratuita en <a href="https://api.nasa.gov/" target="_blank" class="text-terminal-bright hover:underline">api.nasa.gov</a></li>
+                <li>Crear un archivo .env en la raíz del proyecto</li>
+                <li>Agregar: <code class="text-terminal-bright">PUBLIC_NASA_API_KEY=tu_clave_aqui</code></li>
+              </ol>
+              <div class="mt-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim">
+                <p class="text-terminal-bright mb-2">💡 Ejemplo de imagen astronómica:</p>
+                <p class="text-sm">Cada día, la NASA publica una imagen diferente del universo junto con una explicación escrita por un astrónomo profesional.</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        apodContent.innerHTML = `
+          <div class="error-text">Error al cargar la imagen astronómica.</div>
+          <div class="mt-4 text-terminal-dim">
+            <p>Verifica tu conexión a internet y tu clave API de NASA.</p>
+            <p class="mt-2">Puedes obtener una clave gratuita en <a href="https://api.nasa.gov/" target="_blank" class="text-terminal-text hover:text-terminal-bright underline">api.nasa.gov</a></p>
+          </div>
+        `;
+      }
+    }
+
+    private formatDate(dateString: string): string {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+
+    private escapeHtml(text: string): string {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    private updateLastUpdateTime(): void {
+      const lastUpdate = document.getElementById('apod-last-update');
+      if (lastUpdate) {
+        const now = new Date();
+        lastUpdate.textContent = `Última actualización: ${now.toLocaleTimeString('es-ES')}`;
+      }
+    }
+
+    startAutoUpdate(): void {
+      this.fetchAPOD();
+
+      this.intervalId = window.setInterval(() => {
+        this.fetchAPOD();
+      }, this.updateInterval);
+    }
+
+    stopAutoUpdate(): void {
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+      }
+    }
+
+    refreshAPOD(): void {
+      this.fetchAPOD();
+    }
+
+    randomAPOD(): void {
+      this.fetchAPOD(true);
+    }
+  }
+
+  // Inicializar APOD Viewer
+  const apodViewer = new APODViewer();
+  window.apodViewer = apodViewer;
+
+  document.addEventListener('loadView', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail.view === 'apod') {
+      const terminal = window.terminal;
+      const apodComponent = document.getElementById('apod-component');
+
+      if (terminal && apodComponent) {
+        apodViewer.stopAutoUpdate();
+        terminal.printOutput(apodComponent.innerHTML);
+        apodViewer.startAutoUpdate();
+
+        setTimeout(() => {
+          const refreshBtn = document.getElementById('apod-refresh');
+          const randomBtn = document.getElementById('apod-random');
+
+          if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => apodViewer.refreshAPOD());
+          }
+
+          if (randomBtn) {
+            randomBtn.addEventListener('click', () => apodViewer.randomAPOD());
+          }
+        }, 100);
+      }
+    } else {
+      apodViewer.stopAutoUpdate();
+    }
+  });
+</script>
+
+<style>
+  /* Estilos adicionales si es necesario */
+</style>

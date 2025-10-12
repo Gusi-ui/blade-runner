@@ -56,12 +56,12 @@ interface Props {
 
     <div id="terminal-content" class="min-h-[calc(100vh-200px)]">
       <div class="terminal-output" role="log" aria-live="polite" aria-label="Terminal output">
-        <p class="mb-2 text-terminal-bright">Initializing system...</p>
-        <p class="mb-2">Loading kernel modules...</p>
-        <p class="mb-2">Establishing connection to MAINFRAME...</p>
-        <p class="success-text mb-4">✓ System ready</p>
-        <p class="mb-2">Type 'help' to see available commands.</p>
-        <p class="mb-4">Type 'menu' to access main menu.</p>
+        <p class="mb-2 text-terminal-bright">Inicializando sistema...</p>
+        <p class="mb-2">Cargando módulos del kernel...</p>
+        <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
+        <p class="success-text mb-4">✓ Sistema listo</p>
+        <p class="mb-2">Escribe 'help' para ver los comandos disponibles.</p>
+        <p class="mb-4">Escribe 'menu' para acceder al menú principal.</p>
       </div>
 
       <div
@@ -230,7 +230,7 @@ interface Props {
           execute: () => this.clear(),
         },
         date: {
-          execute: () => this.printOutput(`Current date: ${new Date().toLocaleString('en-US')}`),
+          execute: () => this.printOutput(`Fecha actual: ${new Date().toLocaleString('es-ES')}`),
         },
         whoami: {
           execute: () => this.printOutput('gusi@nexus'),
@@ -249,6 +249,19 @@ interface Props {
         },
         '5': {
           execute: () => this.loadView('calculator'),
+        },
+        '6': {
+          execute: () => this.loadView('apod'),
+        },
+        '7': {
+          execute: () => {
+            this.printOutput('Cerrando sesión...');
+            setTimeout(() => {
+              this.clear();
+              this.printOutput('Adiós, humano.');
+              this.input.disabled = true;
+            }, 1000);
+          },
         },
         news: {
           execute: () => this.loadView('news'),
@@ -271,12 +284,18 @@ interface Props {
         calculator: {
           execute: () => this.loadView('calculator'),
         },
+        apod: {
+          execute: () => this.loadView('apod'),
+        },
+        'imagen nasa': {
+          execute: () => this.loadView('apod'),
+        },
         exit: {
           execute: () => {
-            this.printOutput('Closing session...');
+            this.printOutput('Cerrando sesión...');
             setTimeout(() => {
               this.clear();
-              this.printOutput('Goodbye, human.');
+              this.printOutput('Adiós, humano.');
               this.input.disabled = true;
             }, 1000);
           },
@@ -290,7 +309,7 @@ interface Props {
         commands[cmd].execute(args);
       } else if (cmd) {
         this.printOutput(
-          `<span class="error-text">Error: Command '${cmd}' not recognized. Type 'help' to see available commands.</span>`
+          `<span class="error-text">Error: Comando '${cmd}' no reconocido. Escribe 'help' para ver los comandos disponibles.</span>`
         );
       }
 
@@ -299,20 +318,22 @@ interface Props {
 
     private showHelp(): void {
       const helpText = `
-<div class="text-terminal-bright">AVAILABLE COMMANDS:</div>
+<div class="text-terminal-bright">COMANDOS DISPONIBLES:</div>
 <div class="ml-4 mt-2">
-  <div><span class="text-terminal-bright">help</span> - Show this help</div>
-  <div><span class="text-terminal-bright">menu</span> - Show main menu</div>
-  <div><span class="text-terminal-bright">clear</span> - Clear screen</div>
-  <div><span class="text-terminal-bright">date</span> - Show current date</div>
-  <div><span class="text-terminal-bright">news</span> - Technology news</div>
-  <div><span class="text-terminal-bright">resume/cv</span> - Gusi's resume</div>
+  <div><span class="text-terminal-bright">help</span> - Mostrar esta ayuda</div>
+  <div><span class="text-terminal-bright">menu</span> - Mostrar menú principal</div>
+  <div><span class="text-terminal-bright">clear</span> - Limpiar pantalla</div>
+  <div><span class="text-terminal-bright">date</span> - Mostrar fecha actual</div>
+  <div><span class="text-terminal-bright">news</span> - Noticias de tecnología</div>
+  <div><span class="text-terminal-bright">resume/cv</span> - Currículum de Gusi</div>
   <div><span class="text-terminal-bright">projects</span> - Proyectos Debussy</div>
   <div><span class="text-terminal-bright">proyectos debussy</span> - Portfolio de desarrollo web</div>
-  <div><span class="text-terminal-bright">games</span> - Retro games</div>
-  <div><span class="text-terminal-bright">calculator</span> - Cosmic calculator</div>
-  <div><span class="text-terminal-bright">config</span> - Customization options</div>
-  <div><span class="text-terminal-bright">exit</span> - Exit system</div>
+  <div><span class="text-terminal-bright">games</span> - Juegos retro</div>
+  <div><span class="text-terminal-bright">calculator</span> - Calculadora cósmica</div>
+  <div><span class="text-terminal-bright">apod</span> - Imagen astronómica del día NASA</div>
+  <div><span class="text-terminal-bright">imagen nasa</span> - Imagen astronómica del día</div>
+  <div><span class="text-terminal-bright">config</span> - Opciones de personalización</div>
+  <div><span class="text-terminal-bright">exit</span> - Salir del sistema</div>
 </div>
       `;
       this.printOutput(helpText);
