@@ -148,6 +148,91 @@ Cada vez que hagas `git push` a la rama `main`, el sitio se actualizará automá
 
 ---
 
+---
+
+## 🔑 Configuración de Variables de Entorno en Producción
+
+### Para GitHub Pages con GitHub Actions
+
+Las variables de entorno NO se incluyen en el repositorio por seguridad. Debes configurarlas en GitHub:
+
+1. Ve a tu repositorio: `https://github.com/Gusi-ui/blade-runner`
+2. Haz clic en **Settings** (Configuración)
+3. En el menú lateral izquierdo, haz clic en **Secrets and variables** → **Actions**
+4. Haz clic en **New repository secret**
+5. Agrega las siguientes variables:
+
+#### NASA API Key (REQUERIDA para la Calculadora Cósmica):
+
+```
+Nombre: PUBLIC_NASA_API_KEY
+Valor: tu_clave_real_de_nasa
+```
+
+Obtén una clave gratis en: https://api.nasa.gov/
+
+#### NewsAPI Key (opcional para noticias):
+
+```
+Nombre: PUBLIC_NEWS_API_KEY
+Valor: tu_clave_real_de_newsapi
+```
+
+Obtén una clave gratis en: https://newsapi.org/
+
+### Actualizar el Workflow de GitHub Actions
+
+Edita `.github/workflows/deploy.yml` y agrega las variables de entorno en la sección de build:
+
+```yaml
+- name: Build
+  run: npm run build
+  env:
+    PUBLIC_NASA_API_KEY: ${{ secrets.PUBLIC_NASA_API_KEY }}
+    PUBLIC_NEWS_API_KEY: ${{ secrets.PUBLIC_NEWS_API_KEY }}
+```
+
+### Verificar que las APIs Funcionan
+
+Después de configurar las variables:
+
+1. Haz un commit y push para activar el workflow
+2. Ve a la pestaña **Actions** y verifica que el build se complete exitosamente
+3. Abre tu sitio en producción
+4. Abre la consola del navegador (F12)
+5. Ve a la Calculadora Cósmica e ingresa una fecha posterior a 1995
+6. Revisa los logs en la consola:
+   - ✅ Deberías ver: `✓ API Key presente: Sí`
+   - ✅ Deberías ver: `✓ Respuesta de NASA APOD: 200 OK`
+   - ✅ La imagen de NASA debería cargar correctamente
+
+### Problemas Comunes
+
+#### La imagen de NASA no carga en producción
+
+**Causa 1: Variables de entorno no configuradas**
+
+- Verifica que hayas agregado `PUBLIC_NASA_API_KEY` en los secrets de GitHub
+- Verifica que el workflow tenga la sección `env:` con las variables
+
+**Causa 2: API Key inválida o expirada**
+
+- Obtén una nueva API key en https://api.nasa.gov/
+- Actualiza el secret en GitHub
+
+**Causa 3: Límite de rate excedido**
+
+- La API Key DEMO_KEY tiene límite de 30 requests por hora
+- Usa tu propia API key (límite: 1000 requests por hora)
+
+**Causa 4: Problemas de CORS**
+
+- Las imágenes de NASA APOD permiten CORS correctamente
+- Si ves errores de CORS, verifica que la URL de la imagen sea correcta
+- Revisa los logs en la consola del navegador
+
+---
+
 ## 🎉 ¡Listo!
 
 Tu terminal Blade Runner estará disponible en línea con despliegue automático.

@@ -43,6 +43,17 @@
 <script>
   import type { TerminalController } from '../types/terminal';
 
+  // Declaración global para el manejador de errores de imágenes
+  declare global {
+    interface Window {
+      handleNASAImageError: (
+        imgElement: HTMLImageElement,
+        originalUrl: string,
+        date: string
+      ) => void;
+    }
+  }
+
   interface PlanetaryAge {
     planet: string;
     age: number;
@@ -280,16 +291,16 @@
       const birthDate = new Date(birthdate);
       const apodStartDate = new Date('1995-06-16');
 
-      // Si la fecha es anterior a APOD o la clave es demo/inválida, usar contenido alternativo
-      if (
-        birthDate < apodStartDate ||
-        this.nasaApiKey === 'DEMO_KEY' ||
-        !this.nasaApiKey ||
-        this.nasaApiKey.length < 20
-      ) {
-        console.log(
-          '📅 Fecha anterior a junio 1995 o API key no válida - mostrando datos astronómicos calculados'
-        );
+      // Si la fecha es anterior a APOD, usar contenido alternativo
+      if (birthDate < apodStartDate) {
+        console.log('📅 Fecha anterior a junio 1995 - mostrando datos astronómicos calculados');
+        this.displayAlternativeAstronomyData(birthdate);
+        return;
+      }
+
+      // Si no hay API key válida, usar contenido alternativo
+      if (this.nasaApiKey === 'DEMO_KEY' || !this.nasaApiKey) {
+        console.log('⚠️ API key de NASA no configurada - mostrando datos astronómicos calculados');
         this.displayAlternativeAstronomyData(birthdate);
         return;
       }
@@ -306,21 +317,33 @@
 
         // Fetch APOD (Astronomy Picture of the Day) para la fecha de nacimiento
         console.log('✓ Cargando imagen APOD para fecha:', birthdate);
-        const apodResponse = await fetch(
-          `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}&date=${birthdate}`
-        );
+        console.log('✓ API Key presente:', this.nasaApiKey ? 'Sí' : 'No');
+
+        const apodUrl = `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}&date=${birthdate}`;
+        console.log('✓ URL de la API:', apodUrl.replace(this.nasaApiKey, '***'));
+
+        const apodResponse = await fetch(apodUrl);
+
+        console.log('✓ Respuesta de NASA APOD:', apodResponse.status, apodResponse.statusText);
 
         if (apodResponse.ok) {
           const apodData: NASAAPODResponse = await apodResponse.json();
+          console.log('✓ Datos recibidos de NASA:', {
+            title: apodData.title,
+            date: apodData.date,
+            media_type: apodData.media_type,
+            url: apodData.url,
+          });
           this.displayNASAData(apodData);
         } else {
           // Si falla la API, mostrar contenido astronómico alternativo
-          console.log('⚠️ Error en API de NASA, usando contenido alternativo');
+          const errorText = await apodResponse.text();
+          console.log('⚠️ Error en API de NASA:', apodResponse.status, errorText);
           this.displayAlternativeAstronomyData(birthdate);
         }
       } catch (error) {
         // Mostrar contenido alternativo en lugar de error
-        console.log('⚠️ Error al cargar APOD, usando contenido alternativo:', error);
+        console.error('⚠️ Error al cargar APOD:', error);
         this.displayAlternativeAstronomyData(birthdate);
       }
     }
@@ -656,6 +679,9 @@
       const translatedTitle = await this.translateToSpanish(data.title);
       const translatedExplanation = await this.translateToSpanish(data.explanation);
 
+      // Determinar la URL de la imagen con estrategia de fallback
+      const imageUrl = this.getImageUrl(data.url);
+
       const html = `
       <div class="border border-terminal-dim p-4 rounded">
         <div class="text-terminal-bright text-xl mb-4">
@@ -670,20 +696,21 @@
             <div class="text-xs text-terminal-dim mb-3">${this.formatDate(data.date)}</div>
             <div class="mb-3">
               <img
-                src="https://corsproxy.io/?${encodeURIComponent(data.url)}"
+                id="nasa-apod-image-${data.date}"
+                src="${imageUrl}"
                 alt="${this.escapeHtml(translatedTitle)}"
                 class="w-full mx-auto"
                 style="display: block; max-height: none; object-fit: cover; border-radius: 8px;"
-                onload="console.log('✓ Imagen calculadora cargada')"
-                onerror="console.error('Error cargando imagen calculadora'); this.style.display='none'; this.nextElementSibling.style.display='block';"
+                onload="console.log('✓ Imagen calculadora cargada:', '${data.date}')"
+                onerror="window.handleNASAImageError(this, '${data.url}', '${data.date}')"
               />
-              <div style="display:none;" class="text-terminal-dim text-center p-4 border border-terminal-dim rounded">
-                ⚠️ Error al cargar la imagen. <a href="${data.url}" target="_blank" class="text-terminal-bright hover:underline">Ver imagen original →</a>
+              <div id="nasa-error-${data.date}" style="display:none;" class="text-terminal-dim text-center p-4 border border-terminal-dim rounded">
+                ⚠️ Error al cargar la imagen. <a href="${data.url}" target="_blank" class="text-terminal-bright hover:underline">Ver imagen original en NASA →</a>
               </div>
             </div>
             <div class="text-center text-xs text-terminal-dim mb-3">
               <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright">
-                🔗 Ver imagen original
+                🔗 Ver imagen original en NASA
               </a>
             </div>
           </div>
@@ -694,7 +721,7 @@
             <div class="text-xs text-terminal-dim mb-3">${this.formatDate(data.date)}</div>
             <div class="text-terminal-dim">
               <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright underline">
-                Ver video/multimedia →
+                Ver video/multimedia en NASA →
               </a>
             </div>
           </div>
@@ -717,6 +744,15 @@
     `;
 
       nasaDataDiv.innerHTML = html;
+    }
+
+    private getImageUrl(originalUrl: string): string {
+      // Si la URL es de apod.nasa.gov, intentar usar la versión HD si existe
+      if (originalUrl.includes('apod.nasa.gov')) {
+        return originalUrl;
+      }
+      // Para otras URLs, usar directamente
+      return originalUrl;
     }
 
     private formatDate(dateString: string): string {
@@ -1255,6 +1291,33 @@
       }, 500);
     }
   }
+
+  // Manejador global de errores de imágenes NASA con fallback automático
+  window.handleNASAImageError = function (
+    imgElement: HTMLImageElement,
+    originalUrl: string,
+    date: string
+  ) {
+    console.error('Error cargando imagen NASA:', originalUrl);
+
+    // Intentar con proxy CORS como fallback
+    const currentSrc = imgElement.src;
+
+    // Si ya intentamos con el proxy, mostrar el mensaje de error
+    if (currentSrc.includes('corsproxy.io') || currentSrc.includes('api.allorigins.win')) {
+      console.error('Falló incluso con proxy, mostrando mensaje de error');
+      imgElement.style.display = 'none';
+      const errorDiv = document.getElementById(`nasa-error-${date}`);
+      if (errorDiv) {
+        errorDiv.style.display = 'block';
+      }
+      return;
+    }
+
+    // Intentar con proxy CORS
+    console.log('Intentando cargar imagen con proxy CORS...');
+    imgElement.src = `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`;
+  };
 
   document.addEventListener('loadView', (e: Event) => {
     const customEvent = e as CustomEvent;
