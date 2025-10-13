@@ -164,7 +164,7 @@
         ages.push({ planet, age, orbitalPeriod });
       }
 
-      // Mostrar resultados
+      // Mostrar resultados con placeholder para eventos históricos
       this.displayResults(ages, birthDate, daysPassed);
 
       // Generar noticias del año de nacimiento (debe ejecutarse después de displayResults)
@@ -215,6 +215,16 @@
 
       html += `
           </div>
+        </div>
+      `;
+
+      // Añadir placeholder para eventos históricos
+      html += `
+        <div id="historical-events-placeholder" class="border border-terminal-dim p-4 rounded mt-4">
+          <div class="text-terminal-bright text-xl mb-4">
+            █ EVENTOS HISTÓRICOS EN TECNOLOGÍA Y CIENCIA
+          </div>
+          <div class="loading-dots">Cargando eventos históricos</div>
         </div>
       `;
 
@@ -648,25 +658,22 @@
 
       const html = `
       <div class="border border-terminal-dim p-4 rounded">
-        <div class="text-terminal-bright text-lg mb-4">
+        <div class="text-terminal-bright text-xl mb-4">
           █ IMAGEN ASTRONÓMICA DEL DÍA DE TU NACIMIENTO
-        </div>
-
-        <div class="mb-3">
-          <div class="text-terminal-text font-bold text-lg">${this.escapeHtml(translatedTitle)}</div>
-          <div class="text-xs text-terminal-dim">${this.formatDate(data.date)}</div>
         </div>
 
         ${
           data.media_type === 'image'
             ? `
           <div class="mb-4">
-            <div class="relative">
+            <div class="text-terminal-bright text-lg font-semibold mb-3">${this.escapeHtml(translatedTitle)}</div>
+            <div class="text-xs text-terminal-dim mb-3">${this.formatDate(data.date)}</div>
+            <div class="mb-3">
               <img
                 src="https://corsproxy.io/?${encodeURIComponent(data.url)}"
                 alt="${this.escapeHtml(translatedTitle)}"
-                class="w-full max-w-lg mx-auto border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors block"
-                style="display: block; max-height: 600px; object-fit: contain;"
+                class="w-full mx-auto"
+                style="display: block; max-height: none; object-fit: cover; border-radius: 8px;"
                 onload="console.log('✓ Imagen calculadora cargada')"
                 onerror="console.error('Error cargando imagen calculadora'); this.style.display='none'; this.nextElementSibling.style.display='block';"
               />
@@ -674,7 +681,7 @@
                 ⚠️ Error al cargar la imagen. <a href="${data.url}" target="_blank" class="text-terminal-bright hover:underline">Ver imagen original →</a>
               </div>
             </div>
-            <div class="text-center text-xs text-terminal-dim mt-2">
+            <div class="text-center text-xs text-terminal-dim mb-3">
               <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright">
                 🔗 Ver imagen original
               </a>
@@ -682,10 +689,14 @@
           </div>
         `
             : `
-          <div class="mb-4 text-terminal-dim">
-            <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright underline">
-              Ver video/multimedia →
-            </a>
+          <div class="mb-4">
+            <div class="text-terminal-text font-bold text-lg mb-3">${this.escapeHtml(translatedTitle)}</div>
+            <div class="text-xs text-terminal-dim mb-3">${this.formatDate(data.date)}</div>
+            <div class="text-terminal-dim">
+              <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright underline">
+                Ver video/multimedia →
+              </a>
+            </div>
           </div>
         `
         }
@@ -1172,8 +1183,8 @@
     }
 
     private displayBirthYearNews(news: TechNewsEvent[], year: number, month: number): void {
-      const resultsDiv = document.getElementById('calculator-results');
-      if (!resultsDiv) return;
+      const placeholder = document.getElementById('historical-events-placeholder');
+      if (!placeholder) return;
 
       const monthNames = [
         'Enero',
@@ -1225,7 +1236,8 @@
         </div>
       `;
 
-      resultsDiv.innerHTML += newsHtml;
+      // Reemplazar el placeholder con el contenido real
+      placeholder.outerHTML = newsHtml;
     }
 
     private exit(): void {
