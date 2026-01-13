@@ -5,6 +5,7 @@
 ✅ Workflow de GitHub Actions creado (`.github/workflows/deploy.yml`)
 ✅ Astro configurado para producción (`astro.config.mjs`)
 ✅ Archivo CNAME creado para dominio personalizado
+✅ Archivo `.nojekyll` creado para desactivar Jekyll en GitHub Pages
 
 ---
 
@@ -15,8 +16,13 @@
 1. Ve a tu repositorio: `https://github.com/Gusi-ui/blade-runner`
 2. Haz clic en **Settings** (Configuración)
 3. En el menú lateral izquierdo, haz clic en **Pages**
-4. En **Source**, selecciona **GitHub Actions**
+4. En **Source**, selecciona **GitHub Actions** (NO "Deploy from a branch")
 5. Guarda los cambios
+
+**⚠️ IMPORTANTE**: Si ves que GitHub Pages está usando Jekyll automáticamente, asegúrate de que:
+
+- El **Source** esté configurado en **GitHub Actions** (no en "Deploy from a branch")
+- El archivo `.nojekyll` esté presente en la carpeta `public/` (ya está incluido)
 
 ### 2. Hacer Push de los Cambios
 
@@ -123,8 +129,15 @@ Cada vez que hagas `git push` a la rama `main`, el sitio se actualizará automá
 
 ### El sitio muestra "404"
 
-- Verifica que GitHub Pages esté configurado en **Source: GitHub Actions**
+- Verifica que GitHub Pages esté configurado en **Source: GitHub Actions** (NO "Deploy from a branch")
 - Revisa que el workflow se haya ejecutado correctamente en la pestaña Actions
+- Verifica que el archivo `.nojekyll` esté presente en `public/`
+
+### GitHub Pages está usando Jekyll en lugar de Astro
+
+- Verifica que el **Source** en Settings → Pages esté en **GitHub Actions**
+- Asegúrate de que el archivo `.nojekyll` esté en la carpeta `public/`
+- Si el problema persiste, elimina cualquier archivo `_config.yml` o carpetas `_posts/` que puedan activar Jekyll
 
 ### El dominio personalizado no funciona
 
