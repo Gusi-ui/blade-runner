@@ -2,7 +2,7 @@
 
 Terminal retro-futurista interactiva con estética inspirada en Blade Runner. Una aplicación web completa desarrollada con Astro que simula una terminal antigua con efectos visuales CRT, texto verde fosforescente y múltiples funcionalidades interactivas.
 
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-green.svg)
 ![Astro](https://img.shields.io/badge/Astro-4.16-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
@@ -58,10 +58,23 @@ Terminal retro-futurista interactiva con estética inspirada en Blade Runner. Un
 - Muestra la imagen astronómica del día de tu nacimiento
 - Estadísticas personalizadas
 
+#### 7. **Asistente IA Nexus-7**
+
+- Chat contextual sobre CV, proyectos y comandos
+- Powered by Cloudflare Workers AI
+- Comandos: `chat`, `pregunta`, `ask`
+
+#### 8. **Consola Mobile-First**
+
+- Barra de acciones rápidas táctiles
+- Header colapsable en móvil
+- Controles táctiles para Snake y Tetris
+- PWA instalable con modo offline
+
 ## 🛠️ Tecnologías
 
-- **Framework**: [Astro](https://astro.build) 4.16+
-- **Estilos**: [Tailwind CSS](https://tailwindcss.com) 3.4+
+- **Framework**: [Astro](https://astro.build) 6+
+- **Estilos**: [Tailwind CSS](https://tailwindcss.com) 4+ (`@tailwindcss/vite`)
 - **Lenguaje**: TypeScript
 - **APIs**:
   - [NASA API](https://api.nasa.gov/) - APOD, NeoWs
@@ -73,8 +86,8 @@ Terminal retro-futurista interactiva con estética inspirada en Blade Runner. Un
 
 ### Requisitos Previos
 
-- Node.js 18+
-- npm o pnpm
+- Node.js 20+
+- pnpm 10+ (incluido en `packageManager` del proyecto)
 
 ### Pasos de Instalación
 
@@ -88,8 +101,6 @@ cd blade-runner-terminal
 2. **Instalar dependencias**
 
 ```bash
-npm install
-# o
 pnpm install
 ```
 
@@ -107,8 +118,11 @@ Edita `.env` y añade tus claves API:
 # NASA API Key (obtén una gratis en https://api.nasa.gov/)
 PUBLIC_NASA_API_KEY=tu_clave_nasa_aqui
 
-# NewsAPI Key (obtén una gratis en https://newsapi.org/)
-PUBLIC_NEWS_API_KEY=tu_clave_newsapi_aqui
+# Guardian API Key (opcional, https://open-platform.theguardian.com/)
+PUBLIC_GUARDIAN_API_KEY=test
+
+# URL del Cloudflare Worker (API proxy + chat IA)
+PUBLIC_API_BASE_URL=https://tu-worker.workers.dev
 ```
 
 **Nota**: Puedes usar `DEMO_KEY` para NASA API durante desarrollo, pero tiene límites de uso.
@@ -116,20 +130,21 @@ PUBLIC_NEWS_API_KEY=tu_clave_newsapi_aqui
 4. **Iniciar servidor de desarrollo**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 La aplicación estará disponible en `http://localhost:4321`
 
 ## 🚀 Comandos Disponibles
 
-| Comando           | Acción                                            |
-| ----------------- | ------------------------------------------------- |
-| `npm install`     | Instala dependencias                              |
-| `npm run dev`     | Inicia servidor de desarrollo en `localhost:4321` |
-| `npm run build`   | Construye el sitio en `./dist/`                   |
-| `npm run preview` | Previsualiza el build localmente                  |
-| `npm run astro`   | Ejecuta comandos de Astro CLI                     |
+| Comando        | Acción                                            |
+| -------------- | ------------------------------------------------- |
+| `pnpm install` | Instala dependencias (raíz + workers)             |
+| `pnpm dev`     | Inicia servidor de desarrollo en `localhost:4321` |
+| `pnpm build`   | Construye el sitio en `./dist/`                   |
+| `pnpm preview` | Previsualiza el build localmente                  |
+| `pnpm test`    | Ejecuta tests unitarios                           |
+| `pnpm astro`   | Ejecuta comandos de Astro CLI                     |
 
 ## 🎮 Comandos de Terminal
 
@@ -138,12 +153,15 @@ Una vez en la aplicación, puedes usar estos comandos:
 - `ayuda` / `help` - Muestra todos los comandos disponibles
 - `menu` - Abre el menú principal
 - `limpiar` / `clear` - Limpia la pantalla
-- `fecha` - Muestra la fecha actual
-- `noticias` - Ver noticias tecnológicas
+- `fecha` / `date` - Muestra la fecha actual
+- `noticias` / `news` - Ver noticias tecnológicas
 - `curriculum` / `cv` - Ver currículum de Gusi
-- `proyectos` - Ver portafolio de proyectos
-- `juegos` - Acceder a juegos retro
-- `calculadora` - Abrir calculadora cósmica
+- `proyectos` / `projects` - Ver portafolio de proyectos
+- `juegos` / `games` - Acceder a juegos retro
+- `calculadora` / `calculator` - Abrir calculadora cósmica
+- `apod` / `foto nasa` - Imagen astronómica del día
+- `chat` / `pregunta` - Asistente IA Nexus-7
+- `contacto` / `status` - Info de contacto y diagnóstico
 - `salir` / `exit` - Cerrar sesión
 
 También puedes usar números (1-6) para acceder directamente a las secciones del menú.
@@ -192,14 +210,14 @@ colors: {
 
 1. Push a GitHub
 2. Conecta tu repositorio en [Netlify](https://netlify.com)
-3. Build command: `npm run build`
+3. Build command: `pnpm build`
 4. Publish directory: `dist`
 5. Configura variables de entorno
 
 ### GitHub Pages
 
 ```bash
-npm run build
+pnpm build
 # Despliega la carpeta dist/ a GitHub Pages
 ```
 
@@ -217,7 +235,12 @@ npm run build
 │   │   ├── CV.astro              # Currículum
 │   │   ├── Projects.astro        # Proyectos
 │   │   ├── Games.astro           # Selector de juegos
-│   │   └── CosmicCalculator.astro # Calculadora
+│   │   ├── CosmicCalculator.astro # Calculadora
+│   │   └── Chat.astro             # Asistente IA
+│   ├── lib/
+│   │   ├── api/                   # Cliente API unificado
+│   │   ├── terminal/              # Comandos y utilidades
+│   │   └── ai/                    # Contexto del chat
 │   ├── scripts/
 │   │   ├── snake.ts              # Juego Snake
 │   │   ├── hangman.ts            # Juego Ahorcado
@@ -226,6 +249,7 @@ npm run build
 │   │   └── terminal.css          # Estilos retro
 │   └── pages/
 │       └── index.astro           # Página principal
+├── workers/                      # Cloudflare Worker (API + IA)
 ├── astro.config.mjs              # Configuración Astro
 ├── tailwind.config.mjs           # Configuración Tailwind
 ├── tsconfig.json                 # Configuración TypeScript

@@ -15,36 +15,36 @@ Commands
 
 - Dev server (port 4321 by default)
   ```bash path=null start=null
-  npm run dev
+  pnpm dev
   ```
 - Build (type-check + build) and local preview
   ```bash path=null start=null
-  npm run build
-  npm run preview
+  pnpm build
+  pnpm preview
   ```
 - Linting, formatting, and type checks
 
   ```bash path=null start=null
   # Lint & auto-fix
-  npm run lint
+  pnpm lint
 
   # Lint without fixing
-  npm run lint:check
+  pnpm lint:check
 
   # Format (Prettier) and check mode
-  npm run format
-  npm run format:check
+  pnpm format
+  pnpm format:check
 
   # Type check via Astro
-  npm run type-check
+  pnpm type-check
   ```
 
 - Astro CLI passthrough
   ```bash path=null start=null
-  npm run astro -- <subcommand>
+  pnpm astro -- <subcommand>
   # examples
-  npm run astro -- add
-  npm run astro -- check
+  pnpm astro -- add
+  pnpm astro -- check
   ```
 - Tests: No test runner/config detected in this repository. If tests are added later, document the single-test invocation here.
 
@@ -64,7 +64,7 @@ CI/CD
 
 - GitHub Actions: .github/workflows/deploy.yml
   - Triggers: push to main, manual dispatch.
-  - Node 20, npm ci, npm run build; uploads ./dist as Pages artifact; deploys with actions/deploy-pages.
+  - Node 20, pnpm install --frozen-lockfile, pnpm build; uploads ./dist as Pages artifact; deploys with actions/deploy-pages.
 
 Code architecture (high level)
 
@@ -95,10 +95,10 @@ Linting & formatting policy
 
 - ESLint (.eslintrc.cjs): recommended + plugin:astro + plugin:tailwindcss; TS parser enabled. Dist/.astro/node_modules are ignored. Enforces prefer-const/no-var and TS-specific unused-vars rules; tailwind class conflict/order checks.
 - Prettier (.prettierrc): includes prettier-plugin-astro and prettier-plugin-tailwindcss.
-- Husky/lint-staged are listed as dev dependencies; a pre-commit npm script is defined (lint:check, format:check, type-check). If Husky hooks are initialized in this repo, wire the pre-commit script into .husky/pre-commit.
+- Husky/lint-staged are listed as dev dependencies; a pre-commit pnpm script is defined (lint:check, format:check, type-check, test). Husky runs `pnpm exec lint-staged` in .husky/pre-commit.
 
 Operational notes for Warp
 
-- Use npm run dev for interactive iteration; components render into the terminal via events — inspect console logs when working on NewsFeed and API calls, as they implement verbose diagnostics and fallbacks.
+- Use pnpm dev for interactive iteration; components render into the terminal via events — inspect console logs when working on NewsFeed and API calls, as they implement verbose diagnostics and fallbacks.
 - For GitHub Pages deployments, ensure site/base in astro.config.mjs matches the final URL structure to avoid broken asset paths.
 - If API keys are redacted in commands, replace with {{PUBLIC_NASA_API_KEY}} / {{PUBLIC_NEWS_API_KEY}} placeholders and source from environment variables rather than inlining.
