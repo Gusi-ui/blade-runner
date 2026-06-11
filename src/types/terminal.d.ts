@@ -13,8 +13,16 @@ declare global {
   interface Window {
     terminal?: TerminalController;
     Snake?: GameClass;
+    Tetris?: GameClass;
     Hangman?: GameClass;
     TicTacToe?: GameClass;
+    apodViewer?: unknown;
+    newsFeed?: unknown;
+    handleNASAImageError?: (
+      imgElement: HTMLImageElement,
+      originalUrl: string,
+      date: string
+    ) => void;
   }
 }
 
