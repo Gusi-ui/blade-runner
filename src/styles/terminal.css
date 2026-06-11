@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@config '../../tailwind.config.mjs';
 
 @layer base {
   * {
@@ -14,7 +13,7 @@
   }
 
   body {
-    @apply bg-terminal-bg font-mono text-terminal-text;
+    @apply bg-terminal-bg text-terminal-text font-mono;
     text-shadow: 0 0 5px currentColor;
     font-size: 1rem;
   }
@@ -63,7 +62,7 @@
   }
 
   .terminal-screen {
-    @apply w-full rounded-lg border-2 border-terminal-dim p-4;
+    @apply border-terminal-dim w-full rounded-lg border-2 p-4;
     background: rgba(0, 0, 0, 0.8);
     box-shadow:
       inset 0 0 20px rgba(0, 255, 65, 0.1),
@@ -73,7 +72,7 @@
   }
 
   .terminal-header {
-    @apply mb-4 border-b border-terminal-dim pb-2 text-sm text-terminal-bright md:text-base;
+    @apply border-terminal-dim text-terminal-bright mb-4 border-b pb-2 text-sm md:text-base;
   }
 
   .ascii-header {
@@ -86,7 +85,7 @@
   }
 
   .ascii-art {
-    @apply font-mono text-terminal-bright;
+    @apply text-terminal-bright font-mono;
     text-shadow:
       0 0 5px currentColor,
       0 0 10px currentColor,
@@ -132,7 +131,7 @@
   }
 
   .terminal-input {
-    @apply flex-1 border-none bg-transparent font-mono text-terminal-text outline-none;
+    @apply text-terminal-text flex-1 border-none bg-transparent font-mono outline-none;
     caret-color: transparent;
     position: relative;
     z-index: 1;
@@ -492,7 +491,7 @@
 
   /* Contenedor del título responsivo */
   .section-title {
-    @apply font-mono text-terminal-bright;
+    @apply text-terminal-bright font-mono;
     text-align: center;
     padding: 0.75rem 1rem;
     margin: 0 0 1.5rem 0;
@@ -549,7 +548,7 @@
   }
 
   .menu-item {
-    @apply cursor-pointer rounded p-2 transition-colors duration-200 hover:bg-terminal-dim hover:bg-opacity-20 hover:text-terminal-bright;
+    @apply hover:bg-terminal-dim/20 hover:text-terminal-bright cursor-pointer rounded p-2 transition-colors duration-200;
   }
 
   .menu-item:hover::before {
@@ -575,7 +574,7 @@
   }
 
   .terminal-screen::-webkit-scrollbar-thumb {
-    @apply border border-terminal-text bg-terminal-dim;
+    @apply border-terminal-text bg-terminal-dim border;
   }
 
   .terminal-screen::-webkit-scrollbar-thumb:hover {
@@ -584,7 +583,7 @@
 
   /* Canvas para juegos */
   .game-canvas {
-    @apply mx-auto my-4 border-2 border-terminal-text;
+    @apply border-terminal-text mx-auto my-4 border-2;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
   }
@@ -753,5 +752,110 @@
       transform: scale(1);
       transform-origin: top center;
     }
+  }
+
+  .quick-actions {
+    @apply border-terminal-dim sticky bottom-0 z-10 flex flex-wrap gap-2 border-t bg-black/90 py-2;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .quick-chip {
+    @apply border-terminal-dim text-terminal-text hover:border-terminal-bright hover:text-terminal-bright cursor-pointer rounded border px-3 py-2 text-sm transition-colors;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .terminal-send {
+    @apply ml-2 shrink-0 rounded px-3 py-1 text-sm;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .terminal-input-line {
+    @apply flex flex-wrap items-center gap-2;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .terminal-container {
+    min-height: 100dvh;
+  }
+
+  .terminal-screen {
+    min-height: calc(100dvh - 2rem);
+  }
+
+  .touch-controls {
+    @apply mx-auto mt-4 grid max-w-xs grid-cols-3 gap-2;
+  }
+
+  .touch-btn {
+    @apply hover:bg-terminal-dim/20 hover:text-terminal-bright flex cursor-pointer items-center justify-center rounded p-2 py-3 text-lg transition-colors duration-200;
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  .touch-btn-wide {
+    grid-column: span 3;
+  }
+
+  body.theme-cyberpunk {
+  }
+
+  body.theme-cyberpunk .terminal-screen {
+    border-color: #00d4ff;
+    box-shadow:
+      inset 0 0 20px rgba(0, 212, 255, 0.1),
+      0 0 30px rgba(0, 212, 255, 0.2);
+  }
+
+  body.theme-cyberpunk,
+  body.theme-cyberpunk .terminal-output,
+  body.theme-cyberpunk .terminal-input {
+    color: #00d4ff;
+    text-shadow: 0 0 5px rgba(0, 212, 255, 0.8);
+  }
+
+  body.theme-cyberpunk .text-terminal-bright {
+    color: #66e5ff;
+  }
+
+  body.theme-cyberpunk .text-terminal-dim {
+    color: #0099bb;
+  }
+
+  body.theme-retro {
+  }
+
+  body.theme-retro .terminal-screen {
+    border-color: #ffb000;
+    box-shadow:
+      inset 0 0 20px rgba(255, 176, 0, 0.1),
+      0 0 30px rgba(255, 176, 0, 0.2);
+  }
+
+  body.theme-retro,
+  body.theme-retro .terminal-output,
+  body.theme-retro .terminal-input {
+    color: #ffb000;
+    text-shadow: 0 0 5px rgba(255, 176, 0, 0.8);
+  }
+
+  body.theme-retro .text-terminal-bright {
+    color: #ffcc44;
+  }
+
+  body.theme-retro .text-terminal-dim {
+    color: #cc8800;
+  }
+
+  body.reduced-effects .particles,
+  body.reduced-effects .scanline,
+  body.reduced-effects .crt-flicker {
+    display: none !important;
+  }
+
+  body.reduced-effects .ascii-art {
+    animation: none;
+    text-shadow: none;
   }
 }
