@@ -38,6 +38,15 @@ export class Snake {
       <div class="flex justify-center">
         <canvas id="snake-canvas" class="game-canvas" width="400" height="400"></canvas>
       </div>
+      <div class="flex flex-col items-center gap-2 mb-4 md:hidden">
+        <div class="text-sm text-terminal-bright">Controles táctiles:</div>
+        <button id="snake-btn-up" type="button" class="menu-item px-4 py-2 text-lg" aria-label="Arriba">↑</button>
+        <div class="flex gap-2">
+          <button id="snake-btn-left" type="button" class="menu-item px-4 py-2 text-lg" aria-label="Izquierda">←</button>
+          <button id="snake-btn-down" type="button" class="menu-item px-4 py-2 text-lg" aria-label="Abajo">↓</button>
+          <button id="snake-btn-right" type="button" class="menu-item px-4 py-2 text-lg" aria-label="Derecha">→</button>
+        </div>
+      </div>
       <div class="text-center mt-4">
         <button id="snake-restart" class="menu-item inline-block px-4 py-2">Reiniciar</button>
         <button id="snake-exit" class="menu-item inline-block px-4 py-2 ml-2">Salir</button>
@@ -62,7 +71,26 @@ export class Snake {
       if (exitBtn) {
         exitBtn.addEventListener('click', () => this.exit());
       }
+
+      this.setupTouchControls();
     }, 100);
+  }
+
+  private setupTouchControls(): void {
+    const setDirection = (vx: number, vy: number) => {
+      if (vx !== 0 && this.velocityX === 0) {
+        this.velocityX = vx;
+        this.velocityY = 0;
+      } else if (vy !== 0 && this.velocityY === 0) {
+        this.velocityX = 0;
+        this.velocityY = vy;
+      }
+    };
+
+    document.getElementById('snake-btn-up')?.addEventListener('click', () => setDirection(0, -1));
+    document.getElementById('snake-btn-down')?.addEventListener('click', () => setDirection(0, 1));
+    document.getElementById('snake-btn-left')?.addEventListener('click', () => setDirection(-1, 0));
+    document.getElementById('snake-btn-right')?.addEventListener('click', () => setDirection(1, 0));
   }
 
   private resetGame(): void {

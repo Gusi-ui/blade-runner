@@ -1,13 +1,6 @@
 // Tetris Game - Retro Style
 import type { TerminalController } from '../types/terminal';
 
-// Extend Window interface to include Tetris
-declare global {
-  interface Window {
-    Tetris: typeof Tetris;
-  }
-}
-
 // Tetris piece interface
 interface TetrisPiece {
   shape: number[][];
