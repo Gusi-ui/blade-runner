@@ -7,6 +7,7 @@ import Projects from '../components/Projects.astro';
 import Games from '../components/Games.astro';
 import CosmicCalculator from '../components/CosmicCalculator.astro';
 import APOD from '../components/APOD.astro';
+import Chat from '../components/Chat.astro';
 import '../styles/terminal.css';
 
 const title = 'Blade Runner Terminal - Gusi';
@@ -22,6 +23,10 @@ const description =
     <meta name="description" content={description} />
     <meta name="author" content="Gusi" />
     <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="canonical" href="https://gusi.dev/" />
 
     <!-- Open Graph -->
     <meta property="og:title" content={title} />
@@ -57,34 +62,23 @@ const description =
     <Games />
     <CosmicCalculator />
     <APOD />
+    <Chat />
 
     <!-- Script global para manejo de eventos -->
     <script>
-      // Asegurar que el input de terminal siempre esté enfocado
       document.addEventListener('DOMContentLoaded', () => {
-        const terminalInput = document.getElementById('terminal-input') as HTMLInputElement;
+        const isMobile = window.matchMedia('(max-width: 640px)').matches;
+        const savedTheme = localStorage.getItem('nexus-theme');
+        const reducedEffects = localStorage.getItem('nexus-reduced-effects') === 'true';
 
-        if (terminalInput) {
-          terminalInput.focus();
+        if (savedTheme) document.body.classList.add(`theme-${savedTheme}`);
+        if (reducedEffects) document.body.classList.add('reduced-effects');
 
-          // Re-enfocar cuando se hace clic en cualquier parte
-          document.addEventListener('click', e => {
-            // No re-enfocar si se hizo clic en un input, button o link
-            const target = e.target as HTMLElement;
-            if (
-              target.tagName !== 'INPUT' &&
-              target.tagName !== 'BUTTON' &&
-              target.tagName !== 'A' &&
-              !target.closest('button') &&
-              !target.closest('a')
-            ) {
-              terminalInput.focus();
-            }
-          });
+        generateParticles(isMobile ? 15 : 50);
+
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
         }
-
-        // Generar partículas cyberpunk
-        generateParticles();
       });
 
       // Prevenir zoom en dispositivos móviles al hacer doble tap
@@ -101,11 +95,11 @@ const description =
         false
       );
 
-      function generateParticles(): void {
+      function generateParticles(count = 50): void {
         const particlesContainer = document.getElementById('particles');
         if (!particlesContainer) return;
 
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < count; i++) {
           const particle = document.createElement('div');
           particle.className = 'particle';
           particle.style.left = Math.random() * 100 + '%';
@@ -118,13 +112,15 @@ const description =
       }
     </script>
 
-    <!-- Service Worker para PWA (opcional) -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          // Descomentado si implementas un service worker
-          // navigator.serviceWorker.register('/sw.js');
-        });
+    <script is:inline type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Blade Runner Terminal",
+        "description": "Terminal retro-futurista interactiva de Gusi",
+        "url": "https://gusi.dev",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any"
       }
     </script>
   </body>

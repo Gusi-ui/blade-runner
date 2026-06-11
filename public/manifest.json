@@ -1,0 +1,19 @@
+{
+  "name": "Blade Runner Terminal",
+  "short_name": "Nexus-7",
+  "description": "Terminal retro-futurista interactiva de Gusi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
