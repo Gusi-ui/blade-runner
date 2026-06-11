@@ -6,19 +6,19 @@
   <div class="section-title">Calculadora Cósmica</div>
 
   <div class="mb-6">
-    <div class="mb-4 text-terminal-text">
+    <div class="text-terminal-text mb-4">
       Descubre tu edad en diferentes planetas y obtén datos astronómicos de tu fecha de nacimiento.
     </div>
 
     <div class="mb-6 space-y-4">
       <div>
-        <label for="birthdate" class="mb-2 block text-base text-terminal-bright">
+        <label for="birthdate" class="text-terminal-bright mb-2 block text-base">
           Ingresa tu fecha de nacimiento:
         </label>
         <input
           type="date"
           id="birthdate"
-          class="terminal-input w-full rounded border-2 border-terminal-bright bg-black px-4 py-3 text-lg text-terminal-text md:w-auto"
+          class="terminal-input border-terminal-bright text-terminal-text w-full rounded border-2 bg-black px-4 py-3 text-lg md:w-auto"
           style="color-scheme: dark;"
           max={new Date().toISOString().split('T')[0]}
         />
@@ -42,17 +42,8 @@
 
 <script>
   import type { TerminalController } from '../types/terminal';
-
-  // Declaración global para el manejador de errores de imágenes
-  declare global {
-    interface Window {
-      handleNASAImageError: (
-        imgElement: HTMLImageElement,
-        originalUrl: string,
-        date: string
-      ) => void;
-    }
-  }
+  import { fetchAPOD } from '../lib/api/client';
+  import { translateToSpanish } from '../lib/api/translate';
 
   interface PlanetaryAge {
     planet: string;
@@ -319,28 +310,8 @@
         console.log('✓ Cargando imagen APOD para fecha:', birthdate);
         console.log('✓ API Key presente:', this.nasaApiKey ? 'Sí' : 'No');
 
-        const apodUrl = `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}&date=${birthdate}`;
-        console.log('✓ URL de la API:', apodUrl.replace(this.nasaApiKey, '***'));
-
-        const apodResponse = await fetch(apodUrl);
-
-        console.log('✓ Respuesta de NASA APOD:', apodResponse.status, apodResponse.statusText);
-
-        if (apodResponse.ok) {
-          const apodData: NASAAPODResponse = await apodResponse.json();
-          console.log('✓ Datos recibidos de NASA:', {
-            title: apodData.title,
-            date: apodData.date,
-            media_type: apodData.media_type,
-            url: apodData.url,
-          });
-          this.displayNASAData(apodData);
-        } else {
-          // Si falla la API, mostrar contenido astronómico alternativo
-          const errorText = await apodResponse.text();
-          console.log('⚠️ Error en API de NASA:', apodResponse.status, errorText);
-          this.displayAlternativeAstronomyData(birthdate);
-        }
+        const apodData = await fetchAPOD({ date: birthdate });
+        await this.displayNASAData(apodData);
       } catch (error) {
         // Mostrar contenido alternativo en lugar de error
         console.error('⚠️ Error al cargar APOD:', error);
@@ -360,7 +331,7 @@
           console.log('✓ Última fecha APOD disponible:', data.date);
           return new Date(data.date);
         }
-      } catch (error) {
+      } catch {
         console.warn('No se pudo obtener la fecha más reciente de APOD');
       }
 
@@ -403,7 +374,7 @@
             █ DATOS ASTRONÓMICOS DE TU NACIMIENTO
           </div>
 
-          <div class="mb-4 p-3 bg-yellow-900 bg-opacity-30 rounded border border-yellow-700">
+          <div class="mb-4 p-3 bg-yellow-900/30 rounded border border-yellow-700">
             <div class="text-yellow-200 font-semibold mb-2 text-base">ℹ️ Imagen no disponible</div>
             <div class="text-base text-yellow-100">
               Las imágenes de NASA APOD solo están disponibles desde el 16 de junio de 1995.
@@ -433,12 +404,12 @@
             </div>
           </div>
 
-          <div class="mb-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim">
+          <div class="mb-4 p-3 bg-black/30 rounded border border-terminal-dim">
             <div class="text-terminal-bright font-semibold mb-2 text-base">🌌 Curiosidad Astronómica</div>
             <div class="text-base">${skyData.fact}</div>
           </div>
 
-          <div class="mb-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim">
+          <div class="mb-4 p-3 bg-black/30 rounded border border-terminal-dim">
             <div class="text-terminal-bright font-semibold mb-2 text-base">✨ Datos Cósmicos</div>
             <div class="text-base space-y-1">
               <div>• Has dado <span class="text-terminal-bright">${(daysAlive / 365.25).toFixed(2)}</span> vueltas al Sol</div>
@@ -676,8 +647,8 @@
 
       // Traducir título y explicación
       nasaDataDiv.innerHTML = '<div class="loading-dots">Traduciendo contenido</div>';
-      const translatedTitle = await this.translateToSpanish(data.title);
-      const translatedExplanation = await this.translateToSpanish(data.explanation);
+      const translatedTitle = (await translateToSpanish(data.title)).text;
+      const translatedExplanation = (await translateToSpanish(data.explanation)).text;
 
       // Determinar la URL de la imagen con estrategia de fallback
       const imageUrl = this.getImageUrl(data.url);
@@ -735,7 +706,7 @@
           </div>
         </div>
 
-        <div class="mt-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim">
+        <div class="mt-4 p-3 bg-black/30 rounded border border-terminal-dim">
           <div class="text-terminal-dim text-xs">
             <strong>Título original:</strong> ${this.escapeHtml(data.title)}
           </div>
@@ -763,119 +734,6 @@
         month: 'long',
         day: 'numeric',
       });
-    }
-
-    private async translateToSpanish(text: string): Promise<string> {
-      try {
-        const chunks = this.splitTextIntoChunks(text, 4500);
-        const translatedChunks: string[] = [];
-
-        for (const chunk of chunks) {
-          const translated = await this.translateSinglePart(chunk);
-          translatedChunks.push(translated);
-          if (chunks.length > 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-
-        return translatedChunks.join(' ');
-      } catch (error) {
-        console.warn('Translation failed, using original text:', error);
-        return text;
-      }
-    }
-
-    private splitTextIntoChunks(text: string, maxLength: number): string[] {
-      if (text.length <= maxLength) {
-        return [text];
-      }
-
-      const chunks: string[] = [];
-      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-      let currentChunk = '';
-
-      for (const sentence of sentences) {
-        if ((currentChunk + sentence).length > maxLength && currentChunk.length > 0) {
-          chunks.push(currentChunk.trim());
-          currentChunk = sentence;
-        } else {
-          currentChunk += sentence;
-        }
-      }
-
-      if (currentChunk.length > 0) {
-        chunks.push(currentChunk.trim());
-      }
-
-      return chunks;
-    }
-
-    private async translateSinglePart(text: string): Promise<string> {
-      const maxRetries = 3;
-
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          // Método 1: Usar translate.googleapis.com sin autenticación
-          const googleResponse = await fetch(
-            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text)}`
-          );
-
-          if (googleResponse.ok) {
-            const data = await googleResponse.json();
-            if (data && data[0] && Array.isArray(data[0])) {
-              const translatedText = data[0]
-                .map((item: unknown[]) => (item as string[])[0])
-                .join('');
-              if (translatedText && translatedText.trim()) {
-                return translatedText;
-              }
-            }
-          }
-
-          // Método 2: Fallback a LibreTranslate
-          const libreResponse = await fetch('https://libretranslate.com/translate', {
-            method: 'POST',
-            body: JSON.stringify({
-              q: text,
-              source: 'en',
-              target: 'es',
-              format: 'text',
-            }),
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (libreResponse.ok) {
-            const data = await libreResponse.json();
-            if (data.translatedText) {
-              return data.translatedText;
-            }
-          }
-
-          // Método 3: Fallback a MyMemory
-          const myMemoryResponse = await fetch(
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`
-          );
-
-          if (myMemoryResponse.ok) {
-            const data = await myMemoryResponse.json();
-            if (data.responseStatus === 200 && data.responseData?.translatedText) {
-              return data.responseData.translatedText;
-            }
-          }
-
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-          }
-        } catch (error) {
-          console.warn(`Intento ${attempt + 1} de traducción falló:`, error);
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-          }
-        }
-      }
-
-      console.warn('Todos los métodos de traducción fallaron, usando texto original');
-      return text;
     }
 
     private escapeHtml(text: string): string {
@@ -1030,8 +888,8 @@
       for (const event of events) {
         try {
           // Traducir título y descripción
-          const translatedTitle = await this.translateToSpanish(event.title);
-          const translatedDescription = await this.translateToSpanish(event.description);
+          const translatedTitle = (await translateToSpanish(event.title)).text;
+          const translatedDescription = (await translateToSpanish(event.description)).text;
 
           translatedEvents.push({
             ...event,
@@ -1266,7 +1124,7 @@
               )
               .join('')}
           </div>
-          <div class="mt-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim text-xs text-terminal-dim">
+          <div class="mt-4 p-3 bg-black/30 rounded border border-terminal-dim text-xs text-terminal-dim">
             💡 Datos obtenidos de Wikipedia. Los eventos se filtran por relevancia en tecnología, ciencia y astronomía.
           </div>
         </div>
@@ -1295,28 +1153,12 @@
   // Manejador global de errores de imágenes NASA con fallback automático
   window.handleNASAImageError = function (
     imgElement: HTMLImageElement,
-    originalUrl: string,
+    _originalUrl: string,
     date: string
   ) {
-    console.error('Error cargando imagen NASA:', originalUrl);
-
-    // Intentar con proxy CORS como fallback
-    const currentSrc = imgElement.src;
-
-    // Si ya intentamos con el proxy, mostrar el mensaje de error
-    if (currentSrc.includes('corsproxy.io') || currentSrc.includes('api.allorigins.win')) {
-      console.error('Falló incluso con proxy, mostrando mensaje de error');
-      imgElement.style.display = 'none';
-      const errorDiv = document.getElementById(`nasa-error-${date}`);
-      if (errorDiv) {
-        errorDiv.style.display = 'block';
-      }
-      return;
-    }
-
-    // Intentar con proxy CORS
-    console.log('Intentando cargar imagen con proxy CORS...');
-    imgElement.src = `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`;
+    imgElement.style.display = 'none';
+    const errorDiv = document.getElementById(`nasa-error-${date}`);
+    if (errorDiv) errorDiv.style.display = 'block';
   };
 
   document.addEventListener('loadView', (e: Event) => {

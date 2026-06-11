@@ -17,59 +17,21 @@
       <button id="apod-random" class="menu-item px-3 py-1 text-xs">Imagen Aleatoria</button>
     </div>
 
-    <div class="text-xs text-terminal-dim">
+    <div class="text-terminal-dim text-xs">
       <span id="apod-last-update">Última actualización: Nunca</span>
     </div>
   </div>
 
-  <div class="mt-4 text-sm text-terminal-dim">Escribe 'menu' para volver al menú principal.</div>
+  <div class="text-terminal-dim mt-4 text-sm">Escribe 'menu' para volver al menú principal.</div>
 </div>
 
 <script>
-  interface APODData {
-    title: string;
-    explanation: string;
-    url: string;
-    hdurl?: string;
-    date: string;
-    media_type: string;
-    copyright?: string;
-  }
-
-  declare global {
-    interface Window {
-      apodViewer: APODViewer;
-    }
-  }
+  import { fetchAPOD, type APODData } from '../lib/api/client';
+  import { translateToSpanish } from '../lib/api/translate';
 
   class APODViewer {
-    private nasaApiKey: string;
-    private updateInterval: number = 3600000; // 1 hora
+    private updateInterval: number = 3600000;
     private intervalId?: number;
-
-    constructor() {
-      this.nasaApiKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
-    }
-
-    async getLatestAPODDate(): Promise<Date> {
-      try {
-        // Llamar a la API sin parámetro de fecha para obtener la imagen más reciente
-        const response = await fetch(
-          `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}`
-        );
-
-        if (response.ok) {
-          const data: APODData = await response.json();
-          console.log('✓ Fecha más reciente de APOD:', data.date);
-          return new Date(data.date);
-        }
-      } catch (error) {
-        console.warn('No se pudo obtener la fecha más reciente, usando fecha actual:', error);
-      }
-
-      // Fallback: usar la fecha actual
-      return new Date();
-    }
 
     async fetchAPOD(random: boolean = false): Promise<void> {
       const apodContent = document.getElementById('apod-content');
@@ -78,33 +40,7 @@
       apodContent.innerHTML = '<div class="loading-dots">Cargando imagen astronómica</div>';
 
       try {
-        let url = `https://api.nasa.gov/planetary/apod?api_key=${this.nasaApiKey}`;
-
-        if (random) {
-          // Para imagen aleatoria, primero obtener la fecha más reciente disponible
-          const latestDate = await this.getLatestAPODDate();
-
-          // Generar una fecha aleatoria entre 1995-06-16 y la última fecha disponible
-          const startDate = new Date('1995-06-16');
-          const randomTime =
-            startDate.getTime() + Math.random() * (latestDate.getTime() - startDate.getTime());
-          const randomDate = new Date(randomTime).toISOString().split('T')[0];
-          url += `&date=${randomDate}`;
-          console.log('Fetching random APOD from NASA for date:', randomDate);
-        } else {
-          // Sin parámetro de fecha, la API devuelve automáticamente la imagen más reciente
-          console.log('Fetching latest APOD from NASA...');
-        }
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status}`);
-        }
-
-        const data: APODData = await response.json();
-
-        // Traducir la explicación al español
+        const data = await fetchAPOD({ random });
         await this.displayAPOD(data);
         this.updateLastUpdateTime();
       } catch (error) {
@@ -117,9 +53,14 @@
       const apodContent = document.getElementById('apod-content');
       if (!apodContent) return;
 
-      // Traducir el texto al español usando la API de traducción
-      const translatedExplanation = await this.translateToSpanish(data.explanation);
-      const translatedTitle = await this.translateToSpanish(data.title);
+      const titleResult = await translateToSpanish(data.title);
+      const explanationResult = await translateToSpanish(data.explanation);
+      const translatedTitle = titleResult.text;
+      const translatedExplanation = explanationResult.text;
+      const translationNote =
+        !titleResult.translated || !explanationResult.translated
+          ? '<div class="text-xs text-terminal-dim mt-2">[Traducción automática no disponible — texto en inglés]</div>'
+          : '';
 
       let html = `
         <div class="border border-terminal-bright p-4 rounded">
@@ -135,21 +76,20 @@
       `;
 
       if (data.media_type === 'image') {
-        // Usar proxy CORS para cargar la imagen
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(data.url)}`;
+        const imageUrl = data.hdurl || data.url;
         html += `
           <div class="mb-4">
             <div class="relative">
               <img
-                src="${proxyUrl}"
+                src="${imageUrl}"
                 alt="${this.escapeHtml(translatedTitle)}"
                 class="w-full max-w-2xl mx-auto border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-pointer block"
                 style="display: block; max-height: 600px; object-fit: contain;"
-                onload="console.log('✓ Imagen cargada correctamente')"
-                onerror="console.error('Error cargando imagen'); this.style.display='none'; this.nextElementSibling.style.display='block';"
+                loading="lazy"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
               />
               <div style="display:none;" class="text-terminal-dim text-center p-4 border border-terminal-dim rounded">
-                ⚠️ Error al cargar la imagen. <a href="${data.url}" target="_blank" class="text-terminal-bright hover:underline">Abrir imagen original en nueva pestaña →</a>
+                ⚠️ Error al cargar la imagen. <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-bright hover:underline">Abrir imagen original →</a>
               </div>
             </div>
             <div class="text-center text-xs text-terminal-dim mt-2">
@@ -183,7 +123,8 @@
             </div>
           </div>
 
-          <div class="mt-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim">
+          ${translationNote}
+          <div class="mt-4 p-3 bg-black/30 rounded border border-terminal-dim">
             <div class="text-terminal-dim text-xs">
               <strong>Título original:</strong> ${this.escapeHtml(data.title)}
             </div>
@@ -194,134 +135,15 @@
       apodContent.innerHTML = html;
     }
 
-    private async translateToSpanish(text: string): Promise<string> {
-      try {
-        // Usar Google Translate API a través de un proxy público
-        // Esto evita problemas de CORS y es más confiable
-        const chunks = this.splitTextIntoChunks(text, 4500);
-        const translatedChunks: string[] = [];
-
-        for (const chunk of chunks) {
-          const translated = await this.translateSinglePart(chunk);
-          translatedChunks.push(translated);
-          // Pequeña pausa entre peticiones para evitar rate limiting
-          if (chunks.length > 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-
-        return translatedChunks.join(' ');
-      } catch (error) {
-        console.warn('Translation failed, using original text:', error);
-        return text;
-      }
-    }
-
-    private splitTextIntoChunks(text: string, maxLength: number): string[] {
-      if (text.length <= maxLength) {
-        return [text];
-      }
-
-      const chunks: string[] = [];
-      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-      let currentChunk = '';
-
-      for (const sentence of sentences) {
-        if ((currentChunk + sentence).length > maxLength && currentChunk.length > 0) {
-          chunks.push(currentChunk.trim());
-          currentChunk = sentence;
-        } else {
-          currentChunk += sentence;
-        }
-      }
-
-      if (currentChunk.length > 0) {
-        chunks.push(currentChunk.trim());
-      }
-
-      return chunks;
-    }
-
-    private async translateSinglePart(text: string): Promise<string> {
-      const maxRetries = 3;
-
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          // Método 1: Usar translate.googleapis.com sin autenticación (limitado pero funcional)
-          const googleResponse = await fetch(
-            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text)}`
-          );
-
-          if (googleResponse.ok) {
-            const data = await googleResponse.json();
-            if (data && data[0] && Array.isArray(data[0])) {
-              const translatedText = data[0]
-                .map((item: unknown[]) => (item as string[])[0])
-                .join('');
-              if (translatedText && translatedText.trim()) {
-                console.log('✓ Traducción exitosa con Google Translate');
-                return translatedText;
-              }
-            }
-          }
-
-          // Método 2: Fallback a LibreTranslate
-          const libreResponse = await fetch('https://libretranslate.com/translate', {
-            method: 'POST',
-            body: JSON.stringify({
-              q: text,
-              source: 'en',
-              target: 'es',
-              format: 'text',
-            }),
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (libreResponse.ok) {
-            const data = await libreResponse.json();
-            if (data.translatedText) {
-              console.log('✓ Traducción exitosa con LibreTranslate');
-              return data.translatedText;
-            }
-          }
-
-          // Método 3: Fallback a MyMemory
-          const myMemoryResponse = await fetch(
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`
-          );
-
-          if (myMemoryResponse.ok) {
-            const data = await myMemoryResponse.json();
-            if (data.responseStatus === 200 && data.responseData?.translatedText) {
-              console.log('✓ Traducción exitosa con MyMemory');
-              return data.responseData.translatedText;
-            }
-          }
-
-          // Si llegamos aquí y no es el último intento, esperamos antes de reintentar
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-          }
-        } catch (error) {
-          console.warn(`Intento ${attempt + 1} de traducción falló:`, error);
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-          }
-        }
-      }
-
-      console.warn('Todos los métodos de traducción fallaron, usando texto original');
-      return text;
-    }
-
     private displayError(): void {
       const apodContent = document.getElementById('apod-content');
       if (!apodContent) return;
 
-      const isDemoKey =
-        this.nasaApiKey === 'DEMO_KEY' || this.nasaApiKey === 'tu_clave_real_de_nasa_aqui';
+      const nasaKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
+      const isDemoKey = nasaKey === 'DEMO_KEY' || nasaKey === 'tu_clave_real_de_nasa_aqui';
+      const hasWorker = !!import.meta.env.PUBLIC_API_BASE_URL;
 
-      if (isDemoKey) {
+      if (isDemoKey && !hasWorker) {
         apodContent.innerHTML = `
           <div class="border border-terminal-dim p-4 rounded">
             <div class="error-text mb-4">⚠️ Clave API de NASA requerida</div>
@@ -332,7 +154,7 @@
                 <li>Crear un archivo .env en la raíz del proyecto</li>
                 <li>Agregar: <code class="text-terminal-bright">PUBLIC_NASA_API_KEY=tu_clave_aqui</code></li>
               </ol>
-              <div class="mt-4 p-3 bg-black bg-opacity-30 rounded border border-terminal-dim">
+              <div class="mt-4 p-3 bg-black/30 rounded border border-terminal-dim">
                 <p class="text-terminal-bright mb-2">💡 Ejemplo de imagen astronómica:</p>
                 <p class="text-sm">Cada día, la NASA publica una imagen diferente del universo junto con una explicación escrita por un astrónomo profesional.</p>
               </div>

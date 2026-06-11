@@ -19,115 +19,56 @@
       <div class="loading-dots">Cargando noticias</div>
     </div>
 
-    <div class="text-xs text-terminal-dim">
+    <div class="text-terminal-dim text-xs">
       <span id="last-update">Última actualización: Nunca</span> |
       <span id="news-count">0 noticias cargadas</span>
     </div>
   </div>
 
-  <div class="mt-4 text-sm text-terminal-dim">Escribe 'menu' para volver al menú principal.</div>
+  <div class="text-terminal-dim mt-4 text-sm">Escribe 'menu' para volver al menú principal.</div>
 </div>
 
 <script>
-  interface NewsArticle {
-    title: string;
-    description: string;
-    url: string;
-    publishedAt: string;
-    source: {
-      name: string;
-    };
-  }
-
-  declare global {
-    interface Window {
-      newsFeed: NewsFeed;
-    }
-  }
+  import { fetchNews as fetchNewsApi, type NewsArticle } from '../lib/api/client';
+  import { translateToSpanish } from '../lib/api/translate';
 
   class NewsFeed {
-    private newsApiKey: string;
-    private updateInterval: number = 300000; // 5 minutos para actualizaciones
+    private updateInterval: number = 300000;
     private intervalId?: number;
     public allNews: NewsArticle[] = [];
     private currentFilter: string = 'all';
-    private demoNewsPool: NewsArticle[] = [];
-    private guardianApiKey: string;
-    private nasaApiKey: string;
-
-    constructor() {
-      // APIs públicas gratuitas
-      this.newsApiKey = import.meta.env.PUBLIC_NEWS_API_KEY || '';
-      this.guardianApiKey = import.meta.env.PUBLIC_GUARDIAN_API_KEY || 'test'; // Guardian permite 'test' como clave
-      this.nasaApiKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
-
-      // Inicializar pool de noticias demo
-      this.initializeDemoNewsPool();
-    }
 
     async fetchNews(): Promise<void> {
       const newsContent = document.getElementById('news-content');
       if (!newsContent) return;
 
-      console.log('🔄 Obteniendo noticias de múltiples fuentes...');
-
       try {
-        // Obtener noticias de múltiples fuentes públicas y gratuitas
-        const [guardianNews, nasaNews, arxivNews] = await Promise.allSettled([
-          this.fetchFromGuardian(),
-          this.fetchFromNASA(),
-          this.fetchFromArXiv(),
-        ]);
+        const uniqueNews = await fetchNewsApi('all');
 
-        const allNews: NewsArticle[] = [];
-
-        // Procesar resultados de Guardian
-        if (guardianNews.status === 'fulfilled' && guardianNews.value.length > 0) {
-          console.log('✓ The Guardian:', guardianNews.value.length, 'noticias');
-          allNews.push(...guardianNews.value);
-        }
-
-        // Procesar resultados de NASA
-        if (nasaNews.status === 'fulfilled' && nasaNews.value.length > 0) {
-          console.log('✓ NASA:', nasaNews.value.length, 'noticias');
-          allNews.push(...nasaNews.value);
-        }
-
-        // Procesar resultados de arXiv
-        if (arxivNews.status === 'fulfilled' && arxivNews.value.length > 0) {
-          console.log('✓ arXiv:', arxivNews.value.length, 'artículos');
-          allNews.push(...arxivNews.value);
-        }
-
-        // Eliminar duplicados basados en título
-        const uniqueNews = allNews.filter(
-          (article, index, self) => index === self.findIndex(a => a.title === article.title)
-        );
-
-        console.log('📰 Total de noticias únicas:', uniqueNews.length);
-
-        // Si no hay noticias reales, mostrar noticias demo
         if (uniqueNews.length === 0) {
-          console.log('⚠️ No se pudieron obtener noticias reales, mostrando demo');
           this.showEnhancedDemoNews();
           return;
         }
 
-        // Limitar a las primeras 15 noticias para traducir (optimización)
-        const newsToTranslate = uniqueNews.slice(0, 15);
-
-        // Traducir noticias al español
-        console.log('🌐 Traduciendo', newsToTranslate.length, 'noticias al español...');
+        const newsToTranslate = uniqueNews.slice(0, 12);
         newsContent.innerHTML = '<div class="loading-dots">Traduciendo noticias al español</div>';
-        const translatedNews = await this.translateArticles(newsToTranslate);
-        console.log('✓ Noticias traducidas:', translatedNews.length);
 
-        // Categorizar y mostrar noticias traducidas
+        const translatedNews: NewsArticle[] = [];
+        for (const article of newsToTranslate) {
+          const title = await translateToSpanish(article.title);
+          const description = await translateToSpanish(article.description);
+          translatedNews.push({
+            ...article,
+            title: title.text,
+            description: description.text,
+          });
+        }
+
         this.categorizeNewsDynamically(translatedNews);
         this.applyFilter();
         this.updateLastUpdateTime();
       } catch (error) {
-        console.error('❌ Error al obtener noticias:', error);
+        console.error('Error al obtener noticias:', error);
         this.showEnhancedDemoNews();
       }
     }
@@ -199,7 +140,7 @@
               .map((article, index) => {
                 const date = new Date(article.publishedAt).toLocaleDateString('es-ES');
                 return `
-                <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim hover:bg-opacity-10 transition-colors">
+                <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim/10 transition-colors">
                   <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
                   <div class="text-base mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
                   <div class="text-sm text-terminal-dim mt-2">
@@ -221,7 +162,7 @@
         filteredNews.forEach((article, index) => {
           const date = new Date(article.publishedAt).toLocaleDateString('es-ES');
           html += `
-            <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim hover:bg-opacity-10 transition-colors">
+            <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim/10 transition-colors">
               <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
               <div class="text-base mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
               <div class="text-sm text-terminal-dim mt-2">
@@ -248,312 +189,6 @@
         const now = new Date();
         lastUpdate.textContent = `Última actualización: ${now.toLocaleTimeString('es-ES')}`;
       }
-    }
-
-    private displayError(): void {
-      const newsContent = document.getElementById('news-content');
-      if (!newsContent) return;
-
-      newsContent.innerHTML = `
-        <div class="border border-yellow-700 bg-yellow-900 bg-opacity-20 p-4 rounded mb-4">
-          <div class="text-yellow-200 font-semibold mb-2">⚠️ Error al cargar noticias</div>
-          <div class="text-yellow-100 text-sm">
-            No se pudieron obtener noticias de las fuentes en línea. Mostrando contenido de demostración.
-          </div>
-        </div>
-        <div class="mt-4 text-terminal-dim text-sm">
-          <p class="mb-2">Fuentes intentadas:</p>
-          <ul class="ml-4 list-disc space-y-1">
-            <li>The Guardian API (tecnología y ciencia)</li>
-            <li>NASA APOD API (noticias espaciales)</li>
-            <li>arXiv API (papers científicos recientes)</li>
-          </ul>
-          <p class="mt-4 text-xs">Revisa la consola del navegador (F12) para más detalles.</p>
-        </div>
-      `;
-    }
-
-    // The Guardian API - Noticias de tecnología y ciencia
-    private async fetchFromGuardian(): Promise<NewsArticle[]> {
-      try {
-        const topics = ['technology', 'science', 'artificial-intelligence-ai'];
-        const allArticles: NewsArticle[] = [];
-
-        for (const topic of topics) {
-          const url = `https://content.guardianapis.com/search?section=${topic}&show-fields=headline,trailText,thumbnail&page-size=5&api-key=${this.guardianApiKey}`;
-
-          const response = await fetch(url);
-          if (!response.ok) continue;
-
-          const data = await response.json();
-          if (data.response && data.response.results) {
-            const articles = data.response.results.map((item: any) => ({
-              title: item.fields?.headline || item.webTitle,
-              description: item.fields?.trailText || 'Artículo de The Guardian sobre ' + topic,
-              url: item.webUrl,
-              publishedAt: item.webPublicationDate,
-              source: { name: 'The Guardian' },
-            }));
-            allArticles.push(...articles);
-          }
-        }
-
-        return allArticles.slice(0, 10);
-      } catch (error) {
-        console.warn('Error al obtener noticias de The Guardian:', error);
-        return [];
-      }
-    }
-
-    // NASA API - Noticias espaciales
-    private async fetchFromNASA(): Promise<NewsArticle[]> {
-      try {
-        // NASA News RSS Feed via API
-        const url = 'https://api.nasa.gov/planetary/apod?api_key=' + this.nasaApiKey + '&count=3';
-
-        const response = await fetch(url);
-        if (!response.ok) return [];
-
-        const data = await response.json();
-
-        return data.map((item: any) => ({
-          title: item.title,
-          description: item.explanation.substring(0, 250) + '...',
-          url: item.url,
-          publishedAt: item.date + 'T00:00:00Z',
-          source: { name: 'NASA' },
-        }));
-      } catch (error) {
-        console.warn('Error al obtener noticias de NASA:', error);
-        return [];
-      }
-    }
-
-    // arXiv API - Papers científicos recientes
-    private async fetchFromArXiv(): Promise<NewsArticle[]> {
-      try {
-        const topics = [
-          'cat:cs.AI', // Inteligencia Artificial
-          'cat:astro-ph', // Astrofísica
-          'cat:cs.LG', // Machine Learning
-        ];
-
-        const allPapers: NewsArticle[] = [];
-
-        for (const topic of topics) {
-          const url = `https://export.arxiv.org/api/query?search_query=${topic}&start=0&max_results=2&sortBy=submittedDate&sortOrder=descending`;
-
-          const response = await fetch(url);
-          if (!response.ok) continue;
-
-          const text = await response.text();
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(text, 'text/xml');
-
-          const entries = xml.querySelectorAll('entry');
-          entries.forEach(entry => {
-            const title = entry.querySelector('title')?.textContent?.trim() || '';
-            const summary = entry.querySelector('summary')?.textContent?.trim() || '';
-            const link = entry.querySelector('id')?.textContent?.trim() || '';
-            const published =
-              entry.querySelector('published')?.textContent?.trim() || new Date().toISOString();
-
-            if (title && summary) {
-              allPapers.push({
-                title: title,
-                description: summary.substring(0, 250) + '...',
-                url: link,
-                publishedAt: published,
-                source: { name: 'arXiv' },
-              });
-            }
-          });
-        }
-
-        return allPapers.slice(0, 4);
-      } catch (error) {
-        console.warn('Error al obtener papers de arXiv:', error);
-        return [];
-      }
-    }
-
-    private initializeDemoNewsPool(): void {
-      this.demoNewsPool = [
-        // Noticias de IA y Tecnología
-        {
-          title: '🤖 GPT-5 promete avances revolucionarios en comprensión del lenguaje natural',
-          description:
-            'OpenAI anuncia la próxima generación de modelos de lenguaje con capacidades sin precedentes en razonamiento y comprensión contextual.',
-          url: 'https://openai.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'AI Weekly' },
-        },
-        {
-          title: '🧠 Neuralink logra avance histórico en interfaces cerebro-computadora',
-          description:
-            'Primer paciente humano controla exitosamente el cursor de una computadora con el pensamiento, marcando una nueva era en neurotecnología.',
-          url: 'https://neuralink.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Future Tech' },
-        },
-        {
-          title: '💻 Computación cuántica alcanza viabilidad comercial',
-          description:
-            'IBM y Google anuncian procesadores cuánticos capaces de resolver problemas del mundo real más rápido que las computadoras clásicas.',
-          url: 'https://quantum.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Quantum Today' },
-        },
-        {
-          title: '🔐 Nuevo sistema de IA detecta amenazas cibernéticas en tiempo real',
-          description:
-            'Algoritmos de aprendizaje automático ahora predicen y previenen brechas de seguridad antes de que ocurran, revolucionando la ciberseguridad.',
-          url: 'https://cybersec.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Security Now' },
-        },
-        {
-          title: '🎮 Herramientas de desarrollo de juegos con IA transforman la industria',
-          description:
-            'Nuevas herramientas de IA generativa permiten a los desarrolladores crear mundos de juego complejos en horas en lugar de meses.',
-          url: 'https://gamedev.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Game Developer' },
-        },
-        // Noticias de Espacio y Cosmos
-        {
-          title: '🚀 SpaceX lanza exitosamente primera misión tripulada a Marte',
-          description:
-            'Misión histórica marca el primer paso de la humanidad hacia convertirse en una especie multiplanetaria, con la tripulación esperada en 7 meses.',
-          url: 'https://spacex.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Space News' },
-        },
-        {
-          title: '🌌 James Webb descubre exoplaneta potencialmente habitable',
-          description:
-            'El telescopio detecta biofirmas en la atmósfera de un planeta a 120 años luz de distancia, reavivando la búsqueda de vida extraterrestre.',
-          url: 'https://nasa.gov',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'NASA News' },
-        },
-        {
-          title: '🛸 Avance revolucionario en teoría de viaje más rápido que la luz',
-          description:
-            'Físicos proponen nuevo concepto de motor warp que podría hacer posible el viaje interestelar en nuestra vida.',
-          url: 'https://physics.org',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Physics Today' },
-        },
-        {
-          title: '🪐 Anillos de Saturno revelan secretos sobre formación del sistema solar',
-          description:
-            'Nuevos datos de la misión Cassini proporcionan información sobre cómo se formaron planetas y lunas hace miles de millones de años.',
-          url: 'https://jpl.nasa.gov',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'JPL News' },
-        },
-        {
-          title: '☄️ Empresa de minería de asteroides anuncia primera operación comercial',
-          description:
-            'Compañía privada planea extraer metales raros de asteroides cercanos a la Tierra, potencialmente valorados en billones de dólares.',
-          url: 'https://asteroidmining.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Mining Weekly' },
-        },
-        {
-          title:
-            '🔭 Nuevo conjunto de telescopios detecta misteriosas señales del espacio profundo',
-          description:
-            'Astrónomos captan ráfagas de radio repetitivas desde galaxia distante, despertando renovado interés en programas SETI.',
-          url: 'https://seti.org',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'SETI Institute' },
-        },
-        {
-          title: '🌍 Planeta similar a la Tierra encontrado en sistema estelar cercano',
-          description:
-            'Proxima Centauri b muestra signos de agua líquida y atmósfera estable, convirtiéndolo en objetivo principal para futura exploración.',
-          url: 'https://exoplanets.org',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Exoplanet News' },
-        },
-        // Noticias Mixtas de Tecnología y Ciencia
-        {
-          title: '⚡ Reactor de fusión logra ganancia neta de energía',
-          description:
-            'Científicos producen más energía de la consumida por primera vez, acercando la energía limpia e ilimitada a la realidad.',
-          url: 'https://iter.org',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Energy Today' },
-        },
-        {
-          title: '🧬 Avance de CRISPR permite prevención de enfermedades antes del nacimiento',
-          description:
-            'Tecnología de edición genética elimina exitosamente enfermedades hereditarias en embriones humanos con 100% de precisión.',
-          url: 'https://crispr.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'BioTech News' },
-        },
-        {
-          title: '🌐 Cobertura global de internet alcanza 100% con red de satélites',
-          description:
-            'Últimas regiones de la Tierra obtienen acceso a internet de alta velocidad, transformando educación y comercio mundial.',
-          url: 'https://starlink.com',
-          publishedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          source: { name: 'Tech Global' },
-        },
-      ];
-    }
-
-    private getRandomDemoArticles(count: number = 5): NewsArticle[] {
-      // Crear una copia del pool y mezclarla
-      const shuffled = [...this.demoNewsPool].sort(() => Math.random() - 0.5);
-
-      // Actualizar las fechas para que parezcan recientes
-      return shuffled.slice(0, count).map(article => ({
-        ...article,
-        publishedAt: new Date(Date.now() - Math.random() * 3600000 * 24).toISOString(), // Últimas 24 horas
-      }));
-    }
-
-    private getDemoNews(): string {
-      const demoArticles = [
-        {
-          title: 'Nuevos avances en inteligencia artificial generativa',
-          description: 'Investigadores presentan mejoras significativas en modelos de lenguaje.',
-          source: 'Tech News',
-          date: new Date().toLocaleDateString('es-ES'),
-        },
-        {
-          title: 'NASA descubre exoplaneta potencialmente habitable',
-          description:
-            'El telescopio James Webb identifica signos de agua en atmósfera planetaria.',
-          source: 'Space Daily',
-          date: new Date().toLocaleDateString('es-ES'),
-        },
-        {
-          title: 'IA ayuda en descubrimientos astronómicos',
-          description:
-            'Algoritmos de machine learning identifican nuevos patrones en datos espaciales.',
-          source: 'Science Today',
-          date: new Date().toLocaleDateString('es-ES'),
-        },
-      ];
-
-      return demoArticles
-        .map(
-          (article, index) => `
-        <div class="border-l-2 border-terminal-dim pl-4 py-2 mt-2">
-          <div class="text-terminal-bright">${index + 1}. ${article.title}</div>
-          <div class="text-sm mt-1">${article.description}</div>
-          <div class="text-xs text-terminal-dim mt-2">
-            <span>${article.source}</span> | <span>${article.date}</span>
-          </div>
-        </div>
-      `
-        )
-        .join('');
     }
 
     private escapeHtml(text: string): string {
@@ -678,7 +313,7 @@
       demoArticles.forEach((article, index) => {
         const date = new Date(article.publishedAt).toLocaleDateString('es-ES');
         html += `
-          <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim hover:bg-opacity-10 transition-colors">
+          <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim/10 transition-colors">
             <div class="text-terminal-bright">${index + 1}. ${this.escapeHtml(article.title)}</div>
             <div class="text-sm mt-1">${this.escapeHtml(article.description)}</div>
             <div class="text-xs text-terminal-dim mt-2">
@@ -720,149 +355,6 @@
 
     refreshNews(): void {
       this.fetchNews();
-    }
-
-    // Métodos de traducción
-    private async translateToSpanish(text: string): Promise<string> {
-      try {
-        const chunks = this.splitTextIntoChunks(text, 4500);
-        const translatedChunks: string[] = [];
-
-        for (const chunk of chunks) {
-          const translated = await this.translateSinglePart(chunk);
-          translatedChunks.push(translated);
-          if (chunks.length > 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-
-        return translatedChunks.join(' ');
-      } catch (error) {
-        console.warn('Translation failed, using original text:', error);
-        return text;
-      }
-    }
-
-    private splitTextIntoChunks(text: string, maxLength: number): string[] {
-      if (text.length <= maxLength) {
-        return [text];
-      }
-
-      const chunks: string[] = [];
-      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-      let currentChunk = '';
-
-      for (const sentence of sentences) {
-        if ((currentChunk + sentence).length > maxLength && currentChunk.length > 0) {
-          chunks.push(currentChunk.trim());
-          currentChunk = sentence;
-        } else {
-          currentChunk += sentence;
-        }
-      }
-
-      if (currentChunk.length > 0) {
-        chunks.push(currentChunk.trim());
-      }
-
-      return chunks;
-    }
-
-    private async translateSinglePart(text: string): Promise<string> {
-      const maxRetries = 3;
-
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          // Método 1: Usar translate.googleapis.com sin autenticación
-          const googleResponse = await fetch(
-            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text)}`
-          );
-
-          if (googleResponse.ok) {
-            const data = await googleResponse.json();
-            if (data && data[0] && Array.isArray(data[0])) {
-              const translatedText = data[0]
-                .map((item: unknown[]) => (item as string[])[0])
-                .join('');
-              if (translatedText && translatedText.trim()) {
-                return translatedText;
-              }
-            }
-          }
-
-          // Método 2: Fallback a LibreTranslate
-          const libreResponse = await fetch('https://libretranslate.com/translate', {
-            method: 'POST',
-            body: JSON.stringify({
-              q: text,
-              source: 'en',
-              target: 'es',
-              format: 'text',
-            }),
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (libreResponse.ok) {
-            const data = await libreResponse.json();
-            if (data.translatedText) {
-              return data.translatedText;
-            }
-          }
-
-          // Método 3: Fallback a MyMemory
-          const myMemoryResponse = await fetch(
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`
-          );
-
-          if (myMemoryResponse.ok) {
-            const data = await myMemoryResponse.json();
-            if (data.responseStatus === 200 && data.responseData?.translatedText) {
-              return data.responseData.translatedText;
-            }
-          }
-
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-          }
-        } catch (error) {
-          console.warn(`Intento ${attempt + 1} de traducción falló:`, error);
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-          }
-        }
-      }
-
-      console.warn('Todos los métodos de traducción fallaron, usando texto original');
-      return text;
-    }
-
-    // Traducir artículos de noticias
-    private async translateArticles(articles: NewsArticle[]): Promise<NewsArticle[]> {
-      const translatedArticles: NewsArticle[] = [];
-
-      for (const article of articles) {
-        try {
-          // Traducir título y descripción
-          const translatedTitle = await this.translateToSpanish(article.title);
-          const translatedDescription = await this.translateToSpanish(article.description);
-
-          translatedArticles.push({
-            ...article,
-            title: translatedTitle,
-            description: translatedDescription,
-          });
-
-          // Pequeña pausa entre traducciones para evitar rate limiting
-          if (articles.length > 1) {
-            await new Promise(resolve => setTimeout(resolve, 300));
-          }
-        } catch (error) {
-          console.warn('Error traduciendo artículo, usando original:', error);
-          translatedArticles.push(article);
-        }
-      }
-
-      return translatedArticles;
     }
   }
 
