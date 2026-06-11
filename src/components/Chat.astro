@@ -1,0 +1,140 @@
+---
+// Asistente IA integrado en la terminal
+---
+
+<div id="chat-component" class="hidden">
+  <div class="section-title glitch" data-text="Asistente Nexus-7">Asistente Nexus-7</div>
+
+  <div class="text-terminal-dim mb-4 text-sm">
+    Pregunta sobre proyectos, CV, comandos o tecnología. Escribe tu pregunta y pulsa Enviar.
+  </div>
+
+  <div
+    id="chat-messages"
+    class="border-terminal-dim mb-4 max-h-64 space-y-3 overflow-y-auto rounded border p-3"
+    role="log"
+    aria-live="polite"
+  >
+  </div>
+
+  <div class="flex flex-col gap-2 sm:flex-row">
+    <input
+      type="text"
+      id="chat-input"
+      class="terminal-input border-terminal-dim flex-1 rounded border bg-black px-3 py-2"
+      placeholder="Escribe tu pregunta..."
+      aria-label="Mensaje para el asistente"
+    />
+    <button id="chat-send" class="menu-item px-4 py-2" type="button">Enviar</button>
+  </div>
+
+  <div id="chat-status" class="text-terminal-dim mt-2 text-xs"></div>
+  <div class="text-terminal-dim mt-4 text-sm">Escribe 'menu' para volver al menú principal.</div>
+</div>
+
+<script>
+  import { sendChatMessage } from '../lib/api/client';
+
+  interface ChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
+  }
+
+  class ChatAssistant {
+    private history: ChatMessage[] = [];
+    private isStreaming = false;
+
+    init(): void {
+      const sendBtn = document.getElementById('chat-send');
+      const input = document.getElementById('chat-input') as HTMLInputElement;
+
+      sendBtn?.addEventListener('click', () => this.handleSend());
+      input?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') this.handleSend();
+      });
+
+      this.appendMessage(
+        'assistant',
+        'Sistema Nexus-7 online. ¿En qué puedo ayudarte? Prueba: "¿Qué proyectos tiene Gusi?" o "¿Cómo veo la foto de la NASA?"'
+      );
+    }
+
+    private appendMessage(role: 'user' | 'assistant', content: string): void {
+      const container = document.getElementById('chat-messages');
+      if (!container) return;
+
+      const div = document.createElement('div');
+      div.className = role === 'user' ? 'text-terminal-bright' : 'text-terminal-text';
+      div.innerHTML = `<span class="text-terminal-dim">${role === 'user' ? 'Tú' : 'Nexus-7'}:</span> ${this.escapeHtml(content)}`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    private setStatus(text: string): void {
+      const el = document.getElementById('chat-status');
+      if (el) el.textContent = text;
+    }
+
+    private escapeHtml(text: string): string {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    private async handleSend(): Promise<void> {
+      if (this.isStreaming) return;
+
+      const input = document.getElementById('chat-input') as HTMLInputElement;
+      const message = input?.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      this.appendMessage('user', message);
+      this.history.push({ role: 'user', content: message });
+      this.isStreaming = true;
+      this.setStatus('Procesando...');
+
+      try {
+        const response = await sendChatMessage(message, this.history.slice(0, -1));
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const data = await response.json();
+        const assistantText = data.response || data.message || data.text || 'Sin respuesta.';
+        this.appendMessage('assistant', assistantText);
+
+        if (assistantText) {
+          this.history.push({ role: 'assistant', content: assistantText });
+        }
+        this.setStatus('');
+      } catch (error) {
+        const apiBase = import.meta.env.PUBLIC_API_BASE_URL;
+        const msg = apiBase
+          ? 'Error al conectar con el asistente. Verifica que el Worker esté desplegado.'
+          : 'El asistente requiere PUBLIC_API_BASE_URL. Configura el Worker de Cloudflare.';
+        this.appendMessage('assistant', msg);
+        this.setStatus('');
+        console.error('Chat error:', error);
+      } finally {
+        this.isStreaming = false;
+      }
+    }
+  }
+
+  const chatAssistant = new ChatAssistant();
+
+  document.addEventListener('loadView', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail.view === 'chat') {
+      const terminal = window.terminal;
+      const chatComponent = document.getElementById('chat-component');
+
+      if (terminal && chatComponent) {
+        terminal.printOutput(chatComponent.innerHTML);
+        setTimeout(() => chatAssistant.init(), 100);
+      }
+    }
+  });
+</script>
