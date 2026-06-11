@@ -1,0 +1,16 @@
+{
+  "name": "blade-runner-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "release": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250409.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.100.0"
+  }
+}
