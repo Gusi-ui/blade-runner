@@ -1,3 +1,4 @@
+import { cancelAsk } from '../ai/ask';
 import { buildCommands } from './commands';
 import { getCompletions } from './completion';
 import { CommandHistory } from './history';
@@ -26,11 +27,13 @@ export class TerminalController {
     this.ctx = {
       print: html => this.printOutput(html),
       printText: text => this.printText(text),
+      printBlock: () => this.printBlock(),
       clear: () => this.clear(),
       loadView: (view, args) => this.loadView(view, args),
       setInputDisabled: disabled => {
         this.input.disabled = disabled;
       },
+      scrollToBottom: () => this.scrollToBottom(),
       registry: this.registry,
     };
 
@@ -142,6 +145,7 @@ export class TerminalController {
     }
     if (e.ctrlKey && e.key.toLowerCase() === 'c') {
       e.preventDefault();
+      if (cancelAsk()) return; // primero cancela el streaming de IA si lo hay
       this.printOutput(
         `<span class="text-terminal-bright">${PROMPT}</span> ${escapeHtml(this.input.value)}^C`
       );
@@ -281,6 +285,13 @@ export class TerminalController {
     div.className = 'terminal-output mb-2';
     div.textContent = text;
     this.outputContainer.appendChild(div);
+  }
+
+  printBlock(): HTMLElement {
+    const div = document.createElement('div');
+    div.className = 'terminal-output mb-2';
+    this.outputContainer.appendChild(div);
+    return div;
   }
 
   private scrollToBottom(): void {

@@ -24,11 +24,34 @@ interface NewsArticle {
   source: { name: string };
 }
 
-const SYSTEM_PROMPT = `Eres el asistente de la terminal Nexus-7 de Gusi, desarrollador Full Stack.
-Responde en español, tono retro-futurista profesional. Máximo 3 párrafos cortos.
-Comandos: menu, news/noticias, cv/curriculum, projects/proyectos, games/juegos, calculator/calculadora, apod, chat, help, contacto.
-Email: webmaster@gusi.dev | GitHub: Gusi-ui | Web: gusi.dev
-No inventes datos de contacto. Sugiere comandos cuando sea útil.`;
+const CHAT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+const CHAT_MAX_TOKENS = 768;
+const CHAT_MAX_HISTORY = 10;
+const CHAT_MAX_MESSAGE_CHARS = 2000;
+
+const SYSTEM_PROMPT = `Eres el asistente de la terminal Nexus-7 de Gusi, un desarrollador Full Stack español.
+Responde SIEMPRE en español, con tono profesional y estética retro-futurista de Blade Runner.
+Sé conciso (máximo 3 párrafos cortos) y responde en texto plano: tus respuestas se imprimen
+en una terminal, así que nada de markdown, tablas ni bloques de código salvo que te pidan código.
+
+COMANDOS DE LA TERMINAL (sugiérelos cuando ayuden):
+menu, news/noticias [ai|cosmos], cv/curriculum, projects/proyectos, games/juegos,
+calculator/calculadora, apod, ask/pregunta, chat, help/ayuda, contacto, status, config.
+
+PERFIL DE GUSI:
+- Desarrollador Full Stack especializado en JavaScript, TypeScript, Astro, React y Vue
+- Apasionado por interfaces retro-futuristas y experiencias web únicas
+- Email: webmaster@gusi.dev | GitHub: https://github.com/Gusi-ui | Web: https://gusi.dev
+
+PROYECTOS DESTACADOS:
+- Blade Runner Terminal: esta terminal interactiva cyberpunk hecha con Astro y Cloudflare Workers
+- Portfolio profesional con métricas y proyectos de desarrollo web
+- Dashboard Analytics, gestión de citas médicas, CMS headless, API developer portal
+
+REGLAS:
+- No inventes emails, teléfonos ni URLs que no estén en este contexto
+- Si no sabes algo del portfolio, dilo y sugiere un comando de la terminal
+- No des consejos médicos, legales ni financieros`;
 
 const corsHeaders = (origin: string, allowedOrigin: string) => ({
   'Access-Control-Allow-Origin':
@@ -173,9 +196,10 @@ const translateText = async (text: string): Promise<string> => {
     `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text.slice(0, 4500))}`
   );
   if (!response.ok) return text;
-  const data = await response.json();
-  if (data?.[0] && Array.isArray(data[0])) {
-    return data[0].map((item: string[]) => item[0]).join('');
+  const data = (await response.json()) as unknown;
+  const segments = Array.isArray(data) ? data[0] : null;
+  if (Array.isArray(segments)) {
+    return segments.map((item: string[]) => item[0]).join('');
   }
   return text;
 };
@@ -252,11 +276,12 @@ export default {
         const body = (await request.json()) as {
           message?: string;
           history?: { role: string; content: string }[];
+          stream?: boolean;
         };
-        const message = body.message?.trim();
+        const message = body.message?.trim().slice(0, CHAT_MAX_MESSAGE_CHARS);
         if (!message) return jsonResponse({ error: 'Mensaje vacío' }, origin, env, 400);
 
-        const history = (body.history || []).slice(-6);
+        const history = (body.history || []).slice(-CHAT_MAX_HISTORY);
         const messages = [
           { role: 'system', content: SYSTEM_PROMPT },
           ...history.map(h => ({ role: h.role, content: h.content })),
@@ -264,9 +289,25 @@ export default {
         ];
 
         try {
-          const result = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+          if (body.stream) {
+            const stream = (await env.AI.run(CHAT_MODEL, {
+              messages,
+              max_tokens: CHAT_MAX_TOKENS,
+              stream: true,
+            })) as ReadableStream;
+
+            return new Response(stream, {
+              headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                ...corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
+              },
+            });
+          }
+
+          const result = await env.AI.run(CHAT_MODEL, {
             messages,
-            max_tokens: 512,
+            max_tokens: CHAT_MAX_TOKENS,
           });
 
           const text =

@@ -1,3 +1,4 @@
+import { askInline } from '../ai/ask';
 import { CONTACT_HTML } from '../ai/chatContext';
 import { checkApiHealth } from '../api/client';
 import { showConfig } from './configMenu';
@@ -138,10 +139,18 @@ export const buildCommands = (deps: CommandDeps): CommandSpec[] => [
   },
   {
     name: 'chat',
-    aliases: ['8', 'ask', 'pregunta'],
-    description: 'Asistente IA Nexus-7',
+    aliases: ['8'],
+    description: 'Asistente IA Nexus-7 (vista de conversación)',
     view: 'chat',
     handler: viewHandler('chat'),
+  },
+  {
+    name: 'ask',
+    aliases: ['pregunta'],
+    description: 'Pregunta a la IA sin salir de la terminal',
+    usage: 'ask <pregunta>',
+    restOfLine: true,
+    handler: (args, ctx) => (args.length === 0 ? ctx.loadView('chat') : askInline(args[0], ctx)),
   },
   {
     name: 'clear',
@@ -262,6 +271,7 @@ export const resolveCommand = (input: string): CommandAction | null => {
   if (!spec) return null;
   if (SIMPLE_TYPES.has(spec.name)) return { type: spec.name as CommandAction['type'] };
   if (spec.name === 'menu') return { type: 'view', view: 'menu' };
+  if (spec.name === 'ask') return { type: 'view', view: 'chat' };
   if (spec.view) return { type: 'view', view: spec.view as ViewName };
   return null;
 };

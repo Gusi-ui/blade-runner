@@ -7,9 +7,12 @@ export interface TerminalContext {
   print(html: string): void;
   /** Imprime texto plano escapado (seguro para input del usuario). */
   printText(text: string): void;
+  /** Crea y añade un bloque de salida vacío, para contenido incremental (streaming). */
+  printBlock(): HTMLElement;
   clear(): void;
   loadView(view: string, args?: string[]): void;
   setInputDisabled(disabled: boolean): void;
+  scrollToBottom(): void;
   registry: CommandRegistry;
 }
 

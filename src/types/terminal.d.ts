@@ -3,6 +3,7 @@
 export interface TerminalController {
   printOutput: (html: string) => void;
   printText?: (text: string) => void;
+  printBlock?: () => HTMLElement;
 }
 
 // Tipos para las clases de juegos

@@ -1,4 +1,4 @@
-const getApiBase = (): string => import.meta.env.PUBLIC_API_BASE_URL || '';
+export const getApiBase = (): string => import.meta.env.PUBLIC_API_BASE_URL || '';
 
 export interface APODData {
   title: string;
@@ -61,20 +61,6 @@ export const fetchNews = async (
 
   const { fetchNewsFallback } = await import('./news-fallback');
   return fetchNewsFallback(filter);
-};
-
-export const sendChatMessage = async (
-  message: string,
-  history: { role: string; content: string }[] = []
-): Promise<Response> => {
-  const apiBase = getApiBase();
-  if (!apiBase) throw new Error('Chat requiere PUBLIC_API_BASE_URL configurada');
-
-  return fetch(`${apiBase}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, history }),
-  });
 };
 
 export const checkApiHealth = async (): Promise<{
