@@ -37,6 +37,22 @@ jobs:
             echo "::error::Falta CLOUDFLARE_ACCOUNT_ID en GitHub → Settings → Secrets and variables → Actions"
             exit 1
           fi
+          if echo "$CLOUDFLARE_API_TOKEN" | grep -qE '[[:space:]]'; then
+            echo "::error::CLOUDFLARE_API_TOKEN tiene espacios o saltos de línea. Vuelve a crear el secreto copiando solo el token, sin comillas ni 'Bearer'."
+            exit 1
+          fi
+          if echo "$CLOUDFLARE_API_TOKEN" | grep -qE '^Bearer '; then
+            echo "::error::CLOUDFLARE_API_TOKEN no debe incluir el prefijo 'Bearer '. Solo el token."
+            exit 1
+          fi
+          if [ "${#CLOUDFLARE_API_TOKEN}" -lt 30 ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN parece demasiado corto. Usa un API Token de Cloudflare, no la Global API Key."
+            exit 1
+          fi
+          if ! echo "$CLOUDFLARE_ACCOUNT_ID" | grep -qE '^[a-f0-9]{32}$'; then
+            echo "::error::CLOUDFLARE_ACCOUNT_ID debe ser 32 caracteres hex (sin guiones). Obténlo con: pnpm --filter blade-runner-api exec wrangler whoami"
+            exit 1
+          fi
 
       - name: Deploy Worker
         working-directory: workers
