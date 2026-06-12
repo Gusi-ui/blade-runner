@@ -86,6 +86,7 @@
                 class="w-full max-w-2xl mx-auto border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-pointer block"
                 style="display: block; max-height: 600px; object-fit: contain;"
                 loading="lazy"
+                onload="this.style.opacity='1'; this.classList.add('loaded')"
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
               />
               <div style="display:none;" class="text-terminal-dim text-center p-4 border border-terminal-dim rounded">
