@@ -25,6 +25,29 @@
   <div class="text-terminal-dim mt-4 text-sm">Escribe 'menu' para volver al menú principal.</div>
 </div>
 
+<div
+  id="apod-fullscreen-overlay"
+  class="apod-fullscreen-overlay fixed inset-0 z-[200] hidden items-center justify-center bg-black/95 p-4"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Imagen astronómica a pantalla completa"
+  tabindex="-1"
+>
+  <button
+    type="button"
+    id="apod-fullscreen-close"
+    class="menu-item absolute top-4 right-4 z-10 px-3 py-1 text-xs"
+    aria-label="Cerrar pantalla completa"
+  >
+    ✕ Cerrar (ESC)
+  </button>
+  <img
+    id="apod-fullscreen-img"
+    class="border-terminal-bright max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] border-2 object-contain"
+    alt=""
+  />
+</div>
+
 <script>
   import { fetchAPOD, type APODData } from '../lib/api/client';
   import { translateToSpanish } from '../lib/api/translate';
@@ -32,6 +55,53 @@
   class APODViewer {
     private updateInterval: number = 3600000;
     private intervalId?: number;
+    private overlay: HTMLElement | null = null;
+    private overlayImg: HTMLImageElement | null = null;
+
+    constructor() {
+      this.overlay = document.getElementById('apod-fullscreen-overlay');
+      this.overlayImg = document.getElementById('apod-fullscreen-img') as HTMLImageElement | null;
+
+      document.getElementById('apod-fullscreen-close')?.addEventListener('click', () => {
+        this.closeFullscreen();
+      });
+
+      this.overlay?.addEventListener('click', e => {
+        if (e.target === this.overlay) this.closeFullscreen();
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') this.closeFullscreen();
+      });
+
+      document.addEventListener('click', e => {
+        const target = e.target;
+        if (!(target instanceof HTMLImageElement) || !target.classList.contains('apod-image'))
+          return;
+        this.openFullscreen(target.src, target.alt);
+      });
+    }
+
+    private openFullscreen(src: string, alt: string): void {
+      if (!this.overlay || !this.overlayImg || !src) return;
+
+      this.overlayImg.src = src;
+      this.overlayImg.alt = alt;
+      this.overlay.classList.remove('hidden');
+      this.overlay.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+      this.overlay.focus();
+    }
+
+    private closeFullscreen(): void {
+      if (!this.overlay || !this.overlayImg) return;
+      if (this.overlay.classList.contains('hidden')) return;
+
+      this.overlay.classList.add('hidden');
+      this.overlay.classList.remove('flex');
+      this.overlayImg.src = '';
+      document.body.style.overflow = '';
+    }
 
     async fetchAPOD(random: boolean = false): Promise<void> {
       const apodContent = document.getElementById('apod-content');
@@ -83,9 +153,10 @@
               <img
                 src="${imageUrl}"
                 alt="${this.escapeHtml(translatedTitle)}"
-                class="w-full max-w-2xl mx-auto border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-pointer block"
+                class="apod-image w-full max-w-2xl mx-auto border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-zoom-in block"
                 style="display: block; max-height: 600px; object-fit: contain;"
                 loading="lazy"
+                title="Clic para ver a pantalla completa"
                 onload="this.style.opacity='1'; this.classList.add('loaded')"
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
               />
@@ -93,9 +164,10 @@
                 ⚠️ Error al cargar la imagen. <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-bright hover:underline">Abrir imagen original →</a>
               </div>
             </div>
-            <div class="text-center text-xs text-terminal-dim mt-2">
+            <div class="text-center text-xs text-terminal-dim mt-2 space-y-1">
+              <p>🖱️ Clic en la imagen para pantalla completa</p>
               <a href="${data.hdurl || data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright">
-                🔗 Ver imagen en alta resolución
+                🔗 Abrir imagen original en nueva pestaña
               </a>
             </div>
           </div>
@@ -220,7 +292,6 @@
     }
   }
 
-  // Inicializar APOD Viewer
   const apodViewer = new APODViewer();
   window.apodViewer = apodViewer;
 
@@ -255,5 +326,7 @@
 </script>
 
 <style>
-  /* Estilos adicionales si es necesario */
+  .apod-fullscreen-overlay:focus {
+    outline: none;
+  }
 </style>
