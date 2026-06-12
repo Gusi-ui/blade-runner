@@ -31,6 +31,7 @@
 <script>
   import { fetchNews as fetchNewsApi, type NewsArticle } from '../lib/api/client';
   import { translateToSpanish } from '../lib/api/translate';
+  import { formatRelativeTime } from '../lib/utils/relativeTime';
 
   class NewsFeed {
     private updateInterval: number = 300000;
@@ -138,7 +139,9 @@
             ${this.allNews
               .slice(0, 5)
               .map((article, index) => {
-                const date = new Date(article.publishedAt).toLocaleDateString('es-ES');
+                const date =
+                  formatRelativeTime(article.publishedAt) ||
+                  new Date(article.publishedAt).toLocaleDateString('es-ES');
                 return `
                 <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim/10 transition-colors">
                   <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
@@ -160,7 +163,9 @@
       } else {
         let html = '<div class="space-y-4">';
         filteredNews.forEach((article, index) => {
-          const date = new Date(article.publishedAt).toLocaleDateString('es-ES');
+          const date =
+            formatRelativeTime(article.publishedAt) ||
+            new Date(article.publishedAt).toLocaleDateString('es-ES');
           html += `
             <div class="border-l-2 border-terminal-dim pl-4 py-2 hover:bg-terminal-dim/10 transition-colors">
               <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
@@ -376,6 +381,10 @@
 
         // Limpiar noticias anteriores para forzar recarga
         newsFeed.allNews = [];
+
+        // Argumento del comando: 'news ai' | 'news cosmos' | 'news all'
+        const filterArg = (customEvent.detail.args?.[0] as string | undefined) ?? 'all';
+        newsFeed.setFilter(['ai', 'cosmos', 'all'].includes(filterArg) ? filterArg : 'all');
 
         terminal.printOutput(newsComponent.innerHTML);
 

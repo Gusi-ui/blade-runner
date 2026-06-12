@@ -103,14 +103,14 @@
       document.body.style.overflow = '';
     }
 
-    async fetchAPOD(random: boolean = false): Promise<void> {
+    async fetchAPOD(options: { date?: string; random?: boolean } = {}): Promise<void> {
       const apodContent = document.getElementById('apod-content');
       if (!apodContent) return;
 
       apodContent.innerHTML = '<div class="loading-dots">Cargando imagen astronómica</div>';
 
       try {
-        const data = await fetchAPOD({ random });
+        const data = await fetchAPOD(options);
         await this.displayAPOD(data);
         this.updateLastUpdateTime();
       } catch (error) {
@@ -269,9 +269,10 @@
       }
     }
 
-    startAutoUpdate(): void {
-      this.fetchAPOD();
+    startAutoUpdate(initial: { date?: string; random?: boolean } = {}): void {
+      this.fetchAPOD(initial);
 
+      // El refresco horario siempre vuelve a la imagen del día
       this.intervalId = window.setInterval(() => {
         this.fetchAPOD();
       }, this.updateInterval);
@@ -288,7 +289,7 @@
     }
 
     randomAPOD(): void {
-      this.fetchAPOD(true);
+      this.fetchAPOD({ random: true });
     }
   }
 
@@ -304,7 +305,11 @@
       if (terminal && apodComponent) {
         apodViewer.stopAutoUpdate();
         terminal.printOutput(apodComponent.innerHTML);
-        apodViewer.startAutoUpdate();
+
+        // Argumentos del comando: 'apod random' o 'apod YYYY-MM-DD'
+        const arg = (customEvent.detail.args?.[0] as string | undefined) ?? '';
+        const initial = arg === 'random' ? { random: true } : arg ? { date: arg } : {};
+        apodViewer.startAutoUpdate(initial);
 
         setTimeout(() => {
           const refreshBtn = document.getElementById('apod-refresh');

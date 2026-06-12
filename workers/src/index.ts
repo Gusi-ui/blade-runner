@@ -180,6 +180,81 @@ const fetchArXivNews = async (): Promise<NewsArticle[]> => {
   return articles;
 };
 
+const decodeXmlEntities = (text: string): string =>
+  text
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+
+const fetchNasaRSS = async (): Promise<NewsArticle[]> => {
+  const response = await fetch('https://www.nasa.gov/rss/dyn/breaking_news.rss');
+  if (!response.ok) return [];
+
+  const text = await response.text();
+  const items = [...text.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+  const articles: NewsArticle[] = [];
+
+  for (const [, item] of items.slice(0, 5)) {
+    const title = decodeXmlEntities(item.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '');
+    const description = decodeXmlEntities(
+      item.match(/<description>([\s\S]*?)<\/description>/)?.[1] || ''
+    );
+    const link = item.match(/<link>([\s\S]*?)<\/link>/)?.[1]?.trim() || '';
+    const pubDate = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim();
+    if (title) {
+      articles.push({
+        title,
+        description: description.substring(0, 250),
+        url: link,
+        publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+        source: { name: 'NASA' },
+      });
+    }
+  }
+  return articles;
+};
+
+const fetchHackerNews = async (): Promise<NewsArticle[]> => {
+  const response = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+  if (!response.ok) return [];
+
+  const ids = ((await response.json()) as number[]).slice(0, 6);
+  const items = await Promise.allSettled(
+    ids.map(async id => {
+      const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+      if (!res.ok) throw new Error(`HN item ${id}`);
+      return res.json() as Promise<{
+        title?: string;
+        url?: string;
+        time?: number;
+        score?: number;
+        id: number;
+      }>;
+    })
+  );
+
+  const articles: NewsArticle[] = [];
+  for (const item of items) {
+    if (item.status !== 'fulfilled' || !item.value?.title) continue;
+    const story = item.value;
+    articles.push({
+      title: story.title as string,
+      description: `Tech: ${story.score ?? 0} puntos en Hacker News`,
+      url: story.url || `https://news.ycombinator.com/item?id=${story.id}`,
+      publishedAt: story.time
+        ? new Date(story.time * 1000).toISOString()
+        : new Date().toISOString(),
+      source: { name: 'Hacker News' },
+    });
+  }
+  return articles;
+};
+
 const filterNews = (articles: NewsArticle[], filter: string): NewsArticle[] => {
   if (filter === 'all') return articles;
   const aiKw = ['ai', 'artificial', 'machine learning', 'computer', 'software', 'tech'];
@@ -191,17 +266,35 @@ const filterNews = (articles: NewsArticle[], filter: string): NewsArticle[] => {
   return filtered.length > 0 ? filtered : articles;
 };
 
-const translateText = async (text: string): Promise<string> => {
-  const response = await fetch(
-    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text.slice(0, 4500))}`
-  );
-  if (!response.ok) return text;
-  const data = (await response.json()) as unknown;
-  const segments = Array.isArray(data) ? data[0] : null;
-  if (Array.isArray(segments)) {
-    return segments.map((item: string[]) => item[0]).join('');
+const translateWithAI = async (env: Env, text: string): Promise<string> => {
+  const result = (await env.AI.run('@cf/meta/m2m100-1.2b', {
+    text: text.slice(0, 4500),
+    source_lang: 'english',
+    target_lang: 'spanish',
+  })) as { translated_text?: string };
+  return result.translated_text || text;
+};
+
+const translateText = async (env: Env, text: string): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text.slice(0, 4500))}`
+    );
+    if (!response.ok) throw new Error(`Google Translate: ${response.status}`);
+    const data = (await response.json()) as unknown;
+    const segments = Array.isArray(data) ? data[0] : null;
+    if (Array.isArray(segments)) {
+      return segments.map((item: string[]) => item[0]).join('');
+    }
+    throw new Error('Google Translate: respuesta inesperada');
+  } catch {
+    // Fallback: modelo de traducción de Workers AI
+    try {
+      return await translateWithAI(env, text);
+    } catch {
+      return text;
+    }
   }
-  return text;
 };
 
 export default {
@@ -227,34 +320,60 @@ export default {
       if (url.pathname === '/api/apod' && request.method === 'GET') {
         const date = url.searchParams.get('date') || undefined;
         const random = url.searchParams.get('random') === 'true';
-        const cacheKey = `apod:${random ? 'random' : date || 'today'}`;
-        const cached = await getCached<APODData>(env.CACHE, cacheKey);
-        if (cached) return jsonResponse(cached, origin, env);
 
-        const data = await fetchAPOD(env, date, random);
-        await setCached(env.CACHE, cacheKey, data, 21600);
+        // 'random' no se cachea por su clave (devolvería siempre la misma imagen
+        // durante el TTL); se cachea por la fecha resuelta que devuelve la NASA.
+        if (!random) {
+          const cacheKey = `apod:${date || 'today'}`;
+          const cached = await getCached<APODData>(env.CACHE, cacheKey);
+          if (cached) return jsonResponse(cached, origin, env);
+
+          const data = await fetchAPOD(env, date);
+          await setCached(env.CACHE, cacheKey, data, 21600);
+          return jsonResponse(data, origin, env);
+        }
+
+        const data = await fetchAPOD(env, undefined, true);
+        if (data.date) {
+          await setCached(env.CACHE, `apod:${data.date}`, data, 21600);
+        }
         return jsonResponse(data, origin, env);
       }
 
       if (url.pathname === '/api/news' && request.method === 'GET') {
         const filter = url.searchParams.get('filter') || 'all';
+        const pageParam = url.searchParams.get('page');
+        const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : null;
+        const PAGE_SIZE = 10;
+
+        const paginate = (articles: NewsArticle[]): { articles: NewsArticle[] } =>
+          page
+            ? { articles: articles.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) }
+            : { articles };
+
         const cacheKey = `news:${filter}`;
         const cached = await getCached<{ articles: NewsArticle[] }>(env.CACHE, cacheKey);
-        if (cached) return jsonResponse(cached, origin, env);
+        if (cached) return jsonResponse(paginate(cached.articles), origin, env);
 
-        const [guardian, arxiv] = await Promise.allSettled([
+        const [guardian, arxiv, nasa, hackerNews] = await Promise.allSettled([
           fetchGuardianNews(env),
           fetchArXivNews(),
+          fetchNasaRSS(),
+          fetchHackerNews(),
         ]);
         const all: NewsArticle[] = [];
         if (guardian.status === 'fulfilled') all.push(...guardian.value);
         if (arxiv.status === 'fulfilled') all.push(...arxiv.value);
+        if (nasa.status === 'fulfilled') all.push(...nasa.value);
+        if (hackerNews.status === 'fulfilled') all.push(...hackerNews.value);
 
         const unique = all.filter((a, i, self) => i === self.findIndex(x => x.title === a.title));
-        const articles = filterNews(unique, filter).slice(0, 15);
+        const articles = filterNews(unique, filter)
+          .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+          .slice(0, 20);
         const result = { articles };
         await setCached(env.CACHE, cacheKey, result, 900);
-        return jsonResponse(result, origin, env);
+        return jsonResponse(paginate(articles), origin, env);
       }
 
       if (url.pathname === '/api/translate' && request.method === 'POST') {
@@ -266,7 +385,7 @@ export default {
         const cached = await getCached<{ translatedText: string }>(env.CACHE, cacheKey);
         if (cached) return jsonResponse(cached, origin, env);
 
-        const translatedText = await translateText(text);
+        const translatedText = await translateText(env, text);
         const result = { translatedText };
         await setCached(env.CACHE, cacheKey, result, 604800);
         return jsonResponse(result, origin, env);

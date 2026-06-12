@@ -3,6 +3,7 @@ import { CONTACT_HTML } from '../ai/chatContext';
 import { checkApiHealth } from '../api/client';
 import { showConfig } from './configMenu';
 import type { CommandHistory } from './history';
+import { calculatePlanetaryAges } from './planetaryAge';
 import { CommandRegistry } from './registry';
 import type { CommandSpec, TerminalContext } from './registry';
 import { escapeHtml } from './sanitize';
@@ -65,6 +66,57 @@ const showMenu = (ctx: TerminalContext): void => {
  <div id="menu-container"></div>
   `);
   document.dispatchEvent(new CustomEvent('loadMenu'));
+};
+
+const APOD_MIN_DATE = '1995-06-16';
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const isValidISODate = (value: string): boolean =>
+  DATE_RE.test(value) && !Number.isNaN(new Date(value).getTime());
+
+const todayISO = (): string => new Date().toISOString().slice(0, 10);
+
+const handleApod = (args: string[], ctx: TerminalContext): void => {
+  const arg = args[0];
+  if (!arg || arg === 'hoy' || arg === 'today') {
+    ctx.loadView('apod');
+    return;
+  }
+  if (arg === 'random' || arg === 'aleatoria') {
+    ctx.loadView('apod', ['random']);
+    return;
+  }
+  if (isValidISODate(arg)) {
+    if (arg < APOD_MIN_DATE || arg > todayISO()) {
+      ctx.printText(`La fecha debe estar entre ${APOD_MIN_DATE} y hoy.`);
+      return;
+    }
+    ctx.loadView('apod', [arg]);
+    return;
+  }
+  ctx.printText('Uso: apod [YYYY-MM-DD | random | hoy]');
+};
+
+const handleEdad = (args: string[], ctx: TerminalContext): void => {
+  const arg = args[0];
+  if (!arg) {
+    ctx.loadView('calculator');
+    return;
+  }
+  if (!isValidISODate(arg) || new Date(arg).getTime() > Date.now()) {
+    ctx.printText('Uso: edad <YYYY-MM-DD> (tu fecha de nacimiento, p. ej. edad 1990-05-12)');
+    return;
+  }
+  const rows = calculatePlanetaryAges(arg)
+    .map(({ planet, age }) => `│ ${planet.padEnd(8)} │ ${age.toFixed(2).padStart(11)} │`)
+    .join('\n');
+  ctx.print(`<pre class="text-sm leading-tight">
+┌──────────┬─────────────┐
+│ Planeta  │ Edad (años) │
+├──────────┼─────────────┤
+${rows}
+└──────────┴─────────────┘</pre>
+<div class="text-terminal-dim text-xs mt-1">Un año = una vuelta completa al Sol. Usa 'calculadora' para la vista completa con datos NASA.</div>`);
 };
 
 const handleExit = (ctx: TerminalContext): void => {
@@ -134,8 +186,17 @@ export const buildCommands = (deps: CommandDeps): CommandSpec[] => [
     name: 'apod',
     aliases: ['6', 'imagen nasa', 'foto nasa'],
     description: 'Imagen astronómica del día (NASA)',
+    usage: 'apod [YYYY-MM-DD | random | hoy]',
+    choices: ['random', 'hoy'],
     view: 'apod',
-    handler: viewHandler('apod'),
+    handler: handleApod,
+  },
+  {
+    name: 'edad',
+    aliases: ['age'],
+    description: 'Tu edad en cada planeta del sistema solar',
+    usage: 'edad <YYYY-MM-DD>',
+    handler: handleEdad,
   },
   {
     name: 'chat',
