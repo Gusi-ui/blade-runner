@@ -1,4 +1,5 @@
 // Hangman Game - Cosmic Theme
+import { saveScore } from '../lib/games/scores';
 import type { TerminalController } from '../types/terminal';
 
 export class Hangman {
@@ -20,6 +21,7 @@ export class Hangman {
   private guessedLetters: string[] = [];
   private wrongGuesses = 0;
   private maxWrongGuesses = 6;
+  private winStreak = 0;
   private terminal: TerminalController;
 
   constructor(terminal: TerminalController) {
@@ -295,6 +297,8 @@ export class Hangman {
   }
 
   private win(): void {
+    this.winStreak++;
+    saveScore('hangman', this.winStreak);
     const messageEl = document.getElementById('hangman-message');
     if (messageEl) {
       messageEl.innerHTML = `
@@ -302,6 +306,7 @@ export class Hangman {
           ¡GANASTE!
         </div>
         <div class="text-center mt-2">La palabra era: ${this.currentWord}</div>
+        <div class="text-center text-sm text-terminal-dim mt-1">Racha de victorias: ${this.winStreak}</div>
         <div class="text-center mt-4">
           <button id="hangman-play-again" class="menu-item inline-block px-4 py-2">Jugar de nuevo</button>
           <button id="hangman-exit2" class="menu-item inline-block px-4 py-2 ml-2">Salir</button>
@@ -327,6 +332,7 @@ export class Hangman {
   }
 
   private lose(): void {
+    this.winStreak = 0;
     const messageEl = document.getElementById('hangman-message');
     if (messageEl) {
       messageEl.innerHTML = `

@@ -1,4 +1,5 @@
 // Snake Game
+import { getHighScore, saveScore } from '../lib/games/scores';
 import type { TerminalController } from '../types/terminal';
 
 export class Snake {
@@ -106,15 +107,12 @@ export class Snake {
   }
 
   private loadHighScore(): void {
-    const saved = localStorage.getItem('snake-high-score');
-    this.highScore = saved ? parseInt(saved) : 0;
+    this.highScore = getHighScore('snake');
   }
 
   private saveHighScore(): void {
-    if (this.score > this.highScore) {
-      this.highScore = this.score;
-      localStorage.setItem('snake-high-score', this.highScore.toString());
-    }
+    saveScore('snake', this.score);
+    this.highScore = getHighScore('snake');
   }
 
   private updateLevel(): void {

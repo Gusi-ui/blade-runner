@@ -1,6 +1,8 @@
 import { askInline } from '../ai/ask';
 import { CONTACT_HTML } from '../ai/chatContext';
 import { checkApiHealth } from '../api/client';
+import { getLeaderboard } from '../games/scores';
+import { startGuessGame } from '../../scripts/guess';
 import { showConfig } from './configMenu';
 import type { CommandHistory } from './history';
 import { calculatePlanetaryAges } from './planetaryAge';
@@ -174,6 +176,40 @@ export const buildCommands = (deps: CommandDeps): CommandSpec[] => [
     description: 'Juegos retro (Snake, Tetris, Ahorcado, Tres en Raya)',
     view: 'games',
     handler: viewHandler('games'),
+  },
+  {
+    name: 'guess',
+    aliases: ['adivina'],
+    description: 'Adivina el número (juego en la propia terminal)',
+    handler: (_args, ctx) => startGuessGame(ctx),
+  },
+  {
+    name: 'scores',
+    aliases: ['puntuaciones'],
+    description: 'Mejores puntuaciones de los juegos',
+    handler: (_args, ctx) => {
+      const leaderboard = getLeaderboard();
+      if (leaderboard.length === 0) {
+        ctx.printText('Aún no hay puntuaciones guardadas. ¡Juega una partida!');
+        return;
+      }
+      const sections = leaderboard
+        .map(({ label, entries }) => {
+          const rows = entries
+            .map(
+              (entry, i) =>
+                `│ ${String(i + 1)}. │ ${String(entry.score).padStart(7)} │ ${new Date(entry.date).toLocaleDateString('es-ES').padStart(10)} │`
+            )
+            .join('\n');
+          return `<div class="text-terminal-bright mt-2">${escapeHtml(label)}</div><pre class="text-sm leading-tight">┌────┬─────────┬────────────┐
+│ #  │  Puntos │      Fecha │
+├────┼─────────┼────────────┤
+${rows}
+└────┴─────────┴────────────┘</pre>`;
+        })
+        .join('');
+      ctx.print(`<div class="section-title">Mejores Puntuaciones</div>${sections}`);
+    },
   },
   {
     name: 'calculator',

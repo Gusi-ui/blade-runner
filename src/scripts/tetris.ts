@@ -1,4 +1,5 @@
 // Tetris Game - Retro Style
+import { getHighScore, saveScore } from '../lib/games/scores';
 import type { TerminalController } from '../types/terminal';
 
 // Tetris piece interface
@@ -416,13 +417,26 @@ export class Tetris {
     if (this.gameLoop) clearInterval(this.gameLoop);
     if (this.dropTimer) clearInterval(this.dropTimer);
 
+    saveScore('tetris', this.score);
+
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.ctx.fillStyle = '#00ff41';
     this.ctx.font = '30px monospace';
     this.ctx.textAlign = 'center';
-    this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2);
+    this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 20);
+    this.ctx.font = '20px monospace';
+    this.ctx.fillText(
+      `Puntuación: ${this.score}`,
+      this.canvas.width / 2,
+      this.canvas.height / 2 + 10
+    );
+    this.ctx.fillText(
+      `Récord: ${getHighScore('tetris')}`,
+      this.canvas.width / 2,
+      this.canvas.height / 2 + 35
+    );
   }
 
   private restart(): void {

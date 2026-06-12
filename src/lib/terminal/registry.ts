@@ -2,6 +2,16 @@
 // Los handlers reciben un TerminalContext en lugar de tocar el controlador,
 // de modo que el catálogo es testeable sin DOM.
 
+/**
+ * Interceptor de entrada para modos interactivos (juegos textuales,
+ * confirmaciones): mientras esté apilado, recibe cada línea en lugar
+ * del parser de comandos. Ctrl+C lo cancela y lo desapila.
+ */
+export interface InputInterceptor {
+  onInput(value: string): void;
+  onCancel(): void;
+}
+
 export interface TerminalContext {
   /** Imprime HTML confiable (generado por la app, nunca input del usuario). */
   print(html: string): void;
@@ -13,6 +23,8 @@ export interface TerminalContext {
   loadView(view: string, args?: string[]): void;
   setInputDisabled(disabled: boolean): void;
   scrollToBottom(): void;
+  pushInputHandler(interceptor: InputInterceptor): void;
+  popInputHandler(): void;
   registry: CommandRegistry;
 }
 

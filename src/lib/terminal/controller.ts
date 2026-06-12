@@ -3,7 +3,7 @@ import { buildCommands } from './commands';
 import { getCompletions } from './completion';
 import { CommandHistory } from './history';
 import { parseInput } from './parser';
-import { CommandRegistry, type TerminalContext } from './registry';
+import { CommandRegistry, type InputInterceptor, type TerminalContext } from './registry';
 import { escapeHtml } from './sanitize';
 
 const PROMPT = 'gusi@nexus:~$';
@@ -16,6 +16,7 @@ export class TerminalController {
   private hint: HTMLElement | null;
   private history = new CommandHistory();
   private registry = new CommandRegistry();
+  private interceptors: InputInterceptor[] = [];
   private ctx: TerminalContext;
 
   constructor() {
@@ -34,6 +35,8 @@ export class TerminalController {
         this.input.disabled = disabled;
       },
       scrollToBottom: () => this.scrollToBottom(),
+      pushInputHandler: interceptor => void this.interceptors.push(interceptor),
+      popInputHandler: () => void this.interceptors.pop(),
       registry: this.registry,
     };
 
@@ -150,6 +153,9 @@ export class TerminalController {
         `<span class="text-terminal-bright">${PROMPT}</span> ${escapeHtml(this.input.value)}^C`
       );
       this.input.value = '';
+      // Después, el modo interactivo (juego textual) si está activo
+      const interceptor = this.interceptors.pop();
+      if (interceptor) interceptor.onCancel();
       this.history.resetNavigation();
       this.clearHint();
       this.scrollToBottom();
@@ -167,7 +173,7 @@ export class TerminalController {
       e.preventDefault();
       this.submitCommand();
     } else if (e.key === 'Tab') {
-      if (!this.input.value.trim()) return; // no interferir con la navegación por foco
+      if (!this.input.value.trim() || this.interceptors.length > 0) return;
       e.preventDefault();
       this.handleTab();
     } else if (e.key === 'Escape') {
@@ -214,6 +220,10 @@ export class TerminalController {
 
   private updateHint(): void {
     if (!this.hint) return;
+    if (this.interceptors.length > 0) {
+      this.clearHint();
+      return;
+    }
     const { options } = getCompletions(this.input.value, this.registry);
     if (options.length === 0 || (options.length === 1 && options[0].value === this.input.value)) {
       this.clearHint();
@@ -235,10 +245,20 @@ export class TerminalController {
   private submitCommand(): void {
     const command = this.input.value.trim();
     if (!command) return;
-    this.history.add(command);
     this.input.value = '';
     this.clearHint();
     this.updateCursorPosition();
+
+    // Modo interactivo: la entrada va al interceptor, no al parser
+    const interceptor = this.interceptors[this.interceptors.length - 1];
+    if (interceptor) {
+      this.printOutput(`<span class="text-terminal-dim">&gt;</span> ${escapeHtml(command)}`);
+      interceptor.onInput(command);
+      this.scrollToBottom();
+      return;
+    }
+
+    this.history.add(command);
     void this.executeCommand(command);
   }
 

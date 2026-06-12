@@ -23,6 +23,8 @@ const makeCtx = () => {
     loadView: (view, args) => void calls.loadView.push({ view, args }),
     setInputDisabled: () => undefined,
     scrollToBottom: () => undefined,
+    pushInputHandler: () => undefined,
+    popInputHandler: () => undefined,
     registry,
   };
   return { ctx, calls, registry };
