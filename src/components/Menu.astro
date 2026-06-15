@@ -55,7 +55,10 @@
 
 <script>
   document.addEventListener('loadMenu', () => {
-    const menuContainer = document.getElementById('menu-container');
+    // Cada invocación de `menu` imprime un contenedor nuevo: poblamos el ÚLTIMO
+    // (usar un id fijo rellenaba el primero, ya fuera de vista → el menú "no aparecía").
+    const containers = document.querySelectorAll('.menu-container');
+    const menuContainer = containers[containers.length - 1] as HTMLElement | undefined;
     const menuComponent = document.getElementById('menu-component');
 
     if (menuContainer && menuComponent) {

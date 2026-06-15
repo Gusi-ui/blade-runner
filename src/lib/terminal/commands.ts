@@ -66,7 +66,7 @@ const showMenu = (ctx: TerminalContext): void => {
  <div class="section-title">
    Menú Principal - Nexus Terminal v1.0
  </div>
- <div id="menu-container"></div>
+ <div class="menu-container"></div>
   `);
   // Refleja #menu en el hash (deep links); el render lo hace Menu.astro vía loadMenu.
   ctx.loadView('menu');

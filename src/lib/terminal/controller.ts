@@ -251,6 +251,8 @@ export class TerminalController {
 
   private async executeCommand(command: string): Promise<void> {
     this.printOutput(`<span class="text-terminal-bright">${PROMPT}</span> ${escapeHtml(command)}`);
+    // Referencia a la línea del comando para, al terminar, colocarla arriba.
+    const promptLine = this.outputContainer.lastElementChild as HTMLElement | null;
 
     const parsed = parseInput(command, this.registry);
 
@@ -258,7 +260,7 @@ export class TerminalController {
       this.printOutput(
         `<span class="error-text">Error: Comando '${escapeHtml(command)}' no reconocido. Escribe 'help' o 'ayuda'.</span>`
       );
-      this.scrollToBottom();
+      this.scrollCommandIntoView(promptLine);
       return;
     }
 
@@ -269,7 +271,17 @@ export class TerminalController {
       this.printOutput(`<span class="error-text">Error: ${escapeHtml(message)}</span>`);
     }
 
-    this.scrollToBottom();
+    this.scrollCommandIntoView(promptLine);
+  }
+
+  /**
+   * Tras ejecutar un comando, lleva su línea de prompt al inicio del viewport
+   * para que la salida se lea desde arriba ("ver dónde estás"). Si no hay
+   * referencia, cae al scroll al final.
+   */
+  private scrollCommandIntoView(promptLine: HTMLElement | null): void {
+    if (promptLine) promptLine.scrollIntoView({ block: 'start' });
+    else this.scrollToBottom();
   }
 
   private loadView(view: string, args: string[] = []): void {
@@ -327,10 +339,10 @@ export class TerminalController {
   }
 
   private scrollToBottom(): void {
-    const screen = document.querySelector('.terminal-screen');
-    if (screen) {
-      screen.scrollTop = screen.scrollHeight;
-    }
+    // El contenedor scrollable es la ventana (.terminal-screen crece con su
+    // contenido, no tiene overflow propio), así que hay que mover el scroll
+    // del documento, no el del elemento.
+    window.scrollTo({ top: document.documentElement.scrollHeight });
   }
 }
 
