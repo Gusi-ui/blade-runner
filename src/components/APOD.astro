@@ -153,8 +153,8 @@
               <img
                 src="${imageUrl}"
                 alt="${this.escapeHtml(translatedTitle)}"
-                class="apod-image w-full max-w-2xl mx-auto border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-zoom-in block"
-                style="display: block; max-height: 600px; object-fit: contain;"
+                class="apod-image block w-full border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-zoom-in"
+                style="display: block; height: auto;"
                 loading="lazy"
                 title="Clic para ver a pantalla completa"
                 onload="this.style.opacity='1'; this.classList.add('loaded')"
@@ -175,7 +175,7 @@
       } else if (data.media_type === 'video') {
         html += `
           <div class="mb-4">
-            <div class="aspect-video max-w-2xl mx-auto border-2 border-terminal-dim rounded overflow-hidden">
+            <div class="aspect-video w-full border-2 border-terminal-dim rounded overflow-hidden">
               <iframe
                 src="${data.url}"
                 class="w-full h-full"

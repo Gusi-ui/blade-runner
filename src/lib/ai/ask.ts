@@ -22,6 +22,8 @@ export const askInline = async (question: string, ctx: TerminalContext): Promise
   }
 
   const block = ctx.printBlock();
+  // Sin anuncios token a token para lectores de pantalla: se anuncia al final
+  block.setAttribute('aria-live', 'off');
   const label = document.createElement('span');
   label.className = 'text-terminal-dim';
   label.textContent = 'Nexus-7: ';
@@ -53,6 +55,7 @@ export const askInline = async (question: string, ctx: TerminalContext): Promise
       'El asistente no está disponible. Comprueba el estado del Worker con el comando status.';
   } finally {
     activeAbort = null;
+    block.removeAttribute('aria-live');
     ctx.scrollToBottom();
   }
 };

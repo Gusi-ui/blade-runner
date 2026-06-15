@@ -74,7 +74,10 @@ const description =
         if (savedTheme) document.body.classList.add(`theme-${savedTheme}`);
         if (reducedEffects) document.body.classList.add('reduced-effects');
 
-        generateParticles(isMobile ? 15 : 50);
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reducedEffects && !prefersReducedMotion) {
+          generateParticles(isMobile ? 15 : 50);
+        }
 
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('/sw.js').catch(() => {});

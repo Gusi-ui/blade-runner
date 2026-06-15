@@ -19,6 +19,8 @@ export interface TerminalContext {
   printText(text: string): void;
   /** Crea y añade un bloque de salida vacío, para contenido incremental (streaming). */
   printBlock(): HTMLElement;
+  /** Imprime texto plano con efecto máquina de escribir (instantáneo si hay reduced-motion). */
+  printTyped(text: string, charsPerSecond?: number): Promise<void>;
   clear(): void;
   loadView(view: string, args?: string[]): void;
   setInputDisabled(disabled: boolean): void;

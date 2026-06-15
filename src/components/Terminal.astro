@@ -67,7 +67,13 @@ interface Props {
     </div>
 
     <div id="terminal-content" class="min-h-[calc(100vh-200px)]">
-      <div class="terminal-output" role="log" aria-live="polite" aria-label="Terminal output">
+      <div
+        id="boot-output"
+        class="terminal-output"
+        role="log"
+        aria-live="polite"
+        aria-label="Terminal output"
+      >
         <p class="text-terminal-bright mb-2">Inicializando sistema...</p>
         <p class="mb-2">Cargando módulos del kernel...</p>
         <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
@@ -94,15 +100,20 @@ interface Props {
 
       <div class="terminal-input-line mt-2">
         <span class="terminal-prompt" aria-label="Prompt del sistema">gusi@nexus:~$</span>
-        <input
-          type="text"
-          id="terminal-input"
-          class="terminal-input"
-          autocomplete="off"
-          spellcheck="false"
-          aria-label="Entrada de comandos de terminal"
-          aria-describedby="terminal-help"
-        />
+        <div class="terminal-input-wrap">
+          <input
+            type="text"
+            id="terminal-input"
+            class="terminal-input"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Entrada de comandos de terminal"
+            aria-describedby="terminal-help"
+          />
+          <span class="input-mirror" aria-hidden="true"
+            ><span id="mirror-text"></span><span class="terminal-cursor"></span></span
+          >
+        </div>
         <button
           type="button"
           id="terminal-send"
@@ -111,7 +122,6 @@ interface Props {
         >
           ▶
         </button>
-        <span class="terminal-cursor" aria-hidden="true"></span>
       </div>
       <div id="completion-hint" class="text-terminal-dim mt-1 hidden text-xs" aria-hidden="true">
       </div>
@@ -123,10 +133,14 @@ interface Props {
 </div>
 
 <script>
+  import { runBootSequence } from '../lib/terminal/boot';
   import { TerminalController, startHeaderClock } from '../lib/terminal/controller';
 
   window.terminal = new TerminalController();
   startHeaderClock();
+
+  const bootOutput = document.getElementById('boot-output');
+  if (bootOutput) void runBootSequence(bootOutput);
 </script>
 
 <!-- Área de ayuda accesible -->

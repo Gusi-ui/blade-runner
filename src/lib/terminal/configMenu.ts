@@ -1,41 +1,36 @@
+import { isSoundEnabled, toggleSound } from '../audio/keySounds';
 import type { TerminalContext } from './registry';
 
 // Menú interactivo de configuración (tema, efectos, sonido), extraído del
 // controlador. Solo se ejecuta en el navegador.
 
+export const THEMES: Record<string, string> = {
+  classic: 'Clásico (Verde Matrix)',
+  cyberpunk: 'Cyberpunk (Azul Neón)',
+  retro: 'Retro (Ámbar)',
+  phosphor: 'Phosphor (Blanco CRT)',
+};
+
 export const applyTheme = (ctx: TerminalContext, theme: string | null): void => {
   const body = document.body;
-  body.classList.remove('theme-classic', 'theme-cyberpunk', 'theme-retro');
+  body.classList.remove(...Object.keys(THEMES).map(name => `theme-${name}`));
 
-  switch (theme) {
-    case 'cyberpunk':
-      body.classList.add('theme-cyberpunk');
-      localStorage.setItem('nexus-theme', 'cyberpunk');
-      ctx.print('<div class="success-text">Tema Cyberpunk aplicado.</div>');
-      break;
-    case 'retro':
-      body.classList.add('theme-retro');
-      localStorage.setItem('nexus-theme', 'retro');
-      ctx.print('<div class="success-text">Tema Retro aplicado.</div>');
-      break;
-    default:
-      body.classList.add('theme-classic');
-      localStorage.setItem('nexus-theme', 'classic');
-      ctx.print('<div class="success-text">Tema Clásico aplicado.</div>');
-  }
+  const selected = theme && THEMES[theme] ? theme : 'classic';
+  body.classList.add(`theme-${selected}`);
+  localStorage.setItem('nexus-theme', selected);
+  ctx.print(`<div class="success-text">Tema ${THEMES[selected]} aplicado.</div>`);
 };
 
 const handleConfig = (ctx: TerminalContext, config: string | null): void => {
   switch (config) {
-    case 'theme':
+    case 'theme': {
+      const items = Object.entries(THEMES)
+        .map(([name, label]) => `<div class="menu-item" data-theme="${name}">${label}</div>`)
+        .join('');
       ctx.print(`
  <div class="border border-terminal-dim p-4 rounded">
    <div class="text-terminal-bright">Temas Disponibles:</div>
-   <div class="mt-2 space-y-2">
-     <div class="menu-item" data-theme="classic">Clásico (Verde Matrix)</div>
-     <div class="menu-item" data-theme="cyberpunk">Cyberpunk (Azul Neón)</div>
-     <div class="menu-item" data-theme="retro">Retro (Ámbar)</div>
-   </div>
+   <div class="mt-2 space-y-2">${items}</div>
  </div>
       `);
       setTimeout(() => {
@@ -46,6 +41,7 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
         });
       }, 100);
       break;
+    }
     case 'effects': {
       const reduced = document.body.classList.contains('reduced-effects');
       ctx.print(`
@@ -73,15 +69,24 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
  <div class="border border-terminal-dim p-4 rounded">
    <div class="text-terminal-bright">Configuración de Sonido:</div>
    <div class="mt-2">
-     <div class="menu-item" data-sound="mechanical">Sonido Mecánico: <span id="sound-status">Activado</span></div>
-     <div class="text-sm text-terminal-dim mt-2">Los sonidos se reproducen en navegadores compatibles.</div>
+     <div class="menu-item" data-sound="toggle">Sonido de teclas mecánico: <span class="text-terminal-bright">${isSoundEnabled() ? 'Activado' : 'Desactivado'}</span> — pulsa para cambiar</div>
+     <div class="text-sm text-terminal-dim mt-2">Sonido generado con WebAudio, sin descargas. Se guarda tu preferencia.</div>
    </div>
  </div>
       `);
+      setTimeout(() => {
+        document.querySelector('[data-sound="toggle"]')?.addEventListener('click', () => {
+          const enabled = toggleSound();
+          ctx.print(
+            `<div class="success-text">Sonido de teclas ${enabled ? 'activado' : 'desactivado'}.</div>`
+          );
+        });
+      }, 100);
       break;
     case 'reset':
       localStorage.removeItem('nexus-theme');
       localStorage.removeItem('nexus-reduced-effects');
+      localStorage.removeItem('nexus-sound');
       document.body.classList.remove('reduced-effects');
       ctx.print(
         '<div class="success-text">Configuración restaurada a valores predeterminados.</div>'

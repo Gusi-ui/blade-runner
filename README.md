@@ -2,9 +2,20 @@
 
 Terminal retro-futurista interactiva con estética inspirada en Blade Runner. Una aplicación web completa desarrollada con Astro que simula una terminal antigua con efectos visuales CRT, texto verde fosforescente y múltiples funcionalidades interactivas.
 
-![Version](https://img.shields.io/badge/version-2.0.0-green.svg)
-![Astro](https://img.shields.io/badge/Astro-4.16-orange.svg)
+![Version](https://img.shields.io/badge/version-3.0.0-green.svg)
+![Astro](https://img.shields.io/badge/Astro-6-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+## 🆕 Novedades v3.0
+
+- **Secuencia de arranque animada** con efecto máquina de escribir (se salta con cualquier tecla; respeta `prefers-reduced-motion`).
+- **Easter eggs ocultos**: `matrix`, test `voight-kampff`, `tears`, `ls`/`cat`/`pwd`, `sudo` y el código Konami (↑↑↓↓←→←→BA).
+- **Lluvia Matrix** a pantalla completa y **sonido mecánico de teclas** (WebAudio, sin samples, con toggle persistente).
+- **Nuevo tema Phosphor** (CRT blanco) y comando directo `theme <classic|cyberpunk|retro|phosphor>`.
+- **Cursor reescrito** con técnica de espejo del input (sin medición de ancho ni `setInterval`).
+- **Mejoras de accesibilidad y rendimiento**: desactivado de partículas/scanlines y efectos con `prefers-reduced-motion`.
+- **Imagen APOD a todo el ancho** del panel en escritorio y móvil.
+- **Backend en Cloudflare Worker**: APOD, noticias agregadas (Guardian + arXiv + NASA RSS + Hacker News), traducción y chat IA con caché en KV; claves API protegidas como _secrets_ server-side.
 
 ## ✨ Características
 

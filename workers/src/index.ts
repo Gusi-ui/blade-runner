@@ -53,9 +53,15 @@ REGLAS:
 - Si no sabes algo del portfolio, dilo y sugiere un comando de la terminal
 - No des consejos médicos, legales ni financieros`;
 
+// localhost siempre permitido (dev); en producción solo el origen configurado.
+const isAllowedOrigin = (origin: string, allowedOrigin: string): boolean =>
+  allowedOrigin === '*' ||
+  origin === allowedOrigin ||
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
 const corsHeaders = (origin: string, allowedOrigin: string) => ({
-  'Access-Control-Allow-Origin':
-    origin === allowedOrigin || allowedOrigin === '*' ? origin : allowedOrigin,
+  'Access-Control-Allow-Origin': isAllowedOrigin(origin, allowedOrigin) ? origin : allowedOrigin,
+  Vary: 'Origin',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Max-Age': '86400',

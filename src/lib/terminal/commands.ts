@@ -3,7 +3,7 @@ import { CONTACT_HTML } from '../ai/chatContext';
 import { checkApiHealth } from '../api/client';
 import { getLeaderboard } from '../games/scores';
 import { startGuessGame } from '../../scripts/guess';
-import { showConfig } from './configMenu';
+import { applyTheme, showConfig, THEMES } from './configMenu';
 import type { CommandHistory } from './history';
 import { calculatePlanetaryAges } from './planetaryAge';
 import { CommandRegistry } from './registry';
@@ -296,6 +296,21 @@ ${rows}
     aliases: ['configuracion'],
     description: 'Configuración (tema, efectos, sonido)',
     handler: (_args, ctx) => showConfig(ctx),
+  },
+  {
+    name: 'theme',
+    aliases: ['tema'],
+    description: 'Cambia el tema de color',
+    usage: 'theme <classic|cyberpunk|retro|phosphor>',
+    choices: Object.keys(THEMES),
+    handler: (args, ctx) => {
+      const theme = args[0];
+      if (!theme || !THEMES[theme]) {
+        ctx.printText(`Uso: theme <${Object.keys(THEMES).join('|')}>`);
+        return;
+      }
+      applyTheme(ctx, theme);
+    },
   },
   {
     name: 'status',

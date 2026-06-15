@@ -1,10 +1,13 @@
 import { cancelAsk } from '../ai/ask';
+import { playKeySound } from '../audio/keySounds';
 import { buildCommands } from './commands';
 import { getCompletions } from './completion';
+import { buildEasterEggCommands, installKonamiListener } from './easterEggs';
 import { CommandHistory } from './history';
 import { parseInput } from './parser';
 import { CommandRegistry, type InputInterceptor, type TerminalContext } from './registry';
 import { escapeHtml } from './sanitize';
+import { typeText } from './typewriter';
 
 const PROMPT = 'gusi@nexus:~$';
 const MAX_HINT_OPTIONS = 6;
@@ -12,7 +15,7 @@ const MAX_HINT_OPTIONS = 6;
 export class TerminalController {
   private input: HTMLInputElement;
   private outputContainer: HTMLElement;
-  private cursor: HTMLElement;
+  private mirrorText: HTMLElement | null;
   private hint: HTMLElement | null;
   private history = new CommandHistory();
   private registry = new CommandRegistry();
@@ -22,13 +25,14 @@ export class TerminalController {
   constructor() {
     this.input = document.getElementById('terminal-input') as HTMLInputElement;
     this.outputContainer = document.getElementById('output-container') as HTMLElement;
-    this.cursor = document.querySelector('.terminal-cursor') as HTMLElement;
+    this.mirrorText = document.getElementById('mirror-text');
     this.hint = document.getElementById('completion-hint');
 
     this.ctx = {
       print: html => this.printOutput(html),
       printText: text => this.printText(text),
       printBlock: () => this.printBlock(),
+      printTyped: (text, charsPerSecond) => this.printTyped(text, charsPerSecond),
       clear: () => this.clear(),
       loadView: (view, args) => this.loadView(view, args),
       setInputDisabled: disabled => {
@@ -41,14 +45,14 @@ export class TerminalController {
     };
 
     this.registry.registerAll(buildCommands({ history: this.history }));
+    this.registry.registerAll(buildEasterEggCommands());
+    installKonamiListener();
 
     this.input.addEventListener('keydown', this.handleKeyDown.bind(this));
     this.input.addEventListener('input', () => {
-      this.updateCursorPosition();
+      this.syncMirror();
       this.updateHint();
     });
-    this.input.addEventListener('click', () => this.updateCursorPosition());
-    this.input.addEventListener('focus', () => this.updateCursorPosition());
 
     const sendBtn = document.getElementById('terminal-send');
     sendBtn?.addEventListener('click', () => this.submitCommand());
@@ -88,46 +92,15 @@ export class TerminalController {
       }
       if (!isMobile) this.input.focus();
     });
-
-    // Inicializar posición del cursor después de que el DOM esté listo
-    setTimeout(() => {
-      this.updateCursorPosition();
-    }, 100);
-
-    // Actualizar posición del cursor periódicamente solo si el input del terminal está activo
-    setInterval(() => {
-      const activeElement = document.activeElement;
-      if (
-        activeElement === this.input &&
-        !document.querySelector('input[id^="hangman-input"]:focus') &&
-        !document.querySelector('input[id^="tictactoe-"]:focus')
-      ) {
-        this.updateCursorPosition();
-      }
-    }, 100);
   }
 
-  private updateCursorPosition(): void {
-    if (!this.cursor || !this.input) return;
-
-    const prompt = document.querySelector('.terminal-prompt') as HTMLElement;
-    if (!prompt) return;
-
-    const span = document.createElement('span');
-    span.style.visibility = 'hidden';
-    span.style.position = 'absolute';
-    span.style.whiteSpace = 'pre';
-    span.style.font = window.getComputedStyle(this.input).font;
-    span.textContent = this.input.value || '';
-    document.body.appendChild(span);
-
-    const textWidth = span.offsetWidth;
-    document.body.removeChild(span);
-
-    const promptWidth = prompt.offsetWidth;
-    const gapWidth = 8; // gap-2 = 0.5rem = 8px
-    const cursorOffset = 3;
-    this.cursor.style.left = `${promptWidth + gapWidth + textWidth + cursorOffset}px`;
+  /**
+   * El cursor de bloque se posiciona con un "espejo" del texto del input
+   * (mismo ancho en fuente mono): solo hay que sincronizarlo cuando cambia
+   * el valor, sin medir nada ni usar intervalos.
+   */
+  private syncMirror(): void {
+    if (this.mirrorText) this.mirrorText.textContent = this.input.value;
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
@@ -139,6 +112,10 @@ export class TerminalController {
       (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')
     ) {
       return;
+    }
+
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key.length === 1 || e.key === 'Backspace')) {
+      playKeySound('key');
     }
 
     if (e.ctrlKey && e.key.toLowerCase() === 'l') {
@@ -153,6 +130,7 @@ export class TerminalController {
         `<span class="text-terminal-bright">${PROMPT}</span> ${escapeHtml(this.input.value)}^C`
       );
       this.input.value = '';
+      this.syncMirror();
       // Después, el modo interactivo (juego textual) si está activo
       const interceptor = this.interceptors.pop();
       if (interceptor) interceptor.onCancel();
@@ -164,13 +142,14 @@ export class TerminalController {
     if (e.ctrlKey && e.key.toLowerCase() === 'u') {
       e.preventDefault();
       this.input.value = '';
-      this.updateCursorPosition();
+      this.syncMirror();
       this.clearHint();
       return;
     }
 
     if (e.key === 'Enter') {
       e.preventDefault();
+      playKeySound('enter');
       this.submitCommand();
     } else if (e.key === 'Tab') {
       if (!this.input.value.trim() || this.interceptors.length > 0) return;
@@ -183,14 +162,14 @@ export class TerminalController {
       const entry = this.history.prev();
       if (entry !== null) {
         this.input.value = entry;
-        this.updateCursorPosition();
+        this.syncMirror();
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       const entry = this.history.next();
       if (entry !== null) {
         this.input.value = entry;
-        this.updateCursorPosition();
+        this.syncMirror();
       }
     }
   }
@@ -214,7 +193,7 @@ export class TerminalController {
       this.printOutput(`<div class="ml-4 text-sm">${rows}</div>`);
       this.scrollToBottom();
     }
-    this.updateCursorPosition();
+    this.syncMirror();
     this.updateHint();
   }
 
@@ -247,7 +226,7 @@ export class TerminalController {
     if (!command) return;
     this.input.value = '';
     this.clearHint();
-    this.updateCursorPosition();
+    this.syncMirror();
 
     // Modo interactivo: la entrada va al interceptor, no al parser
     const interceptor = this.interceptors[this.interceptors.length - 1];
@@ -312,6 +291,14 @@ export class TerminalController {
     div.className = 'terminal-output mb-2';
     this.outputContainer.appendChild(div);
     return div;
+  }
+
+  async printTyped(text: string, charsPerSecond?: number): Promise<void> {
+    const block = this.printBlock();
+    block.classList.add('whitespace-pre-wrap');
+    this.scrollToBottom();
+    await typeText(block, text, { charsPerSecond });
+    this.scrollToBottom();
   }
 
   private scrollToBottom(): void {

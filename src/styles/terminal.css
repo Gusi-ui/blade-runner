@@ -130,27 +130,50 @@
     flex-shrink: 0;
   }
 
+  /* El cursor de bloque se posiciona con un espejo del texto (fuente mono):
+     un span invisible reproduce el contenido del input y el cursor queda
+     justo detrás, sin mediciones de ancho ni intervalos. */
+  .terminal-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 8ch;
+  }
+
   .terminal-input {
-    @apply text-terminal-text flex-1 border-none bg-transparent font-mono outline-none;
+    @apply text-terminal-text w-full border-none bg-transparent font-mono outline-none;
     caret-color: transparent;
     position: relative;
     z-index: 1;
   }
 
-  .terminal-cursor {
+  .input-mirror {
     position: absolute;
-    width: 8px;
-    height: 1.2em;
-    background-color: #00ff41;
-    left: 0;
-    top: 0;
-    animation: blink 1s infinite;
+    inset: 0;
+    display: flex;
+    align-items: center;
     pointer-events: none;
-    z-index: 10;
+    white-space: pre;
+    overflow: hidden;
+    font: inherit;
+  }
+
+  #mirror-text {
+    color: transparent;
+    text-shadow: none;
+    font-family: inherit;
+  }
+
+  .terminal-cursor {
+    display: inline-block;
+    width: 0.6em;
+    height: 1.2em;
+    background-color: currentColor;
+    flex-shrink: 0;
+    animation: blink 1s infinite;
     opacity: 0;
   }
 
-  .terminal-input:focus + .terminal-cursor {
+  .terminal-input-wrap:focus-within .terminal-cursor {
     opacity: 1;
   }
 
@@ -465,6 +488,20 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+    }
+
+    .scanline,
+    .particles {
+      display: none !important;
+    }
+
+    /* Cursor fijo (sin parpadeo) pero visible al enfocar */
+    .terminal-cursor {
+      animation: none !important;
+    }
+
+    .terminal-input-wrap:focus-within .terminal-cursor {
+      opacity: 1 !important;
     }
   }
 
@@ -846,6 +883,32 @@
 
   body.theme-retro .text-terminal-dim {
     color: #cc8800;
+  }
+
+  body.theme-phosphor .terminal-screen {
+    border-color: #d8d8d8;
+    box-shadow:
+      inset 0 0 20px rgba(232, 232, 232, 0.08),
+      0 0 30px rgba(232, 232, 232, 0.15);
+  }
+
+  body.theme-phosphor,
+  body.theme-phosphor .terminal-output,
+  body.theme-phosphor .terminal-input {
+    color: #e8e8e8;
+    text-shadow: 0 0 4px rgba(232, 232, 232, 0.6);
+  }
+
+  body.theme-phosphor .text-terminal-bright {
+    color: #ffffff;
+  }
+
+  body.theme-phosphor .text-terminal-dim {
+    color: #9a9a9a;
+  }
+
+  body.theme-phosphor .terminal-container {
+    background: radial-gradient(ellipse at center, #101010 0%, #000000 100%);
   }
 
   body.reduced-effects .particles,

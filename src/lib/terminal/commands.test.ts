@@ -19,6 +19,7 @@ const makeCtx = () => {
     print: html => void calls.print.push(html),
     printText: text => void calls.printText.push(text),
     printBlock: () => ({}) as HTMLElement,
+    printTyped: () => Promise.resolve(),
     clear: () => undefined,
     loadView: (view, args) => void calls.loadView.push({ view, args }),
     setInputDisabled: () => undefined,
