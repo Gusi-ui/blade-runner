@@ -25,7 +25,10 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
   switch (config) {
     case 'theme': {
       const items = Object.entries(THEMES)
-        .map(([name, label]) => `<div class="menu-item" data-theme="${name}">${label}</div>`)
+        .map(
+          ([name, label]) =>
+            `<button type="button" class="menu-item" data-theme="${name}">${label}</button>`
+        )
         .join('');
       ctx.print(`
  <div class="border border-terminal-dim p-4 rounded">
@@ -48,7 +51,7 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
  <div class="border border-terminal-dim p-4 rounded">
    <div class="text-terminal-bright">Efectos Visuales:</div>
    <div class="mt-2 space-y-2">
-     <div class="menu-item" data-effect="toggle">${reduced ? 'Activar efectos visuales' : 'Modo solo texto (ahorro batería)'}</div>
+     <button type="button" class="menu-item" data-effect="toggle">${reduced ? 'Activar efectos visuales' : 'Modo solo texto (ahorro batería)'}</button>
    </div>
  </div>
       `);
@@ -69,7 +72,7 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
  <div class="border border-terminal-dim p-4 rounded">
    <div class="text-terminal-bright">Configuración de Sonido:</div>
    <div class="mt-2">
-     <div class="menu-item" data-sound="toggle">Sonido de teclas mecánico: <span class="text-terminal-bright">${isSoundEnabled() ? 'Activado' : 'Desactivado'}</span> — pulsa para cambiar</div>
+     <button type="button" class="menu-item" data-sound="toggle">Sonido de teclas mecánico: <span class="text-terminal-bright">${isSoundEnabled() ? 'Activado' : 'Desactivado'}</span> — pulsa para cambiar</button>
      <div class="text-sm text-terminal-dim mt-2">Sonido generado con WebAudio, sin descargas. Se guarda tu preferencia.</div>
    </div>
  </div>
@@ -105,10 +108,10 @@ export const showConfig = (ctx: TerminalContext): void => {
    <div class="border-l-2 border-terminal-dim pl-4 py-2">
      <div class="text-terminal-bright">Opciones de Personalización</div>
      <div class="mt-2 space-y-2">
-       <div class="menu-item" data-config="theme">Tema de Color</div>
-       <div class="menu-item" data-config="effects">Efectos Visuales</div>
-       <div class="menu-item" data-config="sound">Sonido de Teclas</div>
-       <div class="menu-item" data-config="reset">Restaurar Predeterminados</div>
+       <button type="button" class="menu-item" data-config="theme">Tema de Color</button>
+       <button type="button" class="menu-item" data-config="effects">Efectos Visuales</button>
+       <button type="button" class="menu-item" data-config="sound">Sonido de Teclas</button>
+       <button type="button" class="menu-item" data-config="reset">Restaurar Predeterminados</button>
      </div>
    </div>
    <div class="text-sm text-terminal-dim">Selecciona una opción para personalizar.</div>

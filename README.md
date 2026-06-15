@@ -2,9 +2,15 @@
 
 Terminal retro-futurista interactiva con estética inspirada en Blade Runner. Una aplicación web completa desarrollada con Astro que simula una terminal antigua con efectos visuales CRT, texto verde fosforescente y múltiples funcionalidades interactivas.
 
-![Version](https://img.shields.io/badge/version-3.0.0-green.svg)
+![Version](https://img.shields.io/badge/version-3.1.0-green.svg)
 ![Astro](https://img.shields.io/badge/Astro-6-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+## 🆕 Novedades v3.1
+
+- **Tarjeta Open Graph** (`/og.png`, 1200×630) con estética terminal para previsualización en redes; metadatos `og:image`/`og:url`/`twitter:image` completos.
+- **`sitemap.xml` y `robots.txt`** para mejorar la indexación SEO.
+- **Menú accesible por teclado**: los ítems del menú y de configuración ahora son `<button>` reales (Tab + Enter/Espacio, anunciados a lectores de pantalla).
 
 ## 🆕 Novedades v3.0
 
