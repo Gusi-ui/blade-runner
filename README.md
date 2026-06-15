@@ -2,9 +2,15 @@
 
 Terminal retro-futurista interactiva con estética inspirada en Blade Runner. Una aplicación web completa desarrollada con Astro que simula una terminal antigua con efectos visuales CRT, texto verde fosforescente y múltiples funcionalidades interactivas.
 
-![Version](https://img.shields.io/badge/version-3.1.0-green.svg)
+![Version](https://img.shields.io/badge/version-3.2.0-green.svg)
 ![Astro](https://img.shields.io/badge/Astro-6-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+## 🆕 Novedades v3.2
+
+- **Deep links compartibles**: `gusi.dev/#cv`, `#projects`, `#news`… abren la sección directamente y funcionan con atrás/adelante del navegador.
+- **Descarga del CV en PDF** (`cv --pdf` o botón en el CV) vía diálogo de impresión con hoja de estilos dedicada (blanco y negro, sin elementos de pantalla).
+- **Formulario de contacto** que envía email a través del Worker (`/api/contact`, binding `send_email` de Cloudflare Email Sending) con honeypot anti-bots y rate limit por IP. _Requiere onboarding del dominio en Cloudflare Email Sending._
 
 ## 🆕 Novedades v3.1
 

@@ -21,6 +21,8 @@ export class TerminalController {
   private registry = new CommandRegistry();
   private interceptors: InputInterceptor[] = [];
   private ctx: TerminalContext;
+  /** Vista activa reflejada en location.hash (deep links). Evita bucles de hashchange. */
+  private currentView = '';
 
   constructor() {
     this.input = document.getElementById('terminal-input') as HTMLInputElement;
@@ -66,6 +68,12 @@ export class TerminalController {
         }
       });
     });
+
+    // Deep links: #cv, #projects, #news… cargan la vista al entrar y con
+    // back/forward. La navegación inicial se difiere para que los listeners
+    // de los componentes (loadView) ya estén montados.
+    window.addEventListener('hashchange', () => this.navigateToHash());
+    setTimeout(() => this.navigateToHash(), 0);
 
     const headerToggle = document.getElementById('header-toggle');
     const asciiPanel = document.getElementById('ascii-header-panel');
@@ -265,7 +273,24 @@ export class TerminalController {
   }
 
   private loadView(view: string, args: string[] = []): void {
+    // Refleja la vista en el hash (compartible). Marcar currentView antes de
+    // tocar el hash evita que el hashchange resultante re-ejecute el comando.
+    this.currentView = view;
+    if (location.hash.slice(1) !== view) location.hash = view;
     document.dispatchEvent(new CustomEvent('loadView', { detail: { view, args } }));
+  }
+
+  /** Ejecuta el comando navegable que corresponde al hash actual (#cv, #news…). */
+  private navigateToHash(): void {
+    const token = location.hash.replace(/^#\/?/, '').trim().toLowerCase();
+    if (!token || token === this.currentView) return;
+
+    const spec = this.registry.resolveToken(token);
+    if (!spec || (!spec.view && spec.name !== 'menu')) return; // solo vistas navegables
+
+    this.input.value = '';
+    this.clearHint();
+    void this.executeCommand(spec.name);
   }
 
   private clear(): void {

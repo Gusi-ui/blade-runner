@@ -11,7 +11,9 @@
   "ai": {
     "binding": "AI",
   },
+  "send_email": [{ "name": "EMAIL" }],
   "vars": {
     "ALLOWED_ORIGIN": "https://gusi.dev",
+    "CONTACT_TO": "webmaster@gusi.dev",
   },
 }

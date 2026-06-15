@@ -593,6 +593,35 @@
     @apply text-terminal-bright;
   }
 
+  /* Botones de acción que no deben ocupar todo el ancho como los del menú */
+  .cv-print-btn,
+  .contact-submit {
+    @apply inline-block w-auto;
+  }
+
+  .cv-print-btn::before,
+  .contact-submit::before {
+    content: none !important;
+  }
+
+  /* Campos del formulario de contacto */
+  .contact-input {
+    @apply text-terminal-text border-terminal-dim mt-1 w-full rounded border bg-black/30 px-2 py-1 font-mono outline-none;
+  }
+
+  .contact-input:focus {
+    @apply border-terminal-bright;
+  }
+
+  /* Honeypot anti-bots: invisible para humanos, sin display:none (lo rellenan los bots) */
+  .contact-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
   .error-text {
     @apply text-red-500;
   }
@@ -920,5 +949,54 @@
   body.reduced-effects .ascii-art {
     animation: none;
     text-shadow: none;
+  }
+}
+
+/* Impresión / Guardar como PDF del CV: aísla #cv-component en blanco y negro.
+   Se activa solo con body.print-cv (lo pone printCV() antes de window.print). */
+@media print {
+  body.print-cv {
+    background: #fff !important;
+  }
+
+  body.print-cv > * {
+    display: none !important;
+  }
+
+  body.print-cv #cv-component {
+    display: block !important;
+    position: static !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #000 !important;
+    background: #fff !important;
+    font-family: Georgia, 'Times New Roman', serif !important;
+  }
+
+  body.print-cv #cv-component *,
+  body.print-cv #cv-component a {
+    color: #000 !important;
+    background: transparent !important;
+    text-shadow: none !important;
+    border-color: #999 !important;
+  }
+
+  /* Acento sutil para los títulos de sección en papel */
+  body.print-cv #cv-component .text-terminal-bright,
+  body.print-cv #cv-component .section-title {
+    color: #111 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Elementos que solo tienen sentido en pantalla */
+  body.print-cv #cv-component .cv-print-btn,
+  body.print-cv #cv-component .border-t {
+    display: none !important;
+  }
+
+  body.print-cv #cv-component img {
+    max-width: 140px !important;
+    height: auto !important;
   }
 }

@@ -1,9 +1,24 @@
+/** Binding send_email (Cloudflare Email Sending, API por objeto). */
+interface EmailSendBinding {
+  send(message: {
+    to: string | string[];
+    from: { email: string; name?: string } | string;
+    replyTo?: string;
+    subject: string;
+    text?: string;
+    html?: string;
+  }): Promise<{ messageId?: string }>;
+}
+
 export interface Env {
   CACHE: KVNamespace;
   AI: Ai;
   NASA_API_KEY: string;
   GUARDIAN_API_KEY: string;
   ALLOWED_ORIGIN: string;
+  // Email Sending (binding send_email). Requiere onboarding del dominio en Cloudflare.
+  EMAIL: EmailSendBinding;
+  CONTACT_TO: string; // buzón destino del formulario de contacto
 }
 
 interface APODData {
@@ -75,6 +90,9 @@ const jsonResponse = (data: unknown, origin: string, env: Env, status = 200) =>
       ...corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
     },
   });
+
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const hashKey = async (text: string): Promise<string> => {
   const data = new TextEncoder().encode(text);
@@ -451,6 +469,66 @@ export default {
             env
           );
         }
+      }
+
+      if (url.pathname === '/api/contact' && request.method === 'POST') {
+        const body = (await request.json().catch(() => ({}))) as {
+          name?: string;
+          email?: string;
+          message?: string;
+          website?: string; // honeypot anti-bots
+        };
+
+        // Honeypot: los bots rellenan el campo oculto 'website'. Fingimos éxito.
+        if (body.website) return jsonResponse({ ok: true }, origin, env);
+
+        const name = (body.name || '').trim().slice(0, 100);
+        const email = (body.email || '').trim().slice(0, 200);
+        const message = (body.message || '').trim().slice(0, 2000);
+        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+        if (!name || !emailOk || message.length < 5) {
+          return jsonResponse(
+            { ok: false, error: 'Revisa el nombre, el email y el mensaje (mínimo 5 caracteres).' },
+            origin,
+            env,
+            400
+          );
+        }
+
+        // Rate limit básico por IP: 3 mensajes/hora.
+        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+        const rlKey = `contact:${await hashKey(ip)}`;
+        const count = (await getCached<number>(env.CACHE, rlKey)) || 0;
+        if (count >= 3) {
+          return jsonResponse(
+            { ok: false, error: 'Has enviado demasiados mensajes. Inténtalo más tarde.' },
+            origin,
+            env,
+            429
+          );
+        }
+
+        try {
+          await env.EMAIL.send({
+            to: env.CONTACT_TO || 'webmaster@gusi.dev',
+            from: { email: 'contacto@gusi.dev', name: 'Contacto gusi.dev' },
+            replyTo: email,
+            subject: `[gusi.dev] Mensaje de ${name}`,
+            text: `De: ${name} <${email}>\n\n${message}`,
+            html: `<p><strong>De:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><p style="white-space:pre-wrap">${escapeHtml(message)}</p>`,
+          });
+        } catch (err) {
+          const code = (err as { code?: string })?.code || '';
+          const friendly =
+            code === 'E_SENDER_NOT_VERIFIED' || code === 'E_SENDER_DOMAIN_NOT_AVAILABLE'
+              ? 'El envío de email aún no está configurado en el servidor.'
+              : 'No se pudo enviar el mensaje. Inténtalo más tarde.';
+          return jsonResponse({ ok: false, error: friendly }, origin, env, 502);
+        }
+
+        await setCached(env.CACHE, rlKey, count + 1, 3600);
+        return jsonResponse({ ok: true }, origin, env);
       }
 
       return jsonResponse({ error: 'Not found' }, origin, env, 404);

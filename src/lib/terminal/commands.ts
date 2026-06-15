@@ -1,5 +1,5 @@
 import { askInline } from '../ai/ask';
-import { CONTACT_HTML } from '../ai/chatContext';
+import { printCV } from '../cv/printCV';
 import { checkApiHealth } from '../api/client';
 import { getLeaderboard } from '../games/scores';
 import { startGuessGame } from '../../scripts/guess';
@@ -18,6 +18,7 @@ export type ViewName =
   | 'calculator'
   | 'apod'
   | 'chat'
+  | 'contact'
   | 'menu'
   | 'exit';
 
@@ -67,6 +68,8 @@ const showMenu = (ctx: TerminalContext): void => {
  </div>
  <div id="menu-container"></div>
   `);
+  // Refleja #menu en el hash (deep links); el render lo hace Menu.astro vía loadMenu.
+  ctx.loadView('menu');
   document.dispatchEvent(new CustomEvent('loadMenu'));
 };
 
@@ -159,9 +162,19 @@ export const buildCommands = (deps: CommandDeps): CommandSpec[] => [
   {
     name: 'cv',
     aliases: ['2', 'resume', 'curriculum'],
-    description: 'Currículum de Gusi',
+    description: 'Currículum de Gusi (usa --pdf para descargarlo)',
+    usage: 'cv [--pdf]',
     view: 'cv',
-    handler: viewHandler('cv'),
+    handler: (args, ctx) => {
+      if (args.some(a => a === '--pdf' || a === 'pdf')) {
+        ctx.print(
+          '<div class="text-terminal-dim text-sm">Abriendo diálogo de impresión… elige «Guardar como PDF».</div>'
+        );
+        printCV();
+        return;
+      }
+      ctx.loadView('cv', args);
+    },
   },
   {
     name: 'projects',
@@ -321,8 +334,9 @@ ${rows}
   {
     name: 'contact',
     aliases: ['contacto'],
-    description: 'Información de contacto',
-    handler: (_args, ctx) => ctx.print(CONTACT_HTML),
+    description: 'Contacto y formulario de mensaje',
+    view: 'contact',
+    handler: viewHandler('contact'),
   },
   {
     name: 'exit',

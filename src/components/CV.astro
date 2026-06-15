@@ -3,7 +3,12 @@
 ---
 
 <div id="cv-component" class="hidden">
-  <div class="section-title">Currículum Vitae - Gusi</div>
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="section-title">Currículum Vitae - Gusi</div>
+    <button type="button" class="menu-item cv-print-btn" data-action="print-cv">
+      ⬇ Descargar PDF
+    </button>
+  </div>
 
   <div class="space-y-6">
     <!-- Información Personal con Foto -->
@@ -161,6 +166,8 @@
 </div>
 
 <script>
+  import { printCV } from '../lib/cv/printCV';
+
   document.addEventListener('loadView', (e: Event) => {
     const customEvent = e as CustomEvent;
     if (customEvent.detail.view === 'cv') {
@@ -171,6 +178,11 @@
         terminal.printOutput(cvComponent.innerHTML);
       }
     }
+  });
+
+  // Delegación: el botón de descarga vive dentro del HTML inyectado del CV.
+  document.addEventListener('click', e => {
+    if ((e.target as HTMLElement)?.closest('[data-action="print-cv"]')) printCV();
   });
 </script>
 
