@@ -57,6 +57,19 @@
     private intervalId?: number;
     private overlay: HTMLElement | null = null;
     private overlayImg: HTMLImageElement | null = null;
+    // Bloque concreto de la terminal donde vive ESTA instancia de la vista.
+    // Cada invocación de `apod` imprime un bloque nuevo (con ids repetidos):
+    // hay que consultar dentro de él, no con getElementById global (devolvía
+    // siempre el primero/antiguo → la 2ª petición "no aparecía").
+    private root: HTMLElement | null = null;
+
+    setRoot(el: HTMLElement | null): void {
+      this.root = el;
+    }
+
+    private content(): HTMLElement | null {
+      return (this.root ?? document).querySelector('#apod-content');
+    }
 
     constructor() {
       this.overlay = document.getElementById('apod-fullscreen-overlay');
@@ -104,7 +117,7 @@
     }
 
     async fetchAPOD(options: { date?: string; random?: boolean } = {}): Promise<void> {
-      const apodContent = document.getElementById('apod-content');
+      const apodContent = this.content();
       if (!apodContent) return;
 
       apodContent.innerHTML = '<div class="loading-dots">Cargando imagen astronómica</div>';
@@ -120,11 +133,14 @@
     }
 
     private async displayAPOD(data: APODData): Promise<void> {
-      const apodContent = document.getElementById('apod-content');
+      const apodContent = this.content();
       if (!apodContent) return;
 
-      const titleResult = await translateToSpanish(data.title);
-      const explanationResult = await translateToSpanish(data.explanation);
+      // Título y explicación en paralelo (antes en serie → el doble de espera).
+      const [titleResult, explanationResult] = await Promise.all([
+        translateToSpanish(data.title),
+        translateToSpanish(data.explanation),
+      ]);
       const translatedTitle = titleResult.text;
       const translatedExplanation = explanationResult.text;
       const translationNote =
@@ -209,7 +225,7 @@
     }
 
     private displayError(): void {
-      const apodContent = document.getElementById('apod-content');
+      const apodContent = this.content();
       if (!apodContent) return;
 
       const nasaKey = import.meta.env.PUBLIC_NASA_API_KEY || 'DEMO_KEY';
@@ -262,7 +278,7 @@
     }
 
     private updateLastUpdateTime(): void {
-      const lastUpdate = document.getElementById('apod-last-update');
+      const lastUpdate = (this.root ?? document).querySelector('#apod-last-update');
       if (lastUpdate) {
         const now = new Date();
         lastUpdate.textContent = `Última actualización: ${now.toLocaleTimeString('es-ES')}`;
@@ -306,23 +322,24 @@
         apodViewer.stopAutoUpdate();
         terminal.printOutput(apodComponent.innerHTML);
 
+        // Acotar la instancia al bloque recién impreso (el último .terminal-output).
+        const blocks = document.querySelectorAll('#output-container .terminal-output');
+        const root = blocks[blocks.length - 1] as HTMLElement | undefined;
+        apodViewer.setRoot(root ?? null);
+
         // Argumentos del comando: 'apod random' o 'apod YYYY-MM-DD'
         const arg = (customEvent.detail.args?.[0] as string | undefined) ?? '';
         const initial = arg === 'random' ? { random: true } : arg ? { date: arg } : {};
         apodViewer.startAutoUpdate(initial);
 
-        setTimeout(() => {
-          const refreshBtn = document.getElementById('apod-refresh');
-          const randomBtn = document.getElementById('apod-random');
-
-          if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => apodViewer.refreshAPOD());
-          }
-
-          if (randomBtn) {
-            randomBtn.addEventListener('click', () => apodViewer.randomAPOD());
-          }
-        }, 100);
+        if (root) {
+          root
+            .querySelector('#apod-refresh')
+            ?.addEventListener('click', () => apodViewer.refreshAPOD());
+          root
+            .querySelector('#apod-random')
+            ?.addEventListener('click', () => apodViewer.randomAPOD());
+        }
       }
     } else {
       apodViewer.stopAutoUpdate();

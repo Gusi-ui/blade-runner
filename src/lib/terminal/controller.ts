@@ -75,31 +75,31 @@ export class TerminalController {
     window.addEventListener('hashchange', () => this.navigateToHash());
     setTimeout(() => this.navigateToHash(), 0);
 
-    const headerToggle = document.getElementById('header-toggle');
-    const asciiPanel = document.getElementById('ascii-header-panel');
-    headerToggle?.addEventListener('click', () => {
-      const expanded = headerToggle.getAttribute('aria-expanded') === 'true';
-      headerToggle.setAttribute('aria-expanded', String(!expanded));
-      asciiPanel?.classList.toggle('hidden');
-      headerToggle.textContent = expanded ? '▸ NEXUS-7 Terminal' : '▾ NEXUS-7 Terminal';
-    });
-
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    // En móvil no auto-enfocamos al cargar (evita que salte el teclado solo),
+    // pero SÍ al tocar la pantalla (abajo) para poder escribir sin apuntar al
+    // cursor. En escritorio enfocamos directamente.
     if (!isMobile) this.input.focus();
 
-    document.addEventListener('click', e => {
-      const target = e.target as HTMLElement;
+    // Tocar/clicar cualquier parte del terminal enfoca el input, salvo en
+    // elementos interactivos (botones, enlaces, otros campos). Funciona también
+    // en móvil porque ocurre dentro del gesto del usuario.
+    const focusInputFromTap = (e: Event): void => {
+      const target = e.target as HTMLElement | null;
       if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'BUTTON' ||
-        target.closest('input') ||
+        !target ||
         target.closest('button') ||
+        target.closest('a') ||
+        target.closest('input') ||
+        target.closest('textarea') ||
+        target.closest('select') ||
         target.closest('#quick-actions')
       ) {
         return;
       }
-      if (!isMobile) this.input.focus();
-    });
+      this.input.focus();
+    };
+    document.addEventListener('click', focusInputFromTap);
   }
 
   /**

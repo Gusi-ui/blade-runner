@@ -3,6 +3,22 @@ export interface TranslateResult {
   translated: boolean;
 }
 
+// fetch con tope de tiempo: si el servicio de traducción se queda colgado,
+// abortamos y dejamos que el flujo caiga al fallback en lugar de bloquearse.
+const fetchWithTimeout = async (
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 6000
+): Promise<Response> => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+};
+
 const splitTextIntoChunks = (text: string, maxLength: number): string[] => {
   if (text.length <= maxLength) return [text];
 
@@ -26,7 +42,7 @@ const splitTextIntoChunks = (text: string, maxLength: number): string[] => {
 const translateSinglePart = async (text: string, apiBase: string): Promise<string | null> => {
   if (apiBase) {
     try {
-      const response = await fetch(`${apiBase}/api/translate`, {
+      const response = await fetchWithTimeout(`${apiBase}/api/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, source: 'en', target: 'es' }),
@@ -43,7 +59,7 @@ const translateSinglePart = async (text: string, apiBase: string): Promise<strin
   const maxRetries = 2;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const googleResponse = await fetch(
+      const googleResponse = await fetchWithTimeout(
         `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text)}`
       );
       if (googleResponse.ok) {
@@ -54,7 +70,7 @@ const translateSinglePart = async (text: string, apiBase: string): Promise<strin
         }
       }
 
-      const myMemoryResponse = await fetch(
+      const myMemoryResponse = await fetchWithTimeout(
         `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`
       );
       if (myMemoryResponse.ok) {

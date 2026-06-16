@@ -10,12 +10,22 @@
 
   html {
     font-size: 16px;
+    /* Ocultar la barra de scroll vertical (el scroll sigue funcionando): una
+       terminal con scrollbar visible rompe la estética. */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  html::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none; /* WebKit/Blink */
   }
 
   body {
     @apply bg-terminal-bg text-terminal-text font-mono;
     text-shadow: 0 0 5px currentColor;
     font-size: 1rem;
+    overflow-x: hidden;
   }
 
   /* Asegurar tamaño mínimo de fuente de 0.9rem en todo el contenido */
@@ -57,8 +67,28 @@
 @layer components {
   .terminal-container {
     @apply w-full p-4 md:p-6 lg:p-8;
-    background: radial-gradient(ellipse at center, #001a00 0%, #000000 100%);
+    /* Translúcido para que el fondo Matrix (#matrix-bg) se intuya por detrás. */
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0, 26, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.82) 100%
+    );
+    position: relative;
+    z-index: 1;
     min-height: 100vh;
+  }
+
+  /* Lluvia Matrix de fondo: fija, detrás de todo, tenue y no interactiva. */
+  #matrix-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  body.reduced-effects #matrix-bg {
+    display: none;
   }
 
   .terminal-screen {
@@ -69,6 +99,8 @@
       0 0 30px rgba(0, 255, 65, 0.2);
     backdrop-filter: blur(2px);
     min-height: 100vh;
+    /* Red de seguridad anti-scroll horizontal en móvil. */
+    overflow-x: hidden;
   }
 
   .terminal-header {
@@ -77,6 +109,27 @@
 
   .ascii-header {
     @apply mb-4;
+  }
+
+  /* Logo compacto del cabecero en móvil (sustituye al ASCII, que desbordaba). */
+  .mobile-logo {
+    @apply mb-3 flex flex-col items-center text-center;
+  }
+
+  .mobile-logo__title {
+    @apply text-terminal-bright font-bold;
+    font-size: clamp(1.9rem, 12vw, 2.8rem);
+    letter-spacing: 0.12em;
+    line-height: 1.1;
+    text-shadow:
+      0 0 8px currentColor,
+      0 0 18px currentColor;
+  }
+
+  .mobile-logo__sub {
+    @apply text-terminal-dim mt-1;
+    font-size: 0.7rem;
+    letter-spacing: 0.32em;
   }
 
   .ascii-title {
@@ -130,20 +183,40 @@
     flex-shrink: 0;
   }
 
+  /* Cursor de bloque al final del prompt cuando NO estás escribiendo (idle),
+     estilo terminal DOS/VT100. Se oculta al enfocar la línea de entrada. */
+  .prompt-cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    vertical-align: text-bottom;
+    background-color: currentColor;
+    box-shadow: 0 0 6px currentColor;
+    animation: blink 1.1s steps(1) infinite;
+  }
+
+  .terminal-input-line:focus-within .prompt-cursor {
+    opacity: 0;
+    animation: none;
+  }
+
   /* El cursor de bloque se posiciona con un espejo del texto (fuente mono):
      un span invisible reproduce el contenido del input y el cursor queda
      justo detrás, sin mediciones de ancho ni intervalos. */
   .terminal-input-wrap {
     position: relative;
     flex: 1;
-    min-width: 8ch;
+    min-width: 3ch;
   }
 
   .terminal-input {
     @apply text-terminal-text w-full border-none bg-transparent font-mono outline-none;
-    caret-color: transparent;
+    /* Caret nativo VISIBLE (verde del tema): se ve dónde escribir sin depender
+       del cursor-espejo, que se desincronizaba y obligaba a "tocar el cursor". */
+    caret-color: currentColor;
     position: relative;
     z-index: 1;
+    min-height: 1.6em;
   }
 
   .input-mirror {
@@ -163,18 +236,10 @@
     font-family: inherit;
   }
 
+  /* Cursor-espejo retirado: lo sustituye el caret nativo (ver .terminal-input).
+     Se mantiene el elemento en el DOM pero oculto para no duplicar cursores. */
   .terminal-cursor {
-    display: inline-block;
-    width: 0.6em;
-    height: 1.2em;
-    background-color: currentColor;
-    flex-shrink: 0;
-    animation: blink 1s infinite;
-    opacity: 0;
-  }
-
-  .terminal-input-wrap:focus-within .terminal-cursor {
-    opacity: 1;
+    display: none;
   }
 
   @keyframes blink {
@@ -593,6 +658,50 @@
     @apply text-terminal-bright;
   }
 
+  /* Menú principal estilo lista app: icono + título/descr + número-atajo */
+  .menu-list {
+    @apply my-4 grid grid-cols-1 gap-2 md:grid-cols-2;
+  }
+
+  .menu-row {
+    @apply border-terminal-dim/40 flex w-full cursor-pointer items-center gap-3 rounded border bg-transparent px-3 py-3 text-left font-mono text-inherit transition-colors duration-200;
+    min-height: 56px;
+  }
+
+  .menu-row:hover,
+  .menu-row:focus-visible {
+    @apply border-terminal-bright bg-terminal-dim/15 text-terminal-bright outline-none;
+  }
+
+  .menu-row:active {
+    @apply bg-terminal-dim/30;
+  }
+
+  .menu-row__icon {
+    @apply flex-none text-xl leading-none;
+  }
+
+  .menu-row__body {
+    @apply flex min-w-0 flex-1 flex-col;
+  }
+
+  .menu-row__title {
+    @apply truncate text-base;
+  }
+
+  .menu-row__desc {
+    @apply text-terminal-dim truncate text-xs;
+  }
+
+  .menu-row__key {
+    @apply border-terminal-dim text-terminal-bright flex h-6 w-6 flex-none items-center justify-center rounded border text-xs;
+  }
+
+  .menu-row--exit:hover,
+  .menu-row--exit:focus-visible {
+    @apply border-red-500/70 text-red-400;
+  }
+
   /* Botones de acción que no deben ocupar todo el ancho como los del menú */
   .cv-print-btn,
   .contact-submit {
@@ -820,25 +929,43 @@
     }
   }
 
+  /* Rejilla 2×2 en móvil (las etiquetas no caben en 4 columnas a 375px) y 4
+     columnas en una fila desde sm. Cada chip llena su celda → nada se desborda. */
   .quick-actions {
-    @apply border-terminal-dim sticky bottom-0 z-10 flex flex-wrap gap-2 border-t bg-black/90 py-2;
+    @apply border-terminal-dim sticky bottom-0 z-10 grid grid-cols-2 gap-2 border-t bg-black/90 py-2 sm:grid-cols-4;
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 
   .quick-chip {
-    @apply border-terminal-dim text-terminal-text hover:border-terminal-bright hover:text-terminal-bright cursor-pointer rounded border px-3 py-2 text-sm transition-colors;
+    @apply border-terminal-dim text-terminal-text hover:border-terminal-bright hover:text-terminal-bright flex cursor-pointer items-center justify-center rounded border px-2 py-2 text-center text-sm transition-colors;
     min-height: 44px;
-    min-width: 44px;
+    min-width: 0;
   }
 
+  .quick-chip:active {
+    @apply bg-terminal-dim/30;
+  }
+
+  .quick-chip:hover {
+    box-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent);
+  }
+
+  /* Insignia tipo tecla de función ([F1]…[F4]) dentro del chip. */
+  .quick-chip__key {
+    @apply text-terminal-bright mr-1 font-bold;
+    text-shadow: 0 0 6px currentColor;
+  }
+
+  /* Botón enviar: estilo propio (antes usaba .menu-item, cuyo w-full aplastaba
+     el input a ~3ch). Compacto y anclado a la derecha → más texto visible. */
   .terminal-send {
-    @apply ml-2 shrink-0 rounded px-3 py-1 text-sm;
+    @apply border-terminal-dim text-terminal-bright hover:border-terminal-bright ml-auto flex shrink-0 cursor-pointer items-center justify-center rounded border px-3 text-sm transition-colors;
     min-height: 44px;
     min-width: 44px;
   }
 
   .terminal-input-line {
-    @apply flex flex-wrap items-center gap-2;
+    @apply flex flex-nowrap items-center gap-2;
     padding-bottom: env(safe-area-inset-bottom);
   }
 

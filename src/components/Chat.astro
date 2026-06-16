@@ -40,14 +40,12 @@
   import { streamChat } from '../lib/ai/stream';
 
   class ChatAssistant {
-    private root: HTMLElement;
     private messages: HTMLElement;
     private status: HTMLElement;
     private input: HTMLInputElement;
     private isStreaming = false;
 
     constructor(root: HTMLElement) {
-      this.root = root;
       this.messages = root.querySelector('.chat-messages') as HTMLElement;
       this.status = root.querySelector('.chat-status') as HTMLElement;
       this.input = root.querySelector('.chat-input') as HTMLInputElement;

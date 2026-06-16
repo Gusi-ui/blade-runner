@@ -29,20 +29,22 @@ const viewHandler =
   };
 
 const showHelp = (ctx: TerminalContext): void => {
+  // En móvil cada comando se apila (nombre arriba, descripción debajo); desde
+  // sm se alinea en dos columnas. `break-words` evita el desborde horizontal.
   const rows = ctx.registry
     .visibleSpecs()
     .map(spec => {
       const aliases = (spec.aliases ?? []).filter(a => /^\p{L}/u.test(a)).join(', ');
       return `
         <div class="contents">
-          <span class="text-terminal-bright">${escapeHtml(spec.usage ?? spec.name)}</span>
-          <span>${escapeHtml(spec.description)}${aliases ? ` <span class="text-terminal-dim">(${escapeHtml(aliases)})</span>` : ''}</span>
+          <span class="text-terminal-bright break-words">${escapeHtml(spec.usage ?? spec.name)}</span>
+          <span class="break-words">${escapeHtml(spec.description)}${aliases ? ` <span class="text-terminal-dim">(${escapeHtml(aliases)})</span>` : ''}</span>
         </div>`;
     })
     .join('');
   ctx.print(`
     <div class="text-terminal-bright">COMANDOS DISPONIBLES (ES/EN):</div>
-    <div class="ml-4 mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">${rows}</div>
+    <div class="mt-2 grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:ml-4 sm:grid-cols-[auto_1fr] sm:gap-y-1">${rows}</div>
     <div class="mt-3 text-sm text-terminal-dim">Atajos numéricos: 1=noticias, 2=cv, 3=proyectos, 4=juegos, 5=calculadora, 6=apod, 7=salir, 8=chat. Usa Tab para autocompletar.</div>
   `);
 };

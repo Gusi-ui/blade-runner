@@ -33,14 +33,28 @@
   import { translateToSpanish } from '../lib/api/translate';
   import { formatRelativeTime } from '../lib/utils/relativeTime';
 
+  // Cuántas noticias se piden/traducen. Menos = carga mucho más rápida.
+  const NEWS_LIMIT = 6;
+
   class NewsFeed {
     private updateInterval: number = 300000;
     private intervalId?: number;
     public allNews: NewsArticle[] = [];
     private currentFilter: string = 'all';
+    // Bloque de la terminal de ESTA instancia (ids repetidos al reimprimir →
+    // getElementById global devolvía el bloque antiguo y "no aparecía").
+    private root: HTMLElement | null = null;
+
+    setRoot(el: HTMLElement | null): void {
+      this.root = el;
+    }
+
+    private q<T extends Element>(selector: string): T | null {
+      return (this.root ?? document).querySelector<T>(selector);
+    }
 
     async fetchNews(): Promise<void> {
-      const newsContent = document.getElementById('news-content');
+      const newsContent = this.q<HTMLElement>('#news-content');
       if (!newsContent) return;
 
       try {
@@ -51,19 +65,20 @@
           return;
         }
 
-        const newsToTranslate = uniqueNews.slice(0, 12);
+        const newsToTranslate = uniqueNews.slice(0, NEWS_LIMIT);
         newsContent.innerHTML = '<div class="loading-dots">Traduciendo noticias al español</div>';
 
-        const translatedNews: NewsArticle[] = [];
-        for (const article of newsToTranslate) {
-          const title = await translateToSpanish(article.title);
-          const description = await translateToSpanish(article.description);
-          translatedNews.push({
-            ...article,
-            title: title.text,
-            description: description.text,
-          });
-        }
+        // Traducir todos los artículos (y sus dos campos) en paralelo en vez de
+        // en serie: antes eran ~24 peticiones encadenadas y se atascaba.
+        const translatedNews: NewsArticle[] = await Promise.all(
+          newsToTranslate.map(async article => {
+            const [title, description] = await Promise.all([
+              translateToSpanish(article.title),
+              translateToSpanish(article.description),
+            ]);
+            return { ...article, title: title.text, description: description.text };
+          })
+        );
 
         this.categorizeNewsDynamically(translatedNews);
         this.applyFilter();
@@ -75,8 +90,8 @@
     }
 
     private applyFilter(): void {
-      const newsContent = document.getElementById('news-content');
-      const newsCount = document.getElementById('news-count');
+      const newsContent = this.q<HTMLElement>('#news-content');
+      const newsCount = this.q<HTMLElement>('#news-count');
       if (!newsContent || !newsCount) return;
 
       let filteredNews: NewsArticle[];
@@ -189,7 +204,7 @@
     }
 
     private updateLastUpdateTime(): void {
-      const lastUpdate = document.getElementById('last-update');
+      const lastUpdate = this.q<HTMLElement>('#last-update');
       if (lastUpdate) {
         const now = new Date();
         lastUpdate.textContent = `Última actualización: ${now.toLocaleTimeString('es-ES')}`;
@@ -255,15 +270,15 @@
         spaceNewsFiltered.length
       );
 
-      // Usar las noticias categorizadas
-      this.allNews = news.slice(0, 10); // Tomar las 10 más recientes
+      // Usar las noticias categorizadas (ya vienen limitadas a NEWS_LIMIT)
+      this.allNews = news;
       this.applyFilter();
       this.updateLastUpdateTime();
     }
 
     private showEnhancedDemoNews(): void {
-      const newsContent = document.getElementById('news-content');
-      const newsCount = document.getElementById('news-count');
+      const newsContent = this.q<HTMLElement>('#news-content');
+      const newsCount = this.q<HTMLElement>('#news-count');
 
       if (!newsContent || !newsCount) return;
 
@@ -388,33 +403,30 @@
 
         terminal.printOutput(newsComponent.innerHTML);
 
+        // Acotar la instancia al bloque recién impreso (el último .terminal-output).
+        const blocks = document.querySelectorAll('#output-container .terminal-output');
+        const root = blocks[blocks.length - 1] as HTMLElement | undefined;
+        newsFeed.setRoot(root ?? null);
+
         // Iniciar actualizaciones con carga inmediata
         newsFeed.startAutoUpdate();
 
-        // Agregar event listeners para filtros y actualización
-        setTimeout(() => {
-          const filterAiBtn = document.getElementById('filter-ai');
-          const filterCosmosBtn = document.getElementById('filter-cosmos');
-          const filterAllBtn = document.getElementById('filter-all');
-          const refreshBtn = document.getElementById('refresh-news');
-
-          if (filterAiBtn) {
-            filterAiBtn.addEventListener('click', () => newsFeed.setFilter('ai'));
-          }
-          if (filterCosmosBtn) {
-            filterCosmosBtn.addEventListener('click', () => newsFeed.setFilter('cosmos'));
-          }
-          if (filterAllBtn) {
-            filterAllBtn.addEventListener('click', () => newsFeed.setFilter('all'));
-          }
-          if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-              // Limpiar cache y recargar
-              newsFeed.allNews = [];
-              newsFeed.refreshNews();
-            });
-          }
-        }, 100);
+        // Listeners de filtros y actualización, acotados a ESTE bloque
+        if (root) {
+          root
+            .querySelector('#filter-ai')
+            ?.addEventListener('click', () => newsFeed.setFilter('ai'));
+          root
+            .querySelector('#filter-cosmos')
+            ?.addEventListener('click', () => newsFeed.setFilter('cosmos'));
+          root
+            .querySelector('#filter-all')
+            ?.addEventListener('click', () => newsFeed.setFilter('all'));
+          root.querySelector('#refresh-news')?.addEventListener('click', () => {
+            newsFeed.allNews = [];
+            newsFeed.refreshNews();
+          });
+        }
       }
     } else {
       newsFeed.stopAutoUpdate();

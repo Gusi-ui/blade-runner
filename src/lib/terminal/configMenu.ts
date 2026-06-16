@@ -60,6 +60,8 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
           document.body.classList.toggle('reduced-effects');
           const isReduced = document.body.classList.contains('reduced-effects');
           localStorage.setItem('nexus-reduced-effects', String(isReduced));
+          // Que el fondo Matrix (y otros efectos JS) reaccionen al cambio.
+          document.dispatchEvent(new CustomEvent('effectschange'));
           ctx.print(
             `<div class="success-text">Efectos visuales ${isReduced ? 'desactivados' : 'activados'}.</div>`
           );
