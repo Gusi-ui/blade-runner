@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexus-terminal-v2';
+const CACHE_NAME = 'nexus-terminal-v3';
 const SHELL_ASSETS = ['/', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', event => {
@@ -21,6 +21,8 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  // La API (mismo origen) nunca pasa por la caché: noticias, APOD y chat deben ser frescos.
+  if (new URL(event.request.url).pathname.startsWith('/api/')) return;
 
   event.respondWith(
     caches.match(event.request).then(cached => {

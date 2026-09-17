@@ -5,6 +5,9 @@
   // sesión o una caché antigua. El Account ID no es secreto.
   "account_id": "1f7c0d40473dbca21d83ed0495b171db",
   "main": "src/index.ts",
+  // La API se sirve en el mismo dominio que la web (sin CORS ni URL *.workers.dev).
+  // El resto de gusi.dev sigue yendo a GitHub Pages.
+  "routes": [{ "pattern": "gusi.dev/api/*", "zone_name": "gusi.dev" }],
   "compatibility_date": "2026-09-01",
   "observability": {
     "enabled": true,

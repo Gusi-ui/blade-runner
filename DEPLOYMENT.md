@@ -4,7 +4,7 @@
 
 1. Push a `main` → GitHub Actions construye y despliega `./dist`
 2. Configura en GitHub (Settings → Secrets and variables → Actions → **Variables**):
-   - `PUBLIC_API_BASE_URL` (URL del Worker, ej. `https://blade-runner-api.tu-cuenta.workers.dev`)
+   - `PUBLIC_API_BASE_URL` (en producción `https://gusi.dev`: el Worker atiende `gusi.dev/api/*`)
 
    > ⚠️ No añadas `PUBLIC_NASA_API_KEY` ni `PUBLIC_GUARDIAN_API_KEY` al build: las variables `PUBLIC_*` se incrustan en el JavaScript público. Las claves viven solo como secrets del Worker.
 
