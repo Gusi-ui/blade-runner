@@ -19,6 +19,10 @@ export interface Env {
   // Email Sending (binding send_email). Requiere onboarding del dominio en Cloudflare.
   EMAIL: EmailSendBinding;
   CONTACT_TO: string; // buzón destino del formulario de contacto
+  // Rate Limiting bindings (opcionales: si no existen, no se limita).
+  CHAT_LIMITER?: RateLimit;
+  TRANSLATE_LIMITER?: RateLimit;
+  CONTACT_LIMITER?: RateLimit;
 }
 
 interface APODData {
@@ -43,6 +47,55 @@ const CHAT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const CHAT_MAX_TOKENS = 768;
 const CHAT_MAX_HISTORY = 10;
 const CHAT_MAX_MESSAGE_CHARS = 2000;
+const TRANSLATE_MAX_CHARS = 5000;
+const NEWS_FILTERS = new Set(['all', 'ai', 'cosmos']);
+const APOD_FIRST_DATE = '1995-06-16';
+
+class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
+/** Fecha APOD válida: YYYY-MM-DD real, entre el primer APOD y hoy (UTC). */
+const isValidApodDate = (date: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) return false;
+  return date >= APOD_FIRST_DATE && date <= new Date().toISOString().slice(0, 10);
+};
+
+/** Solo enlaces http(s): los feeds externos podrían traer javascript: u otros esquemas. */
+const safeLink = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : '';
+  } catch {
+    return '';
+  }
+};
+
+const readJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw new HttpError(400, 'JSON inválido');
+  }
+};
+
+/** Aplica el binding de rate limit por IP. Devuelve true si la petición debe rechazarse. */
+const isRateLimited = async (
+  limiter: RateLimit | undefined,
+  request: Request
+): Promise<boolean> => {
+  if (!limiter) return false;
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const { success } = await limiter.limit({ key: ip });
+  return !success;
+};
 
 const SYSTEM_PROMPT = `Eres el asistente de la terminal Nexus-7 de Gusi, un desarrollador Full Stack español.
 Responde SIEMPRE en español, con tono profesional y estética retro-futurista de Blade Runner.
@@ -80,6 +133,7 @@ const corsHeaders = (origin: string, allowedOrigin: string) => ({
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Max-Age': '86400',
+  'X-Content-Type-Options': 'nosniff',
 });
 
 const jsonResponse = (data: unknown, origin: string, env: Env, status = 200) =>
@@ -158,7 +212,7 @@ const fetchGuardianNews = async (env: Env): Promise<NewsArticle[]> => {
       articles.push({
         title: item.fields?.headline || item.webTitle,
         description: item.fields?.trailText || `Artículo de The Guardian sobre ${topic}`,
-        url: item.webUrl,
+        url: safeLink(item.webUrl),
         publishedAt: item.webPublicationDate,
         source: { name: 'The Guardian' },
       });
@@ -195,7 +249,7 @@ const fetchArXivNews = async (): Promise<NewsArticle[]> => {
       articles.push({
         title,
         description: summary.substring(0, 250) + (summary.length > 250 ? '...' : ''),
-        url: link,
+        url: safeLink(link),
         publishedAt: published,
         source: { name: 'arXiv' },
       });
@@ -234,7 +288,7 @@ const fetchNasaRSS = async (): Promise<NewsArticle[]> => {
       articles.push({
         title,
         description: description.substring(0, 250),
-        url: link,
+        url: safeLink(link),
         publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
         source: { name: 'NASA' },
       });
@@ -269,7 +323,7 @@ const fetchHackerNews = async (): Promise<NewsArticle[]> => {
     articles.push({
       title: story.title as string,
       description: `Tech: ${story.score ?? 0} puntos en Hacker News`,
-      url: story.url || `https://news.ycombinator.com/item?id=${story.id}`,
+      url: safeLink(story.url || `https://news.ycombinator.com/item?id=${story.id}`),
       publishedAt: story.time
         ? new Date(story.time * 1000).toISOString()
         : new Date().toISOString(),
@@ -343,6 +397,9 @@ export default {
 
       if (url.pathname === '/api/apod' && request.method === 'GET') {
         const date = url.searchParams.get('date') || undefined;
+        if (date && !isValidApodDate(date)) {
+          return jsonResponse({ error: 'Fecha inválida (YYYY-MM-DD)' }, origin, env, 400);
+        }
         const random = url.searchParams.get('random') === 'true';
 
         // 'random' no se cachea por su clave (devolvería siempre la misma imagen
@@ -365,7 +422,8 @@ export default {
       }
 
       if (url.pathname === '/api/news' && request.method === 'GET') {
-        const filter = url.searchParams.get('filter') || 'all';
+        const filterParam = url.searchParams.get('filter') || 'all';
+        const filter = NEWS_FILTERS.has(filterParam) ? filterParam : 'all';
         const pageParam = url.searchParams.get('page');
         const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : null;
         const PAGE_SIZE = 10;
@@ -401,14 +459,17 @@ export default {
       }
 
       if (url.pathname === '/api/translate' && request.method === 'POST') {
-        const body = (await request.json()) as { text?: string };
-        const text = body.text || '';
+        const body = await readJson<{ text?: unknown }>(request);
+        const text = typeof body.text === 'string' ? body.text.slice(0, TRANSLATE_MAX_CHARS) : '';
         if (!text) return jsonResponse({ translatedText: '' }, origin, env);
 
         const cacheKey = `tr:${await hashKey(text)}`;
         const cached = await getCached<{ translatedText: string }>(env.CACHE, cacheKey);
         if (cached) return jsonResponse(cached, origin, env);
 
+        if (await isRateLimited(env.TRANSLATE_LIMITER, request)) {
+          return jsonResponse({ error: 'Demasiadas peticiones' }, origin, env, 429);
+        }
         const translatedText = await translateText(env, text);
         const result = { translatedText };
         await setCached(env.CACHE, cacheKey, result, 604800);
@@ -416,18 +477,42 @@ export default {
       }
 
       if (url.pathname === '/api/chat' && request.method === 'POST') {
-        const body = (await request.json()) as {
-          message?: string;
-          history?: { role: string; content: string }[];
+        const body = await readJson<{
+          message?: unknown;
+          history?: unknown;
           stream?: boolean;
-        };
-        const message = body.message?.trim().slice(0, CHAT_MAX_MESSAGE_CHARS);
+        }>(request);
+        const message =
+          typeof body.message === 'string'
+            ? body.message.trim().slice(0, CHAT_MAX_MESSAGE_CHARS)
+            : '';
         if (!message) return jsonResponse({ error: 'Mensaje vacío' }, origin, env, 400);
 
-        const history = (body.history || []).slice(-CHAT_MAX_HISTORY);
+        if (await isRateLimited(env.CHAT_LIMITER, request)) {
+          return jsonResponse(
+            { error: 'Demasiadas peticiones. Espera un momento.' },
+            origin,
+            env,
+            429
+          );
+        }
+
+        // Solo turnos user/assistant: el cliente nunca puede inyectar mensajes 'system'.
+        const history = (Array.isArray(body.history) ? body.history : [])
+          .filter(
+            (h): h is { role: 'user' | 'assistant'; content: string } =>
+              typeof h === 'object' &&
+              h !== null &&
+              (h.role === 'user' || h.role === 'assistant') &&
+              typeof h.content === 'string'
+          )
+          .slice(-CHAT_MAX_HISTORY);
         const messages = [
           { role: 'system', content: SYSTEM_PROMPT },
-          ...history.map(h => ({ role: h.role, content: h.content })),
+          ...history.map(h => ({
+            role: h.role,
+            content: h.content.slice(0, CHAT_MAX_MESSAGE_CHARS),
+          })),
           { role: 'user', content: message },
         ];
 
@@ -482,9 +567,12 @@ export default {
         // Honeypot: los bots rellenan el campo oculto 'website'. Fingimos éxito.
         if (body.website) return jsonResponse({ ok: true }, origin, env);
 
-        const name = (body.name || '').trim().slice(0, 100);
-        const email = (body.email || '').trim().slice(0, 200);
-        const message = (body.message || '').trim().slice(0, 2000);
+        const str = (v: unknown, max: number) =>
+          typeof v === 'string' ? v.trim().slice(0, max) : '';
+        // Sin saltos de línea en nombre/email: acaban en cabeceras (Subject, Reply-To).
+        const name = str(body.name, 100).replace(/[\r\n]+/g, ' ');
+        const email = str(body.email, 200);
+        const message = str(body.message, 2000);
         const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
         if (!name || !emailOk || message.length < 5) {
@@ -496,7 +584,16 @@ export default {
           );
         }
 
-        // Rate limit básico por IP: 3 mensajes/hora.
+        if (await isRateLimited(env.CONTACT_LIMITER, request)) {
+          return jsonResponse(
+            { ok: false, error: 'Has enviado demasiados mensajes. Inténtalo más tarde.' },
+            origin,
+            env,
+            429
+          );
+        }
+
+        // Rate limit por IP: 3 mensajes/hora (KV, complementa al binding por minuto).
         const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
         const rlKey = `contact:${await hashKey(ip)}`;
         const count = (await getCached<number>(env.CACHE, rlKey)) || 0;
@@ -533,8 +630,12 @@ export default {
 
       return jsonResponse({ error: 'Not found' }, origin, env, 404);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error interno';
-      return jsonResponse({ error: message }, origin, env, 500);
+      if (error instanceof HttpError) {
+        return jsonResponse({ error: error.message }, origin, env, error.status);
+      }
+      // No exponer detalles internos al cliente; quedan en los logs del Worker.
+      console.error('Unhandled error', url.pathname, error);
+      return jsonResponse({ error: 'Error interno' }, origin, env, 500);
     }
   },
 };

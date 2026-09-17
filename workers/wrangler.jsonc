@@ -1,7 +1,11 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "blade-runner-api",
   "main": "src/index.ts",
-  "compatibility_date": "2025-01-01",
+  "compatibility_date": "2026-09-01",
+  "observability": {
+    "enabled": true,
+  },
   "kv_namespaces": [
     {
       "binding": "CACHE",
@@ -12,6 +16,25 @@
     "binding": "AI",
   },
   "send_email": [{ "name": "EMAIL" }],
+  // Rate limiting por IP (period solo admite 10 o 60 segundos).
+  "ratelimits": [
+    {
+      "name": "CHAT_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 },
+    },
+    {
+      // Holgado: la vista de noticias traduce ~40 textos a la vez (solo cuenta si no hay caché).
+      "name": "TRANSLATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 120, "period": 60 },
+    },
+    {
+      "name": "CONTACT_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 2, "period": 60 },
+    },
+  ],
   "vars": {
     "ALLOWED_ORIGIN": "https://gusi.dev",
     "CONTACT_TO": "webmaster@gusi.dev",

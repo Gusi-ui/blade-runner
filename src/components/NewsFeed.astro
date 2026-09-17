@@ -39,6 +39,7 @@
 <script>
   import { fetchNews as fetchNewsApi, type NewsArticle } from '../lib/api/client';
   import { translateToSpanish } from '../lib/api/translate';
+  import { safeUrl } from '../lib/terminal/sanitize';
   import { formatRelativeTime } from '../lib/utils/relativeTime';
 
   // Cuántas noticias se piden/traducen. Menos = carga mucho más rápida.
@@ -170,9 +171,9 @@
                   <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
                   <div class="text-base mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
                   <div class="text-sm text-terminal-dim mt-2">
-                    <span>${article.source.name}</span> |
+                    <span>${this.escapeHtml(article.source.name)}</span> |
                     <span>${date}</span> |
-                    <a href="${article.url}" target="_blank" rel="noopener noreferrer"
+                    <a href="${safeUrl(article.url)}" target="_blank" rel="noopener noreferrer"
                        class="text-terminal-text hover:text-terminal-bright underline">
                       Leer más →
                     </a>
@@ -194,9 +195,9 @@
               <div class="text-terminal-bright text-base font-semibold">${index + 1}. ${this.escapeHtml(article.title)}</div>
               <div class="text-base mt-1">${this.escapeHtml(article.description || 'Sin descripción')}</div>
               <div class="text-sm text-terminal-dim mt-2">
-                <span>${article.source.name}</span> |
+                <span>${this.escapeHtml(article.source.name)}</span> |
                 <span>${date}</span> |
-                <a href="${article.url}" target="_blank" rel="noopener noreferrer"
+                <a href="${safeUrl(article.url)}" target="_blank" rel="noopener noreferrer"
                    class="text-terminal-text hover:text-terminal-bright underline">
                   Leer más →
                 </a>
