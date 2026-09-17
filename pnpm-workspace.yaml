@@ -1,3 +1,13 @@
 packages:
   - '.'
   - 'workers'
+
+# Solo estos paquetes pueden ejecutar scripts de instalación (binarios nativos).
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd
+
+# Parches de seguridad en dependencias transitivas fijadas por terceros.
+overrides:
+  yaml-language-server>yaml: ^2.8.3
