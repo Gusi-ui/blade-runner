@@ -13,8 +13,12 @@
     </div>
 
     <div class="mb-4 flex gap-2">
-      <button id="apod-refresh" class="menu-item px-3 py-1 text-xs">Actualizar</button>
-      <button id="apod-random" class="menu-item px-3 py-1 text-xs">Imagen Aleatoria</button>
+      <button id="apod-refresh" class="menu-item px-3 py-1 text-xs">
+        Actualizar
+      </button>
+      <button id="apod-random" class="menu-item px-3 py-1 text-xs">
+        Imagen Aleatoria
+      </button>
     </div>
 
     <div class="text-terminal-dim text-xs">
@@ -51,6 +55,7 @@
 <script>
   import { fetchAPOD, type APODData } from '../lib/api/client';
   import { translateToSpanish } from '../lib/api/translate';
+  import { safeUrl } from '../lib/terminal/sanitize';
 
   class APODViewer {
     private updateInterval: number = 3600000;
@@ -167,7 +172,7 @@
           <div class="mb-4">
             <div class="relative">
               <img
-                src="${imageUrl}"
+                src="${safeUrl(imageUrl)}"
                 alt="${this.escapeHtml(translatedTitle)}"
                 class="apod-image block w-full border-2 border-terminal-dim rounded hover:border-terminal-bright transition-colors cursor-zoom-in"
                 style="display: block; height: auto;"
@@ -177,12 +182,12 @@
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
               />
               <div style="display:none;" class="text-terminal-dim text-center p-4 border border-terminal-dim rounded">
-                ⚠️ Error al cargar la imagen. <a href="${data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-bright hover:underline">Abrir imagen original →</a>
+                ⚠️ Error al cargar la imagen. <a href="${safeUrl(data.url)}" target="_blank" rel="noopener noreferrer" class="text-terminal-bright hover:underline">Abrir imagen original →</a>
               </div>
             </div>
             <div class="text-center text-xs text-terminal-dim mt-2 space-y-1">
               <p>🖱️ Clic en la imagen para pantalla completa</p>
-              <a href="${data.hdurl || data.url}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright">
+              <a href="${safeUrl(data.hdurl || data.url)}" target="_blank" rel="noopener noreferrer" class="text-terminal-text hover:text-terminal-bright">
                 🔗 Abrir imagen original en nueva pestaña
               </a>
             </div>
@@ -193,7 +198,7 @@
           <div class="mb-4">
             <div class="aspect-video w-full border-2 border-terminal-dim rounded overflow-hidden">
               <iframe
-                src="${data.url}"
+                src="${safeUrl(data.url)}"
                 class="w-full h-full"
                 frameborder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -3,10 +3,12 @@
 ## Frontend (GitHub Pages + Cloudflare DNS)
 
 1. Push a `main` → GitHub Actions construye y despliega `./dist`
-2. Configura secrets en GitHub:
-   - `PUBLIC_NASA_API_KEY`
-   - `PUBLIC_GUARDIAN_API_KEY` (opcional)
+2. Configura en GitHub (Settings → Secrets and variables → Actions → **Variables**):
    - `PUBLIC_API_BASE_URL` (URL del Worker, ej. `https://blade-runner-api.tu-cuenta.workers.dev`)
+
+   > ⚠️ No añadas `PUBLIC_NASA_API_KEY` ni `PUBLIC_GUARDIAN_API_KEY` al build: las variables `PUBLIC_*` se incrustan en el JavaScript público. Las claves viven solo como secrets del Worker.
+
+3. `main` está protegida: todo cambio entra por Pull Request y requiere que pase el check `verify` (`.github/workflows/ci.yml`).
 
 ## Cloudflare Worker (API + Chat IA)
 
@@ -15,7 +17,7 @@
 ```bash
 pnpm install
 pnpm exec wrangler login
-pnpm exec wrangler kv:namespace create CACHE
+pnpm exec wrangler kv namespace create CACHE
 ```
 
 Copia el ID del namespace en `workers/wrangler.jsonc` → `kv_namespaces[0].id`
@@ -62,8 +64,8 @@ PUBLIC_API_BASE_URL=https://gusi.dev
 cp .env.example .env
 ```
 
-| Variable                  | Descripción                       |
-| ------------------------- | --------------------------------- |
-| `PUBLIC_NASA_API_KEY`     | Clave NASA (fallback cliente)     |
-| `PUBLIC_GUARDIAN_API_KEY` | Clave Guardian (fallback cliente) |
-| `PUBLIC_API_BASE_URL`     | URL base del Worker               |
+| Variable                  | Descripción                                      |
+| ------------------------- | ------------------------------------------------ |
+| `PUBLIC_API_BASE_URL`     | URL base del Worker                              |
+| `PUBLIC_NASA_API_KEY`     | Solo dev local sin Worker (se expone al público) |
+| `PUBLIC_GUARDIAN_API_KEY` | Solo dev local sin Worker (se expone al público) |
