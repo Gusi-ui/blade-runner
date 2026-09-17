@@ -1,6 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "blade-runner-api",
+  // Cuenta "Gusi" (jmartinezblanquez@gmail.com). Fijarla evita que wrangler use otra
+  // sesión o una caché antigua. El Account ID no es secreto.
+  "account_id": "1f7c0d40473dbca21d83ed0495b171db",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "observability": {

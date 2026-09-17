@@ -12,6 +12,10 @@
 
 ## Cloudflare Worker (API + Chat IA)
 
+### Cuenta de Cloudflare
+
+El Worker vive en la cuenta **Gusi** (`1f7c0d40473dbca21d83ed0495b171db`), fijada en `workers/wrangler.jsonc`. Si `wrangler` da `Authentication error [code: 10000]`, comprueba con `pnpm exec wrangler whoami` que tu sesión tiene acceso a esa cuenta.
+
 ### Setup inicial
 
 ```bash
