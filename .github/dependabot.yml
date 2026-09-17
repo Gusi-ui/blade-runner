@@ -1,10 +1,19 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: /
+    directories:
+      - /
+      - /workers
     schedule:
       interval: weekly
+    # Espera unos días antes de proponer versiones recién publicadas (mitiga paquetes comprometidos).
+    cooldown:
+      default-days: 5
     open-pull-requests-limit: 10
+    ignore:
+      # typescript-eslint y @astrojs/check aún no soportan TypeScript 7.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     groups:
       astro:
         patterns:
@@ -13,12 +22,16 @@ updates:
       eslint:
         patterns:
           - 'eslint*'
-          - '@typescript-eslint/*'
+          - '@eslint/*'
           - 'typescript-eslint'
       tailwind:
         patterns:
           - 'tailwindcss'
           - '@tailwindcss/*'
+      cloudflare:
+        patterns:
+          - 'wrangler'
+          - '@cloudflare/*'
       dev-tools:
         patterns:
           - 'prettier*'
@@ -30,3 +43,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns:
+          - '*'
