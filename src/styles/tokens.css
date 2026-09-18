@@ -10,7 +10,7 @@
   --color-line-strong: #2b333d;
   --color-body: #c9d1db;
   --color-strong: #f5f7fa;
-  --color-muted: #6b7684;
+  --color-muted: #7d8896; /* ≥ 5:1 sobre bg, surface y surface-2 (WCAG AA) */
   --color-accent: #4ade80;
   --color-accent-ink: #04140a;
 
