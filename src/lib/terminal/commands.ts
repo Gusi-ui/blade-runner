@@ -1,26 +1,15 @@
 import { askInline } from '../ai/ask';
-import { printCV } from '../cv/printCV';
 import { checkApiHealth } from '../api/client';
 import { getLeaderboard } from '../games/scores';
 import { startGuessGame } from '../../scripts/guess';
 import { applyTheme, showConfig, THEMES } from './configMenu';
+import { buildContentCommands } from './contentCommands';
 import type { CommandHistory } from './history';
 import { calculatePlanetaryAges } from './planetaryAge';
-import { CommandRegistry } from './registry';
 import type { CommandSpec, TerminalContext } from './registry';
 import { escapeHtml } from './sanitize';
 
-export type ViewName =
-  | 'news'
-  | 'cv'
-  | 'projects'
-  | 'games'
-  | 'calculator'
-  | 'apod'
-  | 'chat'
-  | 'contact'
-  | 'menu'
-  | 'exit';
+export type ViewName = 'news' | 'games' | 'calculator' | 'apod' | 'chat' | 'exit';
 
 const viewHandler =
   (view: ViewName) =>
@@ -28,11 +17,8 @@ const viewHandler =
     ctx.loadView(view, args);
   };
 
-const showHelp = (ctx: TerminalContext): void => {
-  // En móvil cada comando se apila (nombre arriba, descripción debajo); desde
-  // sm se alinea en dos columnas. `break-words` evita el desborde horizontal.
-  const rows = ctx.registry
-    .visibleSpecs()
+const helpRows = (specs: CommandSpec[]): string =>
+  specs
     .map(spec => {
       const aliases = (spec.aliases ?? []).filter(a => /^\p{L}/u.test(a)).join(', ');
       return `
@@ -42,10 +28,22 @@ const showHelp = (ctx: TerminalContext): void => {
         </div>`;
     })
     .join('');
+
+// En móvil cada comando se apila (nombre arriba, descripción debajo); desde sm
+// se alinea en dos columnas. `break-words` evita el desborde horizontal.
+const helpGroup = (title: string, specs: CommandSpec[]): string => `
+  <div class="text-accent mt-3 text-xs uppercase tracking-wider">${title}</div>
+  <div class="mt-2 grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-[auto_1fr] sm:gap-y-1">${helpRows(specs)}</div>`;
+
+const showHelp = (ctx: TerminalContext): void => {
+  const specs = ctx.registry.visibleSpecs();
+  const featured = specs.filter(s => s.group === 'featured');
+  const lab = specs.filter(s => s.group !== 'featured');
   ctx.print(`
-    <div class="text-terminal-bright">COMANDOS DISPONIBLES (ES/EN):</div>
-    <div class="mt-2 grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:ml-4 sm:grid-cols-[auto_1fr] sm:gap-y-1">${rows}</div>
-    <div class="mt-3 text-sm text-terminal-dim">Atajos numéricos: 1=noticias, 2=cv, 3=proyectos, 4=juegos, 5=calculadora, 6=apod, 7=salir, 8=chat. Usa Tab para autocompletar.</div>
+    <div class="section-title">Comandos</div>
+    ${helpGroup('Destacados', featured)}
+    ${helpGroup('Laboratorio', lab)}
+    <div class="mt-3 text-sm text-terminal-dim">Atajos: 2=sobre mí, 3=proyectos, 1=noticias, 4=juegos, 5=calculadora, 6=apod, 8=chat. Usa Tab para autocompletar.</div>
   `);
 };
 
@@ -61,18 +59,6 @@ const showStatus = async (ctx: TerminalContext): Promise<void> => {
       <div><span class="text-terminal-bright">Versión:</span> 2.0.0</div>
     </div>
   `);
-};
-
-const showMenu = (ctx: TerminalContext): void => {
-  ctx.print(`
- <div class="section-title">
-   Menú Principal - Nexus Terminal v1.0
- </div>
- <div class="menu-container"></div>
-  `);
-  // Refleja #menu en el hash (deep links); el render lo hace Menu.astro vía loadMenu.
-  ctx.loadView('menu');
-  document.dispatchEvent(new CustomEvent('loadMenu'));
 };
 
 const APOD_MIN_DATE = '1995-06-16';
@@ -140,17 +126,12 @@ export interface CommandDeps {
 }
 
 export const buildCommands = (deps: CommandDeps): CommandSpec[] => [
+  ...buildContentCommands(),
   {
     name: 'help',
-    aliases: ['ayuda', '?'],
+    aliases: ['ayuda', '?', 'menu', 'm'],
     description: 'Muestra esta lista de comandos',
     handler: (_args, ctx) => showHelp(ctx),
-  },
-  {
-    name: 'menu',
-    aliases: ['m'],
-    description: 'Menú principal',
-    handler: (_args, ctx) => showMenu(ctx),
   },
   {
     name: 'news',
@@ -160,30 +141,6 @@ export const buildCommands = (deps: CommandDeps): CommandSpec[] => [
     choices: ['ai', 'cosmos', 'all'],
     view: 'news',
     handler: viewHandler('news'),
-  },
-  {
-    name: 'cv',
-    aliases: ['2', 'resume', 'curriculum'],
-    description: 'Currículum de Gusi (usa --pdf para descargarlo)',
-    usage: 'cv [--pdf]',
-    view: 'cv',
-    handler: (args, ctx) => {
-      if (args.some(a => a === '--pdf' || a === 'pdf')) {
-        ctx.print(
-          '<div class="text-terminal-dim text-sm">Abriendo diálogo de impresión… elige «Guardar como PDF».</div>'
-        );
-        printCV();
-        return;
-      }
-      ctx.loadView('cv', args);
-    },
-  },
-  {
-    name: 'projects',
-    aliases: ['3', 'proyectos', 'proyectos debussy'],
-    description: 'Portfolio de proyectos',
-    view: 'projects',
-    handler: viewHandler('projects'),
   },
   {
     name: 'games',
@@ -336,80 +293,9 @@ ${rows}
     handler: (_args, ctx) => showStatus(ctx),
   },
   {
-    name: 'contact',
-    aliases: ['contacto'],
-    description: 'Contacto y formulario de mensaje',
-    view: 'contact',
-    handler: viewHandler('contact'),
-  },
-  {
     name: 'exit',
     aliases: ['7', 'salir', 'quit'],
     description: 'Cierra la sesión',
     handler: (_args, ctx) => handleExit(ctx),
   },
 ];
-
-// ---------------------------------------------------------------------------
-// API legada, conservada por compatibilidad mientras dura la transición.
-
-export interface CommandAction {
-  type:
-    | 'view'
-    | 'help'
-    | 'clear'
-    | 'date'
-    | 'whoami'
-    | 'config'
-    | 'status'
-    | 'contact'
-    | 'history'
-    | 'exit';
-  view?: ViewName;
-}
-
-const SIMPLE_TYPES = new Set([
-  'help',
-  'clear',
-  'date',
-  'whoami',
-  'config',
-  'status',
-  'contact',
-  'history',
-  'exit',
-]);
-
-const buildDefaultRegistry = (): CommandRegistry => {
-  const registry = new CommandRegistry();
-  // El historial solo lo necesita el comando 'history'; un stub sin storage basta aquí.
-  registry.registerAll(
-    buildCommands({
-      history: {
-        list: () => [],
-        clear: () => undefined,
-      } as unknown as CommandHistory,
-    })
-  );
-  return registry;
-};
-
-const defaultRegistry = buildDefaultRegistry();
-
-export const resolveCommand = (input: string): CommandAction | null => {
-  const spec = defaultRegistry.resolveToken(input.toLowerCase().trim());
-  if (!spec) return null;
-  if (SIMPLE_TYPES.has(spec.name)) return { type: spec.name as CommandAction['type'] };
-  if (spec.name === 'menu') return { type: 'view', view: 'menu' };
-  if (spec.name === 'ask') return { type: 'view', view: 'chat' };
-  if (spec.view) return { type: 'view', view: spec.view as ViewName };
-  return null;
-};
-
-export const ALL_COMMANDS = defaultRegistry.visibleTokens();
-
-export const getCommandSuggestions = (partial: string): string[] => {
-  const p = partial.toLowerCase().trim();
-  if (!p) return [];
-  return ALL_COMMANDS.filter(cmd => cmd.startsWith(p)).slice(0, 6);
-};

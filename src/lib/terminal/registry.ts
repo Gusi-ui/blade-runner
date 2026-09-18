@@ -44,6 +44,8 @@ export interface CommandSpec {
   restOfLine?: boolean;
   /** No aparece en help ni en el autocompletado (easter eggs). */
   hidden?: boolean;
+  /** Grupo en la ayuda: 'featured' (Destacados) o 'lab' (Laboratorio, por defecto). */
+  group?: 'featured' | 'lab';
   /** Comandos de navegación: vista que cargan vía CustomEvent('loadView'). */
   view?: string;
   handler: (args: string[], ctx: TerminalContext) => void | Promise<void>;

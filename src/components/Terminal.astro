@@ -74,12 +74,8 @@ interface Props {
         aria-live="polite"
         aria-label="Terminal output"
       >
-        <p class="text-terminal-bright mb-2">Inicializando sistema...</p>
-        <p class="mb-2">Cargando módulos del kernel...</p>
-        <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
-        <p class="success-text mb-4">✓ Sistema listo</p>
-        <p class="mb-2">Escribe 'help' para ver los comandos disponibles.</p>
-        <p class="mb-4">Escribe 'menu' para acceder al menú principal.</p>
+        <p class="success-text mb-1">✓ Nexus-7 listo.</p>
+        <p class="text-terminal-dim mb-4">Toca un atajo o escribe 'help' para ver los comandos.</p>
       </div>
 
       <div
@@ -90,11 +86,11 @@ interface Props {
       ></div>
 
       <div id="quick-actions" class="quick-actions" role="toolbar" aria-label="Acciones rápidas">
-        <button type="button" class="quick-chip" data-cmd="menu">
+        <button type="button" class="quick-chip" data-cmd="help">
           <span class="quick-chip__key" aria-hidden="true">
             F1
           </span>{' '}
-          Menú
+          Ayuda
         </button>
         <button type="button" class="quick-chip" data-cmd="noticias">
           <span class="quick-chip__key" aria-hidden="true">
@@ -184,7 +180,7 @@ interface Props {
 
 <!-- Área de ayuda accesible -->
 <div id="terminal-help" class="sr-only">
-  Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, menu, noticias, juegos, etc.
-  Navegación: flechas arriba/abajo para historial, Tab para autocompletar, Enter para ejecutar,
+  Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, proyectos, noticias, juegos,
+  etc. Navegación: flechas arriba/abajo para historial, Tab para autocompletar, Enter para ejecutar,
   Ctrl+L para limpiar.
 </div>

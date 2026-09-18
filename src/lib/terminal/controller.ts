@@ -303,11 +303,16 @@ export class TerminalController {
    * esa vista. Los hashes de sección de la página (#proyectos…) no la tocan.
    */
   private navigateToHash(): void {
-    const target = classifyHash(location.hash, token => {
-      const spec = this.registry.resolveToken(token);
-      return !!spec && (!!spec.view || spec.name === 'menu');
-    });
-    if (target.kind === 'section' || target.kind === 'none') return;
+    const target = classifyHash(location.hash, token => !!this.registry.resolveToken(token)?.view);
+    if (target.kind === 'none') return;
+    if (target.kind === 'section') {
+      // Enlaces antiguos (#cv, #projects…): llevar a su sección nueva de la página.
+      if (location.hash.slice(1) !== target.id) {
+        history.replaceState(history.state, '', `#${target.id}`);
+        document.getElementById(target.id)?.scrollIntoView();
+      }
+      return;
+    }
     window.terminalSheet?.show?.();
     if (target.kind === 'terminal' || target.token === this.currentView) return;
     const spec = this.registry.resolveToken(target.token);
