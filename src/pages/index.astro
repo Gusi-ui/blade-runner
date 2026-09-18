@@ -9,133 +9,41 @@ import CosmicCalculator from '../components/CosmicCalculator.astro';
 import APOD from '../components/APOD.astro';
 import Chat from '../components/Chat.astro';
 import Contact from '../components/Contact.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import '../styles/terminal.css';
 
-const title = 'Blade Runner Terminal - Gusi';
+const title = 'Gusi · Desarrollador Full Stack — webs rápidas y a medida';
 const description =
-  'Terminal retro-futurista interactiva estilo Blade Runner con noticias tech, juegos retro y calculadora cósmica.';
+  'Webs rápidas y a medida para negocios y asociaciones: desarrollo con Astro y Cloudflare, migraciones desde WordPress y mantenimiento.';
 ---
 
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
-    <meta name="author" content="Gusi" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="canonical" href="https://gusi.dev/" />
+<BaseLayout title={title} description={description}>
+  <h1 class="sr-only">Webs rápidas y a medida para tu negocio</h1>
 
-    <!-- Open Graph -->
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://gusi.dev/" />
-    <meta property="og:site_name" content="Blade Runner Terminal" />
-    <meta property="og:locale" content="es_ES" />
-    <meta property="og:image" content="https://gusi.dev/og.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content="Blade Runner Terminal — Gusi, Desarrollador Full Stack"
-    />
+  <!-- Componente Principal de Terminal -->
+  <Terminal />
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content="https://gusi.dev/og.png" />
+  <!-- Componentes Ocultos (se cargan dinámicamente) -->
+  <Menu />
+  <NewsFeed />
+  <CV />
+  <Projects />
+  <Games />
+  <CosmicCalculator />
+  <APOD />
+  <Chat />
+  <Contact />
 
-    <title>{title}</title>
-
-    <!-- Preconnect para mejorar rendimiento -->
-    <link rel="preconnect" href="https://api.nasa.gov" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  </head>
-  <body>
-    <!-- Cyberpunk particles -->
-    <div class="particles" id="particles"></div>
-
-    <!-- Componente Principal de Terminal -->
-    <Terminal />
-
-    <!-- Componentes Ocultos (se cargan dinámicamente) -->
-    <Menu />
-    <NewsFeed />
-    <CV />
-    <Projects />
-    <Games />
-    <CosmicCalculator />
-    <APOD />
-    <Chat />
-    <Contact />
-
-    <!-- Script global para manejo de eventos -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const isMobile = window.matchMedia('(max-width: 640px)').matches;
-        const savedTheme = localStorage.getItem('nexus-theme');
-        const reducedEffects = localStorage.getItem('nexus-reduced-effects') === 'true';
-
-        if (savedTheme) document.body.classList.add(`theme-${savedTheme}`);
-        if (reducedEffects) document.body.classList.add('reduced-effects');
-
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (!reducedEffects && !prefersReducedMotion) {
-          generateParticles(isMobile ? 15 : 50);
-        }
-
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
-        }
-      });
-
-      // Prevenir zoom en dispositivos móviles al hacer doble tap
-      let lastTouchEnd = 0;
-      document.addEventListener(
-        'touchend',
-        e => {
-          const now = Date.now();
-          if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-          }
-          lastTouchEnd = now;
-        },
-        false
-      );
-
-      function generateParticles(count = 50): void {
-        const particlesContainer = document.getElementById('particles');
-        if (!particlesContainer) return;
-
-        for (let i = 0; i < count; i++) {
-          const particle = document.createElement('div');
-          particle.className = 'particle';
-          particle.style.left = Math.random() * 100 + '%';
-          particle.style.width = Math.random() * 3 + 1 + 'px';
-          particle.style.height = particle.style.width;
-          particle.style.animationDelay = Math.random() * 6 + 's';
-          particle.style.animationDuration = Math.random() * 4 + 6 + 's';
-          particlesContainer.appendChild(particle);
-        }
+  <script>
+    // Preferencias guardadas de la terminal (tema y efectos).
+    try {
+      const savedTheme = localStorage.getItem('nexus-theme');
+      if (savedTheme) document.body.classList.add(`theme-${savedTheme}`);
+      if (localStorage.getItem('nexus-reduced-effects') === 'true') {
+        document.body.classList.add('reduced-effects');
       }
-    </script>
-    <script is:inline type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "Blade Runner Terminal",
-        "description": "Terminal retro-futurista interactiva de Gusi",
-        "url": "https://gusi.dev",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Any"
-      }
-    </script>
-  </body>
-</html>
+    } catch {
+      /* almacenamiento no disponible (modo privado): se usan los valores por defecto */
+    }
+  </script>
+</BaseLayout>
