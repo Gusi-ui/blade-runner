@@ -1,0 +1,46 @@
+---
+import { profile } from '../../data/profile';
+import { ALAMIA_URL, services } from '../../data/services';
+---
+
+<section id="sobre-mi" class="section">
+  <p class="kicker">// sobre mí</p>
+  <h2 class="section-heading">Hola, soy {profile.name}</h2>
+  <div class="grid gap-8 lg:grid-cols-2">
+    <div class="space-y-4 text-base">
+      {profile.about.map(p => (
+        <p>{p}</p>
+      ))}
+    </div>
+    <ol class="divide-line divide-y" aria-label="Servicios y tarifas">
+      {services.map((s, i) => (
+        <li class="flex gap-4 py-4">
+          <span class="text-accent font-mono text-sm">{String(i + 1).padStart(2, '0')}</span>
+          <div class="flex-1">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+              <h3 class="text-strong font-semibold">{s.title}</h3>
+              <span class="text-strong font-mono">
+                {s.price} <span class="text-muted text-xs">{s.priceNote}</span>
+              </span>
+            </div>
+            <p class="text-muted">{s.description}</p>
+            {s.href === ALAMIA_URL ? (
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noopener"
+                class="text-accent mt-1 inline-block text-sm"
+              >
+                Contratar en alamia.es ↗
+              </a>
+            ) : (
+              <a href={s.href} class="text-accent mt-1 inline-block text-sm">
+                Pedir presupuesto →
+              </a>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

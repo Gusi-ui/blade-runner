@@ -26,6 +26,50 @@ test.describe('presentación', () => {
   });
 });
 
+test.describe('secciones', () => {
+  test('secciones visibles y «Hablemos» lleva al formulario', async ({ page }) => {
+    await page.goto('/');
+    for (const id of ['proyectos', 'sobre-mi', 'contacto']) {
+      await expect(page.locator(`#${id}`)).toBeAttached();
+    }
+    await expect(page.locator('#proyectos li')).toHaveCount(4);
+    await expect(page.locator('#proyectos')).toContainText('Mi estudio');
+    await page.getByRole('link', { name: 'Hablemos' }).click();
+    await expect(page.locator('#contacto form')).toBeInViewport();
+    await expect(page.locator('#terminal-sheet')).toBeHidden();
+  });
+
+  test('no hay scroll horizontal', async ({ page }) => {
+    await page.goto('/');
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('las capturas de los proyectos cargan', async ({ page }) => {
+    await page.goto('/');
+    const imgs = page.locator('#proyectos img');
+    for (const img of await imgs.all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect(img).toHaveJSProperty('complete', true);
+      expect(await img.evaluate(i => (i as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+      await expect(img).not.toHaveCSS('opacity', '0');
+    }
+  });
+
+  test('las tarifas enlazan a alamia.es y lo a medida al formulario', async ({ page }) => {
+    await page.goto('/');
+    const about = page.locator('#sobre-mi');
+    await expect(about.getByRole('link', { name: /Contratar en alamia\.es/ })).toHaveCount(4);
+    await expect(about.getByRole('link', { name: /Pedir presupuesto/ })).toHaveAttribute(
+      'href',
+      '#contacto'
+    );
+    await expect(about).toContainText('250 €');
+  });
+});
+
 test.describe('terminal en capa', () => {
   test('se abre al tocar y se cierra con ✕, Esc y atrás', async ({ page }) => {
     await page.goto('/');

@@ -1,0 +1,79 @@
+---
+import { profile } from '../../data/profile';
+---
+
+<section id="contacto" class="section">
+  <p class="kicker">// contacto</p>
+  <h2 class="section-heading">¿Tienes un proyecto?</h2>
+  <form data-contact-form class="grid max-w-xl gap-3" novalidate>
+    <label class="grid gap-1 text-sm">
+      Nombre
+      <input name="name" required maxlength="100" autocomplete="name" class="field" />
+    </label>
+    <label class="grid gap-1 text-sm">
+      Email
+      <input
+        name="email"
+        type="email"
+        required
+        maxlength="200"
+        autocomplete="email"
+        class="field"
+      />
+    </label>
+    <label class="grid gap-1 text-sm">
+      ¿Qué necesitas?
+      <textarea
+        name="message"
+        required
+        minlength="5"
+        maxlength="2000"
+        rows="5"
+        class="field"
+      ></textarea>
+    </label>
+    <!-- Campo trampa anti-bots: invisible y fuera de tabulación para personas -->
+    <input
+      name="website"
+      type="text"
+      tabindex="-1"
+      autocomplete="off"
+      class="hidden"
+      aria-hidden="true"
+    />
+    <button type="submit" class="btn-primary">
+      Enviar mensaje
+    </button>
+    <p data-contact-status class="text-sm" role="status" aria-live="polite"></p>
+  </form>
+  <p class="text-muted mt-6 text-sm">
+    <a href={`mailto:${profile.email}`} class="hover:text-strong">
+      {profile.email}
+    </a>{' '}
+    ·
+    <a href={profile.github} class="hover:text-strong">
+      GitHub
+    </a>
+  </p>
+</section>
+
+<script>
+  import { installContactForm } from '../../lib/contact/form';
+  installContactForm();
+</script>
+
+<style>
+  .field {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    color: var(--color-strong);
+    /* ≥16px: iOS no hace zoom al enfocar el campo */
+    font-size: 1rem;
+  }
+  .field:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+</style>

@@ -10,7 +10,11 @@ import APOD from '../components/APOD.astro';
 import Chat from '../components/Chat.astro';
 import Contact from '../components/Contact.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import AboutSection from '../components/site/AboutSection.astro';
+import ContactSection from '../components/site/ContactSection.astro';
 import Hero from '../components/site/Hero.astro';
+import ProjectsSection from '../components/site/ProjectsSection.astro';
+import SiteFooter from '../components/site/SiteFooter.astro';
 import SiteHeader from '../components/site/SiteHeader.astro';
 import '../styles/global.css';
 
@@ -23,7 +27,11 @@ const description =
   <SiteHeader />
   <main>
     <Hero />
+    <ProjectsSection />
+    <AboutSection />
+    <ContactSection />
   </main>
+  <SiteFooter />
 
   <!-- Terminal en capa a pantalla completa -->
   <TerminalSheet />

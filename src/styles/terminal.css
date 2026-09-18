@@ -528,13 +528,13 @@
     image-rendering: pixelated;
   }
 
-  /* Lazy loading for images */
-  img[loading='lazy'] {
+  /* Aparición suave de imágenes diferidas de la terminal (el APOD añade .loaded). */
+  .terminal-sheet img[loading='lazy'] {
     opacity: 0;
     transition: opacity 0.3s;
   }
 
-  img[loading='lazy'].loaded {
+  .terminal-sheet img[loading='lazy'].loaded {
     opacity: 1;
   }
 
