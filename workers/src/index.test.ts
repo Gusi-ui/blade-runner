@@ -117,3 +117,50 @@ describe('worker errores', () => {
     expect(await res.text()).not.toContain('secreto interno');
   });
 });
+
+describe('worker /api/translate', () => {
+  const aiMock = () =>
+    vi.fn(async (_model: string, input: { messages?: { content: string }[]; text?: string }) =>
+      input.messages
+        ? { response: `ES(${input.messages[1].content})` }
+        : { translated_text: `M2M(${input.text})` }
+    );
+
+  it('traduce un texto con el LLM', async () => {
+    const env = makeEnv({ AI: { run: aiMock() } });
+    const res = await post('/api/translate', JSON.stringify({ text: 'Jemalloc 5.4.0' }), env);
+    expect(await res.json()).toEqual({ translatedText: 'ES(Jemalloc 5.4.0)' });
+  });
+
+  it('traduce por lotes y respeta los textos vacíos', async () => {
+    const env = makeEnv({ AI: { run: aiMock() } });
+    const res = await post('/api/translate', JSON.stringify({ texts: ['a', '', 'b'] }), env);
+    expect(await res.json()).toEqual({ translations: ['ES(a)', '', 'ES(b)'] });
+  });
+
+  it('usa la caché de KV en la segunda petición', async () => {
+    const run = aiMock();
+    const env = makeEnv({ AI: { run } });
+    await post('/api/translate', JSON.stringify({ text: 'hello' }), env);
+    await post('/api/translate', JSON.stringify({ text: 'hello' }), env);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('rechaza lotes demasiado grandes', async () => {
+    const res = await post('/api/translate', JSON.stringify({ texts: Array(21).fill('x') }));
+    expect(res.status).toBe(400);
+  });
+
+  it('recurre a m2m100 si el LLM falla', async () => {
+    const run = vi.fn(async (_model: string, input: { messages?: unknown; text?: string }) => {
+      if (input.messages) throw new Error('boom');
+      return { translated_text: `M2M(${input.text})` };
+    });
+    const res = await post(
+      '/api/translate',
+      JSON.stringify({ text: 'hi' }),
+      makeEnv({ AI: { run } })
+    );
+    expect(await res.json()).toEqual({ translatedText: 'M2M(hi)' });
+  });
+});

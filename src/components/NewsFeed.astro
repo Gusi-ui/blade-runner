@@ -38,7 +38,7 @@
 
 <script>
   import { fetchNews as fetchNewsApi, type NewsArticle } from '../lib/api/client';
-  import { translateToSpanish } from '../lib/api/translate';
+  import { translateBatch } from '../lib/api/translate';
   import { safeUrl } from '../lib/terminal/sanitize';
   import { formatRelativeTime } from '../lib/utils/relativeTime';
 
@@ -97,15 +97,15 @@
         }
         this.render(articles, true);
 
-        const translated = await Promise.all(
-          articles.map(async article => {
-            const [title, description] = await Promise.all([
-              translateToSpanish(article.title),
-              translateToSpanish(article.description),
-            ]);
-            return { ...article, title: title.text, description: description.text };
-          })
+        // Una sola petición para todos los títulos y descripciones.
+        const results = await translateBatch(
+          articles.flatMap(article => [article.title, article.description ?? ''])
         );
+        const translated = articles.map((article, i) => ({
+          ...article,
+          title: results[2 * i].text,
+          description: results[2 * i + 1].text,
+        }));
         this.cache.set(filter, { at: Date.now(), articles: translated });
         if (id === this.loadId) this.render(translated);
       } catch (error) {

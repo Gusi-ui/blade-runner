@@ -54,7 +54,7 @@
 
 <script>
   import { fetchAPOD, type APODData } from '../lib/api/client';
-  import { translateToSpanish } from '../lib/api/translate';
+  import { translateBatch } from '../lib/api/translate';
   import { safeUrl } from '../lib/terminal/sanitize';
 
   class APODViewer {
@@ -148,10 +148,7 @@
     }
 
     private async translateAPOD(data: APODData, id: number): Promise<void> {
-      const [title, explanation] = await Promise.all([
-        translateToSpanish(data.title),
-        translateToSpanish(data.explanation),
-      ]);
+      const [title, explanation] = await translateBatch([data.title, data.explanation]);
       const content = this.content();
       if (id !== this.loadId || !content) return;
 

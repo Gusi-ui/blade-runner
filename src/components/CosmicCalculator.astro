@@ -93,6 +93,9 @@
 
   class CosmicCalculator {
     private terminal: TerminalController;
+    // Bloque impreso de ESTA calculadora: los ids se repiten en cada 'calculadora'
+    // (y en la plantilla oculta), así que se busca dentro de él, no en document.
+    private root: ParentNode;
 
     // Periodos orbitales en días terrestres
     private planets = {
@@ -106,13 +109,22 @@
       Neptuno: 60182,
     };
 
-    constructor(terminal: TerminalController) {
+    constructor(terminal: TerminalController, root: ParentNode) {
       this.terminal = terminal;
+      this.root = root;
+    }
+
+    private byId<T extends HTMLElement = HTMLElement>(id: string): T | null {
+      return this.root.querySelector<T>(`#${id}`);
+    }
+
+    private showError(message: string): void {
+      this.terminal.printOutput(`<div class="error-text">${message}</div>`);
     }
 
     init(): void {
-      const submitBtn = document.getElementById('calculator-submit');
-      const exitBtn = document.getElementById('calculator-exit');
+      const submitBtn = this.byId('calculator-submit');
+      const exitBtn = this.byId('calculator-exit');
 
       if (submitBtn) {
         submitBtn.addEventListener('click', () => this.calculate());
@@ -122,7 +134,7 @@
         exitBtn.addEventListener('click', () => this.exit());
       }
 
-      const birthdateInput = document.getElementById('birthdate') as HTMLInputElement;
+      const birthdateInput = this.byId<HTMLInputElement>('birthdate');
       if (birthdateInput) {
         birthdateInput.addEventListener('keydown', e => {
           if (e.key === 'Enter') {
@@ -133,16 +145,16 @@
     }
 
     private calculate(): void {
-      const birthdateInput = document.getElementById('birthdate') as HTMLInputElement;
-      const resultsDiv = document.getElementById('calculator-results');
-      const nasaDataDiv = document.getElementById('nasa-data');
+      const birthdateInput = this.byId<HTMLInputElement>('birthdate');
+      const resultsDiv = this.byId('calculator-results');
+      const nasaDataDiv = this.byId('nasa-data');
 
       if (!birthdateInput || !resultsDiv || !nasaDataDiv) return;
 
       const birthdate = birthdateInput.value;
 
       if (!birthdate) {
-        alert('Por favor ingresa una fecha de nacimiento válida.');
+        this.showError('Por favor, introduce una fecha de nacimiento válida.');
         return;
       }
 
@@ -150,7 +162,7 @@
       const today = new Date();
 
       if (birthDate > today) {
-        alert('La fecha de nacimiento no puede ser en el futuro.');
+        this.showError('La fecha de nacimiento no puede ser futura.');
         return;
       }
 
@@ -180,7 +192,7 @@
     }
 
     private displayResults(ages: PlanetaryAge[], birthDate: Date, daysPassed: number): void {
-      const resultsDiv = document.getElementById('calculator-results');
+      const resultsDiv = this.byId('calculator-results');
       if (!resultsDiv) return;
 
       resultsDiv.classList.remove('hidden');
@@ -275,7 +287,7 @@
     }
 
     private async fetchNASAData(birthdate: string): Promise<void> {
-      const nasaDataDiv = document.getElementById('nasa-data');
+      const nasaDataDiv = this.byId('nasa-data');
       if (!nasaDataDiv) return;
 
       nasaDataDiv.classList.remove('hidden');
@@ -335,7 +347,7 @@
     }
 
     private displayAlternativeAstronomyData(birthdate: string): void {
-      const nasaDataDiv = document.getElementById('nasa-data');
+      const nasaDataDiv = this.byId('nasa-data');
       if (!nasaDataDiv) return;
 
       const date = new Date(birthdate);
@@ -470,7 +482,7 @@
     }
 
     private initializeAlternativeSolarSystem(): void {
-      const canvas = document.getElementById('solar-canvas-nasa') as HTMLCanvasElement;
+      const canvas = this.byId<HTMLCanvasElement>('solar-canvas-nasa');
       if (!canvas) return;
 
       const ctx = canvas.getContext('2d');
@@ -637,7 +649,7 @@
     }
 
     private async displayNASAData(data: NASAAPODResponse): Promise<void> {
-      const nasaDataDiv = document.getElementById('nasa-data');
+      const nasaDataDiv = this.byId('nasa-data');
       if (!nasaDataDiv) return;
 
       // Traducir título y explicación
@@ -1074,7 +1086,7 @@
     }
 
     private displayBirthYearNews(news: TechNewsEvent[], year: number, month: number): void {
-      const placeholder = document.getElementById('historical-events-placeholder');
+      const placeholder = this.byId('historical-events-placeholder');
       if (!placeholder) return;
 
       const monthNames = [
@@ -1133,17 +1145,7 @@
 
     private exit(): void {
       this.terminal.printOutput('<div class="success-text">Volviendo al menú...</div>');
-      setTimeout(() => {
-        const event = new CustomEvent('loadView', { detail: { view: 'menu' } });
-        document.dispatchEvent(event);
-
-        // Ejecutar comando menu
-        const input = document.getElementById('terminal-input') as HTMLInputElement;
-        if (input) {
-          input.value = 'menu';
-          input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-        }
-      }, 500);
+      setTimeout(() => window.terminal?.run?.('menu'), 500);
     }
   }
 
@@ -1163,11 +1165,11 @@
       if (terminal && calculatorComponent) {
         terminal.printOutput(calculatorComponent.innerHTML);
 
-        // Inicializar calculadora
-        setTimeout(() => {
-          const calculator = new CosmicCalculator(terminal);
-          calculator.init();
-        }, 100);
+        // Enganchar al instante al bloque recién impreso (antes con setTimeout de
+        // 100 ms: un toque rápido en «Calcular» no hacía nada).
+        const blocks = document.querySelectorAll('#output-container .terminal-output');
+        const root = blocks[blocks.length - 1];
+        if (root) new CosmicCalculator(terminal, root).init();
       }
     }
   });

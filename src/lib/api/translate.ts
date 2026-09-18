@@ -3,135 +3,64 @@ export interface TranslateResult {
   translated: boolean;
 }
 
-// fetch con tope de tiempo: si el servicio de traducción se queda colgado,
-// abortamos y dejamos que el flujo caiga al fallback en lugar de bloquearse.
-const fetchWithTimeout = async (
-  url: string,
-  options: RequestInit = {},
-  timeoutMs = 6000
-): Promise<Response> => {
+// El Worker traduce con un LLM (varios segundos en textos largos) y cachea en KV.
+const TIMEOUT_MS = 20000;
+// Debe coincidir con TRANSLATE_MAX_BATCH / TRANSLATE_MAX_CHARS del Worker.
+const MAX_BATCH = 20;
+const MAX_CHARS = 5000;
+
+const postTranslate = async <T>(apiBase: string, body: unknown): Promise<T | null> => {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
+  const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    return await fetch(url, { ...options, signal: controller.signal });
+    const response = await fetch(`${apiBase}/api/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    return response.ok ? ((await response.json()) as T) : null;
+  } catch {
+    return null;
   } finally {
     clearTimeout(id);
   }
 };
 
-const splitTextIntoChunks = (text: string, maxLength: number): string[] => {
-  if (text.length <= maxLength) return [text];
+const untranslated = (text: string): TranslateResult => ({ text, translated: false });
 
-  const chunks: string[] = [];
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-  let currentChunk = '';
+/**
+ * Traduce varios textos en una sola petición al Worker. Si la traducción no
+ * está disponible, devuelve los originales (translated: false): nunca lanza.
+ * Ya no hay respaldo directo a Google/MyMemory desde el navegador.
+ */
+export const translateBatch = async (
+  texts: string[],
+  apiBase = import.meta.env.PUBLIC_API_BASE_URL || ''
+): Promise<TranslateResult[]> => {
+  if (!apiBase) return texts.map(untranslated);
 
-  for (const sentence of sentences) {
-    if ((currentChunk + sentence).length > maxLength && currentChunk.length > 0) {
-      chunks.push(currentChunk.trim());
-      currentChunk = sentence;
-    } else {
-      currentChunk += sentence;
-    }
-  }
-
-  if (currentChunk.length > 0) chunks.push(currentChunk.trim());
-  return chunks;
-};
-
-const translateSinglePart = async (text: string, apiBase: string): Promise<string | null> => {
-  if (apiBase) {
-    try {
-      const response = await fetchWithTimeout(`${apiBase}/api/translate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, source: 'en', target: 'es' }),
-      });
-      if (response.ok) {
-        const data = (await response.json()) as { translatedText?: string };
-        if (data.translatedText?.trim()) return data.translatedText;
-      }
-    } catch {
-      /* fallback to client methods */
-    }
-  }
-
-  const maxRetries = 2;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const googleResponse = await fetchWithTimeout(
-        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text)}`
+  const results: TranslateResult[] = [];
+  for (let i = 0; i < texts.length; i += MAX_BATCH) {
+    const chunk = texts.slice(i, i + MAX_BATCH).map(t => (t ?? '').slice(0, MAX_CHARS));
+    const data = await postTranslate<{ translations?: string[] }>(apiBase, { texts: chunk });
+    chunk.forEach((text, j) => {
+      const translated = data?.translations?.[j];
+      results.push(
+        text.trim() && translated?.trim()
+          ? { text: translated, translated: true }
+          : untranslated(text)
       );
-      if (googleResponse.ok) {
-        const data = await googleResponse.json();
-        if (data?.[0] && Array.isArray(data[0])) {
-          const translatedText = data[0].map((item: unknown[]) => (item as string[])[0]).join('');
-          if (translatedText?.trim()) return translatedText;
-        }
-      }
-
-      const myMemoryResponse = await fetchWithTimeout(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`
-      );
-      if (myMemoryResponse.ok) {
-        const data = await myMemoryResponse.json();
-        if (data.responseStatus === 200 && data.responseData?.translatedText) {
-          return data.responseData.translatedText;
-        }
-      }
-    } catch {
-      if (attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 800 * (attempt + 1)));
-      }
-    }
+    });
   }
-
-  return null;
+  return results;
 };
 
 export const translateToSpanish = async (
   text: string,
   apiBase = import.meta.env.PUBLIC_API_BASE_URL || ''
 ): Promise<TranslateResult> => {
-  if (!text?.trim()) return { text: text || '', translated: false };
-
-  try {
-    const chunks = splitTextIntoChunks(text, 4500);
-    const translatedChunks: string[] = [];
-    let anyTranslated = false;
-
-    for (const chunk of chunks) {
-      const translated = await translateSinglePart(chunk, apiBase);
-      if (translated) {
-        translatedChunks.push(translated);
-        anyTranslated = true;
-      } else {
-        translatedChunks.push(chunk);
-      }
-      if (chunks.length > 1) {
-        await new Promise(resolve => setTimeout(resolve, 400));
-      }
-    }
-
-    return {
-      text: translatedChunks.join(' '),
-      translated: anyTranslated,
-    };
-  } catch {
-    return { text, translated: false };
-  }
-};
-
-export const translateBatch = async (
-  texts: string[],
-  apiBase = import.meta.env.PUBLIC_API_BASE_URL || ''
-): Promise<TranslateResult[]> => {
-  const results: TranslateResult[] = [];
-  for (const text of texts) {
-    results.push(await translateToSpanish(text, apiBase));
-    if (texts.length > 1) {
-      await new Promise(resolve => setTimeout(resolve, 250));
-    }
-  }
-  return results;
+  if (!text?.trim()) return untranslated(text || '');
+  const [result] = await translateBatch([text], apiBase);
+  return result;
 };
