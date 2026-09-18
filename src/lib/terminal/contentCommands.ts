@@ -1,21 +1,27 @@
 import { profile } from '../../data/profile';
-import { featuredProjects } from '../../data/projects';
+import { clientProjects, ownStudio } from '../../data/projects';
 import { ALAMIA_URL, services } from '../../data/services';
 import type { CommandSpec } from './registry';
 import { escapeHtml, safeUrl } from './sanitize';
 
 // Comandos que muestran el contenido de la página (src/data) dentro de la terminal.
 
-const projectsHtml = (): string =>
-  `<div class="section-title">Webs en producción</div><ul class="grid gap-2">${featuredProjects()
+const projectsHtml = (): string => {
+  const studio = ownStudio();
+  return `<div class="section-title">Webs en producción</div><ul class="grid gap-2">${clientProjects()
     .map(
       p => `<li class="rounded-xl border border-terminal-dim p-3">
-        ${p.label ? `<span class="text-accent text-xs">${escapeHtml(p.label)} · </span>` : ''}
         <a href="${safeUrl(p.url)}" target="_blank" rel="noopener" class="text-terminal-bright font-semibold">${escapeHtml(p.name)} ↗</a>
         <div class="text-terminal-dim text-sm">${escapeHtml(p.summary)}</div>
       </li>`
     )
-    .join('')}</ul>`;
+    .join('')}</ul>
+    <div class="mt-3 rounded-xl border border-dashed border-terminal-dim p-3">
+      <span class="text-accent text-xs">${escapeHtml(studio.label ?? '')}</span>
+      <a href="${safeUrl(studio.url)}" target="_blank" rel="noopener" class="text-terminal-bright ml-1 font-semibold">${escapeHtml(studio.name)} ↗</a>
+      <div class="text-terminal-dim text-sm">${escapeHtml(studio.summary)}</div>
+    </div>`;
+};
 
 const aboutHtml = (): string =>
   `<div class="section-title">Hola, soy ${escapeHtml(profile.name)}</div>${profile.about

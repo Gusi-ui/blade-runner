@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { profile } from './profile';
-import { featuredProjects, projects } from './projects';
+import { clientProjects, ownStudio, projects } from './projects';
 import { ALAMIA_URL, services } from './services';
 
 describe('datos del sitio', () => {
@@ -10,12 +10,12 @@ describe('datos del sitio', () => {
     for (const p of projects) expect(p.url).toMatch(/^https:\/\//);
   });
 
-  it('los destacados son las 4 webs reales de la spec', () => {
-    expect(featuredProjects().map(p => p.slug)).toEqual([
+  it('los proyectos de clientes son las 4 webs reales', () => {
+    expect(clientProjects().map(p => p.slug)).toEqual([
       'viandalucia',
       'divermataro',
       'irenepuigdemont',
-      'alamia',
+      'amparomedium',
     ]);
   });
 
@@ -30,8 +30,10 @@ describe('datos del sitio', () => {
     expect(services.at(-1)?.price).toBe('A medida');
   });
 
-  it('alamia.es se presenta como el estudio propio', () => {
-    expect(projects.find(p => p.slug === 'alamia')?.label).toBe('Mi estudio');
+  it('alamia.es es el estudio propio y va aparte de los clientes', () => {
+    expect(ownStudio().slug).toBe('alamia');
+    expect(ownStudio().label).toBe('Mi estudio');
+    expect(clientProjects().some(p => p.kind === 'own')).toBe(false);
   });
 
   it('el perfil tiene email y GitHub válidos', () => {

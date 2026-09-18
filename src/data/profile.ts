@@ -1,4 +1,4 @@
-// Contenido de «Sobre mí». BORRADOR: el usuario debe validar los textos antes de la release.
+// Contenido de «Sobre mí» (validado por el usuario el 2026-09-18).
 export interface Profile {
   name: string;
   role: string;

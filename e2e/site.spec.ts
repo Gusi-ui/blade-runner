@@ -33,7 +33,10 @@ test.describe('secciones', () => {
       await expect(page.locator(`#${id}`)).toBeAttached();
     }
     await expect(page.locator('#proyectos li')).toHaveCount(4);
-    await expect(page.locator('#proyectos')).toContainText('Mi estudio');
+    await expect(page.locator('#proyectos li')).toContainText(['amparomedium.com']);
+    const studio = page.getByRole('complementary', { name: 'Mi estudio' });
+    await expect(studio).toContainText('alamia.es');
+    await expect(page.locator('#proyectos li').filter({ hasText: 'alamia.es' })).toHaveCount(0);
     await page.getByRole('link', { name: 'Hablemos' }).click();
     await expect(page.locator('#contacto form')).toBeInViewport();
     await expect(page.locator('#terminal-sheet')).toBeHidden();
@@ -49,7 +52,8 @@ test.describe('secciones', () => {
 
   test('las capturas de los proyectos cargan', async ({ page }) => {
     await page.goto('/');
-    const imgs = page.locator('#proyectos img');
+    // La captura de la franja del estudio solo se muestra desde sm (en móvil va oculta).
+    const imgs = page.locator('#proyectos li img');
     for (const img of await imgs.all()) {
       await img.scrollIntoViewIfNeeded();
       await expect(img).toHaveJSProperty('complete', true);
