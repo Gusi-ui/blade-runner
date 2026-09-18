@@ -6,6 +6,8 @@ export interface Project {
   summary: string;
   tags: string[];
   featured: boolean;
+  /** Etiqueta destacada en la tarjeta (p. ej. 'Mi estudio' para alamia.es). */
+  label?: string;
 }
 
 export const projects: Project[] = [
@@ -40,9 +42,11 @@ export const projects: Project[] = [
     slug: 'alamia',
     name: 'alamia.es',
     url: 'https://alamia.es',
-    summary: 'Web corporativa con formulario de contacto seguro en el borde.',
-    tags: ['Workers', 'KV'],
+    summary:
+      'Mi estudio para pequeños negocios: webs y mantenimiento con precio cerrado y contratación online.',
+    tags: ['Astro', 'Workers', 'Pagos online'],
     featured: true,
+    label: 'Mi estudio',
   },
 ];
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { profile } from './profile';
 import { featuredProjects, projects } from './projects';
-import { services } from './services';
+import { ALAMIA_URL, services } from './services';
 
 describe('datos del sitio', () => {
   it('los proyectos tienen slug único y URL https', () => {
@@ -19,12 +19,19 @@ describe('datos del sitio', () => {
     ]);
   });
 
-  it('hay 3 servicios con título y descripción', () => {
-    expect(services).toHaveLength(3);
+  it('las tarifas cerradas enlazan a alamia.es y hay una opción a medida', () => {
     for (const s of services) {
       expect(s.title.length).toBeGreaterThan(3);
       expect(s.description.length).toBeGreaterThan(10);
+      expect(s.href === ALAMIA_URL || s.href === '#contacto').toBe(true);
     }
+    const fixed = services.filter(s => s.href === ALAMIA_URL);
+    expect(fixed.map(s => s.price)).toEqual(['250 €', '190 €', '400 €', '10 €']);
+    expect(services.at(-1)?.price).toBe('A medida');
+  });
+
+  it('alamia.es se presenta como el estudio propio', () => {
+    expect(projects.find(p => p.slug === 'alamia')?.label).toBe('Mi estudio');
   });
 
   it('el perfil tiene email y GitHub válidos', () => {
