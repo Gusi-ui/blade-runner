@@ -36,3 +36,6 @@ playwright-report/
 
 # Build de las pruebas e2e
 dist-e2e/
+
+# Estado local de wrangler dev (KV, caché, trazas)
+.wrangler/
