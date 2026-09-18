@@ -122,8 +122,8 @@ Maqueta `terminal-completa.html`.
 Cada fase es una PR contra `develop`, visible en `https://dev.gusi.dev` tras el merge. Producción no cambia hasta la release final.
 
 1. **Base:** tokens `@theme`, fuentes autoalojadas, `src/data/*`, capturas de proyectos.
-2. **Página:** `SiteHeader`, `Hero` + `LiveTerminal`, `ProjectsSection`, `AboutSection`, `ContactSection`, `SiteFooter`, SEO. La terminal completa todavía es la actual.
-3. **Terminal:** `TerminalSheet`, apertura/cierre/historial/hash, chips, estilos nuevos de todas las vistas, `help` en dos grupos, comandos `proyectos`/`sobre-mi`.
+2. **Página y capa:** `SiteHeader`, `Hero` + `LiveTerminal`, `ProjectsSection`, `AboutSection`, `ContactSection`, `SiteFooter`, SEO, y la terminal actual (aspecto antiguo) ya dentro de `TerminalSheet` con apertura/cierre/historial/hash.
+3. **Terminal:** estilos nuevos de todas las vistas, temas por variables, chips contextuales, ajuste al teclado móvil, `help` en dos grupos y comandos `proyectos`/`sobre-mi`.
 4. **Limpieza y pulido:** eliminar código antiguo (§9), service worker v5, ajustes de rendimiento y accesibilidad según Lighthouse.
 5. **Release** `develop → main` (merge commit).
 
