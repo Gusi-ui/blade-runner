@@ -1,6 +1,8 @@
 version: 2
 updates:
   - package-ecosystem: npm
+    # Las actualizaciones entran por develop y pasan a producción con la release.
+    target-branch: develop
     directories:
       - /
       - /workers
@@ -40,6 +42,7 @@ updates:
           - 'lint-staged'
 
   - package-ecosystem: github-actions
+    target-branch: develop
     directory: /
     schedule:
       interval: weekly
