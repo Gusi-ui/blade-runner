@@ -55,9 +55,16 @@ const installApiMocks = async (page: Page): Promise<void> => {
         return json({ articles: NEWS[filter] ?? NEWS.all });
       }
       case '/api/translate': {
-        const { text } = route.request().postDataJSON() as { text: string };
+        const { text, texts } = route.request().postDataJSON() as {
+          text?: string;
+          texts?: string[];
+        };
         await new Promise(resolve => setTimeout(resolve, TRANSLATE_DELAY_MS));
-        return json({ translatedText: translated(text) });
+        return json(
+          texts
+            ? { translations: texts.map(t => (t ? translated(t) : t)) }
+            : { translatedText: translated(text ?? '') }
+        );
       }
       case '/api/chat':
         return route.fulfill({
@@ -78,8 +85,6 @@ const installApiMocks = async (page: Page): Promise<void> => {
   await page.route('https://apod.nasa.gov/**', route =>
     route.fulfill({ status: 200, contentType: 'image/png', body: PIXEL })
   );
-  // Traductores externos de respaldo: nunca en las pruebas.
-  await page.route(/translate\.googleapis\.com|mymemory\.translated\.net/, route => route.abort());
 };
 
 export const test = base.extend<{ terminal: Terminal }>({

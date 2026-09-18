@@ -48,6 +48,11 @@ const CHAT_MAX_TOKENS = 768;
 const CHAT_MAX_HISTORY = 10;
 const CHAT_MAX_MESSAGE_CHARS = 2000;
 const TRANSLATE_MAX_CHARS = 5000;
+const TRANSLATE_MODEL = CHAT_MODEL;
+const TRANSLATE_MAX_BATCH = 20;
+// Versión en la clave: invalida traducciones antiguas (m2m100) guardadas en KV.
+const TRANSLATE_CACHE_PREFIX = 'tr2:';
+const TRANSLATE_TTL = 2592000; // 30 días
 const NEWS_FILTERS = new Set(['all', 'ai', 'cosmos']);
 const APOD_FIRST_DATE = '1995-06-16';
 
@@ -344,35 +349,60 @@ const filterNews = (articles: NewsArticle[], filter: string): NewsArticle[] => {
   return filtered.length > 0 ? filtered : articles;
 };
 
-const translateWithAI = async (env: Env, text: string): Promise<string> => {
+const TRANSLATE_PROMPT = `Eres un traductor profesional de inglés a español de España.
+Traduce el texto del usuario de forma natural y fiel.
+- NO traduzcas nombres propios, marcas, productos, proyectos de software, versiones ni siglas
+  (p. ej. "Jemalloc 5.4.0", "Qwen", "Hacker News", "SpaceX", "x86" se quedan igual).
+- Conserva números, fechas y URLs.
+- Si el texto ya está en español o no tiene nada que traducir, devuélvelo tal cual.
+Responde SOLO con la traducción, sin comillas, notas ni explicaciones.`;
+
+// Traductor de respaldo (rápido pero de baja calidad) si el LLM falla.
+const translateWithM2M = async (env: Env, text: string): Promise<string> => {
   const result = (await env.AI.run('@cf/meta/m2m100-1.2b', {
-    text: text.slice(0, 4500),
+    text,
     source_lang: 'english',
     target_lang: 'spanish',
   })) as { translated_text?: string };
   return result.translated_text || text;
 };
 
+/**
+ * Traduce con el LLM de Workers AI. Antes se usaba el endpoint no oficial de
+ * Google (bloquea las peticiones desde Cloudflare) y caía siempre a m2m100,
+ * que traducía hasta los nombres propios ("Jemalloc 5.4.0" → "Página 5.4.0").
+ */
 const translateText = async (env: Env, text: string): Promise<string> => {
   try {
-    const response = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(text.slice(0, 4500))}`
-    );
-    if (!response.ok) throw new Error(`Google Translate: ${response.status}`);
-    const data = (await response.json()) as unknown;
-    const segments = Array.isArray(data) ? data[0] : null;
-    if (Array.isArray(segments)) {
-      return segments.map((item: string[]) => item[0]).join('');
-    }
-    throw new Error('Google Translate: respuesta inesperada');
+    const result = (await env.AI.run(TRANSLATE_MODEL, {
+      messages: [
+        { role: 'system', content: TRANSLATE_PROMPT },
+        { role: 'user', content: text },
+      ],
+      max_tokens: Math.min(2048, Math.ceil(text.length / 2) + 64),
+      temperature: 0.2,
+    })) as { response?: string };
+    const translated = result.response?.trim().replace(/^"([\s\S]*)"$/, '$1');
+    // Descarta respuestas vacías o desproporcionadas (el modelo se puso a explicar).
+    if (translated && translated.length < text.length * 3 + 40) return translated;
+    throw new Error('Traducción LLM no válida');
   } catch {
-    // Fallback: modelo de traducción de Workers AI
     try {
-      return await translateWithAI(env, text);
+      return await translateWithM2M(env, text);
     } catch {
       return text;
     }
   }
+};
+
+/** Traduce con caché en KV (por texto). */
+const translateCached = async (env: Env, text: string): Promise<string> => {
+  const cacheKey = `${TRANSLATE_CACHE_PREFIX}${await hashKey(text)}`;
+  const cached = await getCached<{ translatedText: string }>(env.CACHE, cacheKey);
+  if (cached) return cached.translatedText;
+  const translatedText = await translateText(env, text);
+  await setCached(env.CACHE, cacheKey, { translatedText }, TRANSLATE_TTL);
+  return translatedText;
 };
 
 export default {
@@ -458,22 +488,33 @@ export default {
         return jsonResponse(paginate(articles), origin, env);
       }
 
+      // Acepta { text } → { translatedText } o, por lotes, { texts } → { translations }.
       if (url.pathname === '/api/translate' && request.method === 'POST') {
-        const body = await readJson<{ text?: unknown }>(request);
-        const text = typeof body.text === 'string' ? body.text.slice(0, TRANSLATE_MAX_CHARS) : '';
-        if (!text) return jsonResponse({ translatedText: '' }, origin, env);
-
-        const cacheKey = `tr:${await hashKey(text)}`;
-        const cached = await getCached<{ translatedText: string }>(env.CACHE, cacheKey);
-        if (cached) return jsonResponse(cached, origin, env);
+        const body = await readJson<{ text?: unknown; texts?: unknown }>(request);
+        const clip = (value: unknown) =>
+          typeof value === 'string' ? value.slice(0, TRANSLATE_MAX_CHARS) : '';
+        const batch = Array.isArray(body.texts);
+        const texts = batch ? (body.texts as unknown[]).map(clip) : [clip(body.text)];
+        if (texts.length > TRANSLATE_MAX_BATCH) {
+          return jsonResponse(
+            { error: `Máximo ${TRANSLATE_MAX_BATCH} textos por petición` },
+            origin,
+            env,
+            400
+          );
+        }
 
         if (await isRateLimited(env.TRANSLATE_LIMITER, request)) {
           return jsonResponse({ error: 'Demasiadas peticiones' }, origin, env, 429);
         }
-        const translatedText = await translateText(env, text);
-        const result = { translatedText };
-        await setCached(env.CACHE, cacheKey, result, 604800);
-        return jsonResponse(result, origin, env);
+        const translations = await Promise.all(
+          texts.map(text => (text.trim() ? translateCached(env, text) : text))
+        );
+        return jsonResponse(
+          batch ? { translations } : { translatedText: translations[0] },
+          origin,
+          env
+        );
       }
 
       if (url.pathname === '/api/chat' && request.method === 'POST') {
