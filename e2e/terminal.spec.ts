@@ -89,6 +89,20 @@ test.describe('aspecto de la terminal', () => {
   });
 });
 
+test.describe('efecto retro', () => {
+  test('apagado por defecto', async ({ terminal, page }) => {
+    await terminal.run('help');
+    await expect(page.locator('#terminal-sheet canvas.matrix-bg')).toHaveCount(0);
+  });
+
+  test('se activa desde config y dibuja dentro de la capa', async ({ terminal, page }) => {
+    await terminal.run('config');
+    await terminal.last.getByRole('button', { name: /efect/i }).first().click();
+    await page.locator('[data-effect="toggle"]').last().click();
+    await expect(page.locator('#terminal-sheet canvas.matrix-bg')).toHaveCount(1);
+  });
+});
+
 test.describe('comandos básicos', () => {
   test('help lista los comandos', async ({ terminal }) => {
     await terminal.run('help');

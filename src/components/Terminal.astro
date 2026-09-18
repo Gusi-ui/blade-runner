@@ -1,72 +1,10 @@
 ---
-interface Props {
-  title?: string;
-}
-
-// const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
+// Contenido de la terminal (salida, atajos y entrada). Vive dentro de TerminalSheet.
 ---
 
 <div class="terminal-container">
-  <div class="terminal-screen crt-flicker">
-    <div class="terminal-header">
-      <!-- Logo compacto solo en móvil: el ASCII completo desbordaba y provocaba
-           scroll horizontal, así que se reserva para sm+ (abajo). -->
-      <div class="mobile-logo sm:hidden" aria-label="GUSI.DEV — Sistema Nexus-7">
-        <span class="mobile-logo__title">GUSI.DEV</span>
-        <span class="mobile-logo__sub">SISTEMA NEXUS-7</span>
-      </div>
-      <!-- ASCII Art Header -->
-      <div
-        id="ascii-header-panel"
-        class="ascii-header text-terminal-bright mb-4 hidden text-center sm:block"
-      >
-        <div class="ascii-title">
-          <pre
-            class="ascii-art glitch font-mono"
-            data-text="╠═════════════════════════════════════════════════════════╣
-║                                                         ║
-║     ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ███████╗██╗   ██╗ ║
-║    ██╔════╝ ██║   ██║██╔════╝██║    ██╔══██╗██╔════╝██║   ██║ ║
-║    ██║  ███╗██║   ██║███████╗██║    ██║  ██║█████╗  ██║   ██║ ║
-║    ██║   ██║██║   ██║╚════██║██║    ██║  ██║██╔══╝  ╚██╗ ██╔╝ ║
-║    ╚██████╔╝╚██████╔╝███████║██║ ██╗██████╔╝███████╗ ╚████╔╝  ║
-║     ╚═════╝  ╚═════╝ ╚══════╝╚═╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝   ║
-║                                                         ║
-║               ╔═══════════════════════════╗             ║
-║               ║   SISTEMA NEXUS-7        ║             ║
-║               ╚═══════════════════════════╝             ║
-║                                                         ║
-╚═════════════════════════════════════════════════════════╝"
-          >
-╠═════════════════════════════════════════════════════════╣
-║                                                         ║
-║     ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ███████╗██╗   ██╗ ║
-║    ██╔════╝ ██║   ██║██╔════╝██║    ██╔══██╗██╔════╝██║   ██║ ║
-║    ██║  ███╗██║   ██║███████╗██║    ██║  ██║█████╗  ██║   ██║ ║
-║    ██║   ██║██║   ██║╚════██║██║    ██║  ██║██╔══╝  ╚██╗ ██╔╝ ║
-║    ╚██████╔╝╚██████╔╝███████║██║ ██╗██████╔╝███████╗ ╚████╔╝  ║
-║     ╚═════╝  ╚═════╝ ╚══════╝╚═╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝   ║
-║                                                         ║
-║               ╔═══════════════════════════╗             ║
-║               ║   SISTEMA NEXUS-7        ║             ║
-║               ╚═══════════════════════════╝             ║
-║                                                         ║
-╚═════════════════════════════════════════════════════════╝
-         </pre>
-        </div>
-      </div>
-
-      <div class="text-terminal-dim flex flex-col items-start justify-between gap-2 text-xs sm:flex-row sm:items-center">
-        <span>
-          CONECTADO: <span id="terminal-datetime"></span>
-        </span>
-        <span>
-          STATUS: <span class="text-green-400">ONLINE</span>
-        </span>
-      </div>
-    </div>
-
-    <div id="terminal-content" class="min-h-[calc(100vh-200px)]">
+  <div class="terminal-screen">
+    <div id="terminal-content" class="pt-3">
       <div
         id="boot-output"
         class="terminal-output"
@@ -124,19 +62,16 @@ interface Props {
       </div>
     </div>
   </div>
-
-  <!-- Scanline effect -->
-  <div class="scanline"></div>
 </div>
 
 <script>
   import { renderBootInstant } from '../lib/terminal/boot';
-  import { TerminalController, startHeaderClock } from '../lib/terminal/controller';
+  import { TerminalController } from '../lib/terminal/controller';
   import { chipsFor } from '../lib/terminal/chips';
   import { createTerminalSheet } from '../lib/terminal/sheet';
+  import { initMatrixBackground } from '../lib/effects/matrixBackground';
 
   window.terminal = new TerminalController();
-  startHeaderClock();
 
   // La terminal vive en una capa a pantalla completa (TerminalSheet). Se crea en
   // el mismo tick que el controlador: su navegación inicial por hash la usa.
@@ -147,6 +82,7 @@ interface Props {
     cmd => window.terminal?.run?.(cmd),
     () => input.focus()
   );
+  initMatrixBackground(dialog);
   document
     .querySelector('[data-close-terminal]')
     ?.addEventListener('click', () => window.terminalSheet?.close());

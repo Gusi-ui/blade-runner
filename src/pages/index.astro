@@ -1,14 +1,10 @@
 ---
 import TerminalSheet from '../components/TerminalSheet.astro';
-import Menu from '../components/Menu.astro';
 import NewsFeed from '../components/NewsFeed.astro';
-import CV from '../components/CV.astro';
-import Projects from '../components/Projects.astro';
 import Games from '../components/Games.astro';
 import CosmicCalculator from '../components/CosmicCalculator.astro';
 import APOD from '../components/APOD.astro';
 import Chat from '../components/Chat.astro';
-import Contact from '../components/Contact.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AboutSection from '../components/site/AboutSection.astro';
 import ContactSection from '../components/site/ContactSection.astro';
@@ -37,15 +33,11 @@ const description =
   <TerminalSheet />
 
   <!-- Componentes Ocultos (se cargan dinámicamente) -->
-  <Menu />
   <NewsFeed />
-  <CV />
-  <Projects />
   <Games />
   <CosmicCalculator />
   <APOD />
   <Chat />
-  <Contact />
 
   <script>
     // Tema guardado de la terminal (solo cambia el acento dentro de la capa).

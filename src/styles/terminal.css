@@ -9,14 +9,15 @@
 }
 
 @layer components {
-  /* Cabecera antigua (ASCII, reloj) y efectos CRT: fuera del diseño nuevo.
-     El marcado se elimina en la limpieza de la fase 4. */
-  .terminal-sheet :is(.terminal-header, .scanline) {
-    display: none;
-  }
-
-  .terminal-content {
-    @apply flex min-h-full flex-col px-4 pt-3 sm:px-6;
+  /* Columna a toda la altura de la capa: el pie (atajos + entrada) queda abajo
+     aunque haya poco contenido. */
+  .terminal-sheet__body,
+  .terminal-container,
+  .terminal-screen,
+  #terminal-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
   }
 
   .terminal-output {
@@ -59,29 +60,6 @@
   /* Botones de las vistas (filtros, acciones, opciones de config y juegos) */
   .menu-item {
     @apply bg-surface-2 border-line-strong text-body hover:border-accent hover:text-strong inline-flex min-h-10 cursor-pointer items-center rounded-lg border px-3 text-left text-sm transition-colors;
-  }
-
-  /* Menú (comando `menu`, hasta que la fase 3 lo sustituye por la ayuda) */
-  .menu-list {
-    @apply my-4 grid grid-cols-1 gap-2 md:grid-cols-2;
-  }
-  .menu-row {
-    @apply bg-surface border-line hover:border-accent flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-left transition-colors;
-  }
-  .menu-row__icon {
-    @apply flex-none text-xl leading-none;
-  }
-  .menu-row__body {
-    @apply flex min-w-0 flex-1 flex-col;
-  }
-  .menu-row__title {
-    @apply text-strong font-sans font-semibold;
-  }
-  .menu-row__desc {
-    @apply text-muted text-xs;
-  }
-  .menu-row__key {
-    @apply border-line-strong text-muted rounded border px-1.5 text-xs;
   }
 
   /* Pie fijo abajo (atajos + entrada), sobre el teclado del móvil */
@@ -151,7 +129,7 @@
     white-space: pre-wrap;
   }
 
-  /* Formulario de contacto dentro de la terminal */
+  /* Campos y botón principal dentro de la terminal (calculadora) */
   .contact-input {
     @apply bg-surface border-line-strong text-strong mt-1 w-full rounded-xl border px-3 py-2 text-base;
   }
@@ -160,9 +138,6 @@
   }
   .contact-submit {
     @apply bg-accent text-accent-ink border-transparent font-semibold;
-  }
-  .contact-honeypot {
-    display: none;
   }
 
   /* Aparición suave de imágenes diferidas de la terminal (el APOD añade .loaded). */

@@ -112,6 +112,17 @@ test.describe('terminal en capa', () => {
     expect(sheetTop).toBe(0);
   });
 
+  test('recién abierta, la entrada queda abajo de la pantalla', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-open-terminal]').first().click();
+    const gap = await page.evaluate(() => {
+      const footer = document.querySelector('.terminal-footer')!.getBoundingClientRect();
+      const sheet = document.getElementById('terminal-sheet')!.getBoundingClientRect();
+      return sheet.bottom - footer.bottom;
+    });
+    expect(gap).toBeLessThan(2);
+  });
+
   test('los atajos y la ruta cambian con la vista', async ({ page }) => {
     await page.goto('/#news');
     const chips = page.locator('#quick-actions .quick-chip');
