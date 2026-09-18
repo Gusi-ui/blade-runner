@@ -179,22 +179,26 @@ const setCached = async (cache: KVNamespace, key: string, data: unknown, ttl: nu
   await cache.put(key, JSON.stringify(data), { expirationTtl: ttl });
 };
 
+const randomApodDate = (): string => {
+  const start = new Date(`${APOD_FIRST_DATE}T00:00:00Z`).getTime();
+  return new Date(start + Math.random() * (Date.now() - start)).toISOString().slice(0, 10);
+};
+
 const fetchAPOD = async (env: Env, date?: string, random?: boolean): Promise<APODData> => {
   const nasaKey = env.NASA_API_KEY || 'DEMO_KEY';
-  let url = `https://api.nasa.gov/planetary/apod?api_key=${nasaKey}`;
+  // En modo aleatorio se reintenta con otra fecha: algunos días no tienen APOD
+  // o la NASA devuelve error puntual para ellos.
+  const attempts = random ? 3 : 1;
+  let status = 0;
 
-  if (random) {
-    const start = new Date('1995-06-16').getTime();
-    const end = Date.now();
-    const randomDate = new Date(start + Math.random() * (end - start)).toISOString().split('T')[0];
-    url += `&date=${randomDate}`;
-  } else if (date) {
-    url += `&date=${date}`;
+  for (let i = 0; i < attempts; i++) {
+    const day = random ? randomApodDate() : date;
+    const url = `https://api.nasa.gov/planetary/apod?api_key=${nasaKey}${day ? `&date=${day}` : ''}`;
+    const response = await fetch(url);
+    if (response.ok) return response.json();
+    status = response.status;
   }
-
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`NASA APOD: ${response.status}`);
-  return response.json();
+  throw new Error(`NASA APOD: ${status}`);
 };
 
 const fetchGuardianNews = async (env: Env): Promise<NewsArticle[]> => {
