@@ -24,11 +24,11 @@
     <div class="flex flex-col gap-2 sm:flex-row">
       <input
         type="text"
-        class="chat-input terminal-input border-terminal-dim flex-1 rounded border bg-black px-3 py-2"
+        class="chat-input border-terminal-dim text-terminal-text focus:border-terminal-bright min-w-0 flex-1 rounded border bg-black px-3 py-2 font-mono caret-current outline-none"
         placeholder="Escribe tu pregunta..."
         aria-label="Mensaje para el asistente"
       />
-      <button class="chat-send menu-item px-4 py-2" type="button">
+      <button class="chat-send menu-item shrink-0 px-4 py-2 sm:w-auto" type="button">
         Enviar
       </button>
     </div>

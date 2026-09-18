@@ -189,6 +189,8 @@ export const buildCommands = (deps: CommandDeps): CommandSpec[] => [
     name: 'games',
     aliases: ['4', 'juegos'],
     description: 'Juegos retro (Snake, Tetris, Ahorcado, Tres en Raya)',
+    usage: 'games [snake|tetris|hangman|tictactoe]',
+    choices: ['snake', 'tetris', 'hangman', 'tictactoe'],
     view: 'games',
     handler: viewHandler('games'),
   },

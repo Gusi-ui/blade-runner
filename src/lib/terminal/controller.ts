@@ -62,10 +62,7 @@ export class TerminalController {
     document.querySelectorAll('.quick-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const cmd = chip.getAttribute('data-cmd');
-        if (cmd) {
-          this.input.value = cmd;
-          this.submitCommand();
-        }
+        if (cmd) this.run(cmd);
       });
     });
 
@@ -227,6 +224,12 @@ export class TerminalController {
     if (!this.hint) return;
     this.hint.textContent = '';
     this.hint.classList.add('hidden');
+  }
+
+  /** Ejecuta un comando como si se hubiera tecleado (menús, chips, enlaces). */
+  run(command: string): void {
+    this.input.value = command;
+    this.submitCommand();
   }
 
   private submitCommand(): void {

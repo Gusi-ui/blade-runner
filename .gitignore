@@ -29,3 +29,10 @@ pnpm-debug.log*
 # Archivos basura de macOS
 ._*
 .DS_Store
+
+# Playwright
+test-results/
+playwright-report/
+
+# Build de las pruebas e2e
+dist-e2e/
