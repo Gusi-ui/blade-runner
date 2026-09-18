@@ -24,6 +24,14 @@ import Terminal from './Terminal.astro';
   </div>
 </dialog>
 
+<script>
+  // Ruta de la vista en la cabecera: nexus-7 ~/news
+  const path = document.getElementById('sheet-path');
+  document.addEventListener('viewchange', e => {
+    if (path) path.textContent = `~/${(e as CustomEvent).detail.view}`;
+  });
+</script>
+
 <style is:global>
   .terminal-sheet {
     position: fixed;

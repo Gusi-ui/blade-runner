@@ -84,10 +84,13 @@
     @apply border-line-strong text-muted rounded border px-1.5 text-xs;
   }
 
-  /* Línea de entrada fija abajo, sobre el teclado del móvil */
-  .terminal-input-line {
-    @apply bg-bg border-line sticky bottom-0 z-10 mt-auto flex items-center gap-2 border-t pt-2;
+  /* Pie fijo abajo (atajos + entrada), sobre el teclado del móvil */
+  .terminal-footer {
+    @apply bg-bg border-line sticky bottom-0 z-10 mt-auto border-t;
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  .terminal-input-line {
+    @apply flex items-center gap-2 pt-2;
   }
   .terminal-prompt {
     @apply text-accent text-sm whitespace-nowrap;

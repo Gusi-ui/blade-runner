@@ -60,11 +60,10 @@ export class TerminalController {
     const sendBtn = document.getElementById('terminal-send');
     sendBtn?.addEventListener('click', () => this.submitCommand());
 
-    document.querySelectorAll('.quick-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const cmd = chip.getAttribute('data-cmd');
-        if (cmd) this.run(cmd);
-      });
+    // Los atajos se regeneran al cambiar de vista: delegación en su contenedor.
+    document.getElementById('quick-actions')?.addEventListener('click', e => {
+      const chip = (e.target as HTMLElement | null)?.closest<HTMLElement>('.quick-chip');
+      if (chip?.dataset.cmd) this.run(chip.dataset.cmd);
     });
 
     // Deep links: #cv, #projects, #news… cargan la vista al entrar y con
@@ -296,6 +295,7 @@ export class TerminalController {
     // (así «atrás» cierra la capa en lugar de ir vista por vista).
     if (location.hash.slice(1) !== view) history.replaceState(history.state, '', `#${view}`);
     document.dispatchEvent(new CustomEvent('loadView', { detail: { view, args } }));
+    document.dispatchEvent(new CustomEvent('viewchange', { detail: { view } }));
   }
 
   /**
@@ -324,6 +324,8 @@ export class TerminalController {
 
   private clear(): void {
     this.outputContainer.innerHTML = '';
+    this.currentView = '';
+    document.dispatchEvent(new CustomEvent('viewchange', { detail: { view: '' } }));
   }
 
   printOutput(html: string): void {

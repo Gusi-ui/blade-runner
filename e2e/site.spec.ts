@@ -108,6 +108,18 @@ test.describe('terminal en capa', () => {
     expect(sheetTop).toBe(0);
   });
 
+  test('los atajos y la ruta cambian con la vista', async ({ page }) => {
+    await page.goto('/#news');
+    const chips = page.locator('#quick-actions .quick-chip');
+    await expect(chips.last()).toHaveText('clear');
+    await expect(page.locator('#sheet-path')).toHaveText('~/news');
+    await chips.filter({ hasText: 'proyectos' }).click();
+    await expect(page.locator('#output-container')).toContainText('viandalucia.org');
+    await chips.filter({ hasText: 'clear' }).click();
+    await expect(page.locator('#sheet-path')).toHaveText('~/');
+    await expect(chips.first()).toHaveText('proyectos');
+  });
+
   test('un enlace #apod abre la terminal en esa vista', async ({ page }) => {
     await page.goto('/#apod');
     await expect(page.locator('#terminal-sheet')).toBeVisible();
