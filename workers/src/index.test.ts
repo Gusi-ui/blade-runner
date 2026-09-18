@@ -39,6 +39,17 @@ describe('worker /api/apod', () => {
     }
   );
 
+  it('apod aleatorio reintenta con otra fecha si la NASA falla', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('', { status: 500 }))
+      .mockResolvedValueOnce(Response.json({ title: 't', date: '2001-01-01', url: 'https://x' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await call('/api/apod?random=true');
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('acepta una fecha válida', async () => {
     vi.stubGlobal(
       'fetch',
