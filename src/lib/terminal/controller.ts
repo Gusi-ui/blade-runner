@@ -2,6 +2,7 @@ import { cancelAsk } from '../ai/ask';
 import { playKeySound } from '../audio/keySounds';
 import { buildCommands } from './commands';
 import { getCompletions } from './completion';
+import { classifyHash } from './hashRoute';
 import { buildEasterEggCommands, installKonamiListener } from './easterEggs';
 import { CommandHistory } from './history';
 import { parseInput } from './parser';
@@ -59,11 +60,10 @@ export class TerminalController {
     const sendBtn = document.getElementById('terminal-send');
     sendBtn?.addEventListener('click', () => this.submitCommand());
 
-    document.querySelectorAll('.quick-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const cmd = chip.getAttribute('data-cmd');
-        if (cmd) this.run(cmd);
-      });
+    // Los atajos se regeneran al cambiar de vista: delegación en su contenedor.
+    document.getElementById('quick-actions')?.addEventListener('click', e => {
+      const chip = (e.target as HTMLElement | null)?.closest<HTMLElement>('.quick-chip');
+      if (chip?.dataset.cmd) this.run(chip.dataset.cmd);
     });
 
     // Deep links: #cv, #projects, #news… cargan la vista al entrar y con
@@ -72,15 +72,9 @@ export class TerminalController {
     window.addEventListener('hashchange', () => this.navigateToHash());
     setTimeout(() => this.navigateToHash(), 0);
 
-    const isMobile = window.matchMedia('(max-width: 640px)').matches;
-    // En móvil no auto-enfocamos al cargar (evita que salte el teclado solo),
-    // pero SÍ al tocar la pantalla (abajo) para poder escribir sin apuntar al
-    // cursor. En escritorio enfocamos directamente.
-    if (!isMobile) this.input.focus();
-
-    // Tocar/clicar cualquier parte del terminal enfoca el input, salvo en
-    // elementos interactivos (botones, enlaces, otros campos). Funciona también
-    // en móvil porque ocurre dentro del gesto del usuario.
+    // La terminal vive en una capa (<dialog>): no se enfoca al cargar la página
+    // (la capa se encarga al abrirse). Tocar dentro de la capa enfoca el input,
+    // salvo en elementos interactivos (botones, enlaces, otros campos).
     const focusInputFromTap = (e: Event): void => {
       const target = e.target as HTMLElement | null;
       if (
@@ -96,7 +90,7 @@ export class TerminalController {
       }
       this.input.focus();
     };
-    document.addEventListener('click', focusInputFromTap);
+    document.getElementById('terminal-sheet')?.addEventListener('click', focusInputFromTap);
   }
 
   /**
@@ -283,26 +277,46 @@ export class TerminalController {
    * referencia, cae al scroll al final.
    */
   private scrollCommandIntoView(promptLine: HTMLElement | null): void {
-    if (promptLine) promptLine.scrollIntoView({ block: 'start' });
-    else this.scrollToBottom();
+    // Sin scrollIntoView: desplazaría también el <dialog> y la cabecera de la capa.
+    const scroller = document.getElementById('output-scroll');
+    if (!promptLine || !scroller) {
+      this.scrollToBottom();
+      return;
+    }
+    const offset = promptLine.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    scroller.scrollTop += offset;
   }
 
   private loadView(view: string, args: string[] = []): void {
     // Refleja la vista en el hash (compartible). Marcar currentView antes de
     // tocar el hash evita que el hashchange resultante re-ejecute el comando.
     this.currentView = view;
-    if (location.hash.slice(1) !== view) location.hash = view;
+    // replaceState: cambiar de vista dentro de la capa no llena el historial
+    // (así «atrás» cierra la capa en lugar de ir vista por vista).
+    if (location.hash.slice(1) !== view) history.replaceState(history.state, '', `#${view}`);
     document.dispatchEvent(new CustomEvent('loadView', { detail: { view, args } }));
+    document.dispatchEvent(new CustomEvent('viewchange', { detail: { view } }));
   }
 
-  /** Ejecuta el comando navegable que corresponde al hash actual (#cv, #news…). */
+  /**
+   * Hash de la URL → terminal: #terminal abre la capa; #apod, #news… la abren en
+   * esa vista. Los hashes de sección de la página (#proyectos…) no la tocan.
+   */
   private navigateToHash(): void {
-    const token = location.hash.replace(/^#\/?/, '').trim().toLowerCase();
-    if (!token || token === this.currentView) return;
-
-    const spec = this.registry.resolveToken(token);
-    if (!spec || (!spec.view && spec.name !== 'menu')) return; // solo vistas navegables
-
+    const target = classifyHash(location.hash, token => !!this.registry.resolveToken(token)?.view);
+    if (target.kind === 'none') return;
+    if (target.kind === 'section') {
+      // Enlaces antiguos (#cv, #projects…): llevar a su sección nueva de la página.
+      if (location.hash.slice(1) !== target.id) {
+        history.replaceState(history.state, '', `#${target.id}`);
+        document.getElementById(target.id)?.scrollIntoView();
+      }
+      return;
+    }
+    window.terminalSheet?.show?.();
+    if (target.kind === 'terminal' || target.token === this.currentView) return;
+    const spec = this.registry.resolveToken(target.token);
+    if (!spec) return;
     this.input.value = '';
     this.clearHint();
     void this.executeCommand(spec.name);
@@ -310,6 +324,8 @@ export class TerminalController {
 
   private clear(): void {
     this.outputContainer.innerHTML = '';
+    this.currentView = '';
+    document.dispatchEvent(new CustomEvent('viewchange', { detail: { view: '' } }));
   }
 
   printOutput(html: string): void {
@@ -342,28 +358,8 @@ export class TerminalController {
   }
 
   private scrollToBottom(): void {
-    // El contenedor scrollable es la ventana (.terminal-screen crece con su
-    // contenido, no tiene overflow propio), así que hay que mover el scroll
-    // del documento, no el del elemento.
-    window.scrollTo({ top: document.documentElement.scrollHeight });
+    // El scroll es el del cuerpo de la capa (#output-scroll), no el de la página.
+    const scroller = document.getElementById('output-scroll');
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
   }
 }
-
-/** Reloj de la cabecera ("CONECTADO: ..."), actualizado cada segundo. */
-export const startHeaderClock = (): void => {
-  const update = (): void => {
-    const datetimeEl = document.getElementById('terminal-datetime');
-    if (datetimeEl) {
-      datetimeEl.textContent = new Date().toLocaleString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-    }
-  };
-  update();
-  setInterval(update, 1000);
-};

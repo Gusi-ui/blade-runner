@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCommands, getCommandSuggestions, resolveCommand } from './commands';
+import { buildCommands } from './commands';
 import type { CommandHistory } from './history';
 import { CommandRegistry, type TerminalContext } from './registry';
 
@@ -31,40 +31,75 @@ const makeCtx = () => {
   return { ctx, calls, registry };
 };
 
-describe('resolveCommand', () => {
-  it('resolves Spanish aliases', () => {
-    expect(resolveCommand('ayuda')?.type).toBe('help');
-    expect(resolveCommand('noticias')?.type).toBe('view');
-    expect(resolveCommand('salir')?.type).toBe('exit');
-    expect(resolveCommand('calculadora')?.view).toBe('calculator');
+describe('resolución de comandos', () => {
+  const name = (token: string) => makeCtx().registry.resolveToken(token)?.name;
+
+  it('alias en español', () => {
+    expect(name('ayuda')).toBe('help');
+    expect(name('noticias')).toBe('news');
+    expect(name('salir')).toBe('exit');
+    expect(name('calculadora')).toBe('calculator');
   });
 
-  it('resolves numeric shortcuts', () => {
-    expect(resolveCommand('6')?.view).toBe('apod');
-    expect(resolveCommand('8')?.view).toBe('chat');
-    expect(resolveCommand('7')?.type).toBe('exit');
+  it('atajos numéricos', () => {
+    expect(name('6')).toBe('apod');
+    expect(name('8')).toBe('chat');
+    expect(name('7')).toBe('exit');
+    expect(name('2')).toBe('sobre-mi');
+    expect(name('3')).toBe('proyectos');
   });
 
-  it('resolves multi-word aliases', () => {
-    expect(resolveCommand('imagen nasa')?.view).toBe('apod');
-    expect(resolveCommand('proyectos debussy')?.view).toBe('projects');
+  it('alias de varias palabras', () => {
+    expect(name('imagen nasa')).toBe('apod');
   });
 
-  it('resolves menu and simple commands', () => {
-    expect(resolveCommand('menu')).toEqual({ type: 'view', view: 'menu' });
-    expect(resolveCommand('cls')?.type).toBe('clear');
-    expect(resolveCommand('contacto')?.type).toBe('contact');
+  it('menu es un alias de help y cv/about lo son de sobre-mi', () => {
+    expect(name('menu')).toBe('help');
+    expect(name('m')).toBe('help');
+    expect(name('cv')).toBe('sobre-mi');
+    expect(name('about')).toBe('sobre-mi');
+    expect(name('projects')).toBe('proyectos');
+    expect(name('contact')).toBe('contacto');
   });
 
-  it('returns null for unknown commands', () => {
-    expect(resolveCommand('comando_inexistente')).toBeNull();
+  it('desconocido → undefined', () => {
+    expect(name('comando_inexistente')).toBeUndefined();
   });
 });
 
-describe('getCommandSuggestions', () => {
-  it('suggests matching commands', () => {
-    const suggestions = getCommandSuggestions('not');
-    expect(suggestions).toContain('noticias');
+describe('comandos de contenido', () => {
+  it('proyectos imprime las 4 webs reales', () => {
+    const { ctx, calls, registry } = makeCtx();
+    registry.resolveToken('proyectos')?.handler([], ctx);
+    const html = calls.print.join('');
+    for (const site of ['viandalucia.org', 'divermataro.org', 'irenepuigdemont.com', 'alamia.es']) {
+      expect(html).toContain(site);
+    }
+  });
+
+  it('sobre-mi imprime la presentación y las tarifas', () => {
+    const { ctx, calls, registry } = makeCtx();
+    registry.resolveToken('sobre-mi')?.handler([], ctx);
+    const html = calls.print.join('');
+    expect(html).toContain('Hola, soy Gusi');
+    expect(html).toContain('250 €');
+    expect(html).toContain('A medida');
+  });
+
+  it('proyectos, sobre-mi y contacto están en Destacados', () => {
+    const { registry } = makeCtx();
+    for (const cmd of ['proyectos', 'sobre-mi', 'contacto']) {
+      expect(registry.resolveToken(cmd)?.group).toBe('featured');
+    }
+  });
+
+  it('help separa Destacados y Laboratorio', () => {
+    const { ctx, calls, registry } = makeCtx();
+    registry.resolveToken('help')?.handler([], ctx);
+    const html = calls.print.join('');
+    expect(html).toContain('Destacados');
+    expect(html).toContain('Laboratorio');
+    expect(html.indexOf('proyectos')).toBeLessThan(html.indexOf('Laboratorio'));
   });
 });
 

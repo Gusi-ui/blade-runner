@@ -1,0 +1,28 @@
+---
+// Plantillas de las vistas de la terminal. No es una página para visitantes: la
+// capa la descarga al abrirse por primera vez (src/lib/terminal/lazy.ts) y
+// extrae #terminal-vistas. robots.txt la excluye y lleva noindex.
+import APOD from '../components/APOD.astro';
+import Chat from '../components/Chat.astro';
+import CosmicCalculator from '../components/CosmicCalculator.astro';
+import Games from '../components/Games.astro';
+import NewsFeed from '../components/NewsFeed.astro';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Plantillas de la terminal</title>
+  </head>
+  <body>
+    <div id="terminal-vistas">
+      <NewsFeed />
+      <APOD />
+      <Chat />
+      <Games />
+      <CosmicCalculator />
+    </div>
+  </body>
+</html>

@@ -4,12 +4,11 @@ import { prefersInstant, typeText } from './typewriter';
 // (sessionStorage) y cualquier tecla o click la salta.
 
 const BOOT_LINES: { text: string; className: string }[] = [
-  { text: 'Inicializando sistema...', className: 'text-terminal-bright mb-2' },
-  { text: 'Cargando módulos del kernel...', className: 'mb-2' },
-  { text: 'Estableciendo conexión con MAINFRAME...', className: 'mb-2' },
-  { text: '✓ Sistema listo', className: 'success-text mb-4' },
-  { text: "Escribe 'help' para ver los comandos disponibles.", className: 'mb-2' },
-  { text: "Escribe 'menu' para acceder al menú principal.", className: 'mb-4' },
+  { text: '✓ Nexus-7 listo.', className: 'success-text mb-1' },
+  {
+    text: "Toca un atajo o escribe 'help' para ver los comandos.",
+    className: 'text-terminal-dim mb-4',
+  },
 ];
 
 const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));

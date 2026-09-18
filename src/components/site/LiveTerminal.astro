@@ -1,0 +1,59 @@
+---
+import { profile } from '../../data/profile';
+import { projects } from '../../data/projects';
+import { buildLiveScript } from '../../lib/site/liveTerminal';
+
+// El HTML inicial ya lleva el guion completo: sin JS o con movimiento reducido
+// se ve escrito; con JS se vuelve a escribir con animación.
+const script = buildLiveScript(profile, projects.length);
+---
+
+<button
+  type="button"
+  data-open-terminal
+  class="live-terminal card w-full p-0 text-left font-mono text-sm"
+>
+  <span class="border-line flex items-center gap-1.5 border-b px-3 py-2" aria-hidden="true">
+    <i class="bg-line-strong size-2 rounded-full"></i>
+    <i class="bg-line-strong size-2 rounded-full"></i>
+    <i class="bg-line-strong size-2 rounded-full"></i>
+    <span class="text-muted ml-auto text-xs">nexus-7</span>
+  </span>
+  <span class="block min-h-48 px-3 py-3 leading-7" data-live-output>
+    {script.map(l => (
+      <>
+        <span class="live-cmd block">$ {l.cmd}</span>
+        <span class="live-out text-strong block">{l.out}</span>
+      </>
+    ))}
+    <span class="live-cursor live-cmd block">$ </span>
+  </span>
+  <span class="border-line text-accent flex justify-between border-t px-3 py-2 text-xs">
+    <span>▶ Toca para usar la terminal</span>
+    <span class="text-muted">help</span>
+  </span>
+</button>
+
+<script>
+  import { readLiveScript, renderLive } from '../../lib/site/liveTerminal';
+
+  // El guion ya viene escrito en el HTML: se lee de ahí (sin importar los datos).
+  const el = document.querySelector<HTMLElement>('[data-live-output]');
+  const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (el && !instant) void renderLive(el, readLiveScript(el), { instant });
+</script>
+
+<style>
+  .live-terminal :global(.live-cmd) {
+    color: var(--color-accent);
+  }
+  .live-terminal :global(.live-cursor)::after {
+    content: '▌';
+    animation: var(--animate-blink);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-terminal :global(.live-cursor)::after {
+      animation: none;
+    }
+  }
+</style>

@@ -24,14 +24,16 @@ test.describe('carga de la página', () => {
     page.on('pageerror', error => errors.push(error.message));
 
     await page.goto('/');
-    await expect(page.getByText('Sistema listo')).toBeVisible();
+    await page.locator('[data-open-terminal]').first().click();
+    await expect(page.locator('#terminal-sheet')).toBeVisible();
 
-    // Sin la hoja de estilos el fondo sería blanco y la pantalla no tendría borde.
+    // Sin la hoja de estilos el fondo sería blanco y la barra de la capa no
+    // tendría borde (la capa en sí no lo lleva en móvil: ocupa toda la pantalla).
     const styles = await page.evaluate(() => {
-      const screen = document.querySelector('.terminal-screen');
+      const bar = document.querySelector('.terminal-sheet__bar');
       return {
         body: getComputedStyle(document.body).backgroundColor,
-        border: screen ? getComputedStyle(screen).borderTopStyle : 'none',
+        border: bar ? getComputedStyle(bar).borderBottomStyle : 'none',
         sheets: document.styleSheets.length,
       };
     });
@@ -45,16 +47,67 @@ test.describe('carga de la página', () => {
     expect(errors).toEqual([]);
   });
 
-  test('un enlace profundo (#cv) abre la vista', async ({ terminal }) => {
-    await terminal.open('/#cv');
-    await expect(terminal.output.getByText('Currículum Vitae - Gusi')).toBeVisible();
+  test('un enlace profundo (#apod) abre la terminal en esa vista', async ({ terminal }) => {
+    await terminal.open('/#apod');
+    await expect(terminal.output).toContainText('Imagen Astronómica');
+  });
+
+  test('el enlace antiguo #cv lleva a «Sobre mí» de la página', async ({ page }) => {
+    await page.goto('/#cv');
+    await expect(page.locator('#terminal-sheet')).toBeHidden();
+    await expect(page.locator('#sobre-mi')).toBeInViewport();
+  });
+});
+
+test.describe('aspecto de la terminal', () => {
+  test('usa la paleta nueva', async ({ terminal, page }) => {
+    await terminal.run('help');
+    const colors = await page.evaluate(() => {
+      const sheet = document.getElementById('terminal-sheet')!;
+      const bright = document.querySelector('#output-container .text-terminal-bright')!;
+      return {
+        bg: getComputedStyle(sheet).backgroundColor,
+        bright: getComputedStyle(bright).color,
+        shadow: getComputedStyle(bright).textShadow,
+      };
+    });
+    expect(colors.bg).toBe('rgb(11, 13, 16)');
+    expect(colors.bright).toBe('rgb(245, 247, 250)');
+    expect(colors.shadow).toBe('none');
+  });
+
+  test('el tema ámbar cambia el acento', async ({ terminal, page }) => {
+    await terminal.run('theme retro');
+    const accent = await page.evaluate(() => ({
+      sheet: getComputedStyle(document.getElementById('terminal-sheet')!)
+        .getPropertyValue('--color-accent')
+        .trim(),
+      page: getComputedStyle(document.body).getPropertyValue('--color-accent').trim(),
+    }));
+    expect(accent.sheet).toBe('#fbbf24');
+    expect(accent.page).toBe('#4ade80');
+  });
+});
+
+test.describe('efecto retro', () => {
+  test('apagado por defecto', async ({ terminal, page }) => {
+    await terminal.run('help');
+    await expect(page.locator('#terminal-sheet canvas.matrix-bg')).toHaveCount(0);
+  });
+
+  test('se activa desde config y dibuja dentro de la capa', async ({ terminal, page }) => {
+    await terminal.run('config');
+    await terminal.last.getByRole('button', { name: /efect/i }).first().click();
+    await page.locator('[data-effect="toggle"]').last().click();
+    await expect(page.locator('#terminal-sheet canvas.matrix-bg')).toHaveCount(1);
   });
 });
 
 test.describe('comandos básicos', () => {
   test('help lista los comandos', async ({ terminal }) => {
     await terminal.run('help');
-    await expect(terminal.last).toContainText('COMANDOS DISPONIBLES');
+    await expect(terminal.last).toContainText('Destacados');
+    await expect(terminal.last).toContainText('Laboratorio');
     await expect(terminal.last).toContainText('news [ai|cosmos|all]');
   });
 
@@ -86,11 +139,20 @@ test.describe('comandos básicos', () => {
 });
 
 test.describe('menú y accesos rápidos', () => {
-  test('pulsar una opción del menú abre su vista', async ({ terminal, page }) => {
+  test('menu muestra la ayuda y sobre-mi el contenido real', async ({ terminal }) => {
     await terminal.run('menu');
-    await terminal.last.locator('.menu-row[data-option="2"]').click();
-    await expect(page).toHaveURL(/#cv$/);
-    await expect(terminal.last).toContainText('Currículum Vitae - Gusi');
+    await expect(terminal.last).toContainText('Destacados');
+    await terminal.run('cv');
+    await expect(terminal.last).toContainText('Hola, soy Gusi');
+    await expect(terminal.last).toContainText('250 €');
+    await terminal.run('proyectos');
+    await expect(terminal.last).toContainText('alamia.es');
+  });
+
+  test('contacto cierra la terminal y lleva al formulario', async ({ terminal, page }) => {
+    await terminal.run('contacto');
+    await expect(page.locator('#terminal-sheet')).toBeHidden();
+    await expect(page.locator('#contacto form')).toBeInViewport();
   });
 
   test('el chip APOD abre la imagen del día', async ({ terminal, page }) => {
@@ -144,6 +206,26 @@ test.describe('APOD', () => {
       });
       await expect(terminal.last.locator('.apod-title')).toHaveText(translated(APOD_TODAY.title));
     }
+  });
+
+  test('la imagen a pantalla completa se ve por encima de la terminal', async ({
+    terminal,
+    page,
+  }) => {
+    test.skip(live, 'depende de la imagen simulada');
+    await terminal.run('apod');
+    await terminal.last.locator('.apod-image').click();
+    const overlay = page.locator('#apod-fullscreen-overlay');
+    await expect(overlay).toBeVisible();
+    // Visible de verdad: el elemento en el centro de la pantalla es el visor.
+    const onTop = await page.evaluate(() => {
+      const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return !!el?.closest('#apod-fullscreen-overlay');
+    });
+    expect(onTop).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(overlay).toBeHidden();
+    await expect(page.locator('#terminal-sheet')).toBeVisible();
   });
 
   test('apod random carga una imagen aleatoria', async ({ terminal }) => {
@@ -204,6 +286,16 @@ test.describe('formularios', () => {
     await expect(terminal.last.locator('#calculator-results')).toBeVisible();
   });
 
+  test('la calculadora muestra zodiaco, planetas y efemérides', async ({ terminal }) => {
+    await terminal.run('calculadora');
+    await terminal.last.locator('#birthdate').fill('1990-05-12');
+    await terminal.last.locator('#calculator-submit').click();
+    await expect(terminal.last).toContainText('Tauro');
+    await expect(terminal.last).toContainText('Marte');
+    await expect(terminal.last.locator('#calc-events')).not.toContainText('Buscando');
+    await expect(terminal.last.locator('#calc-solar')).toBeVisible();
+  });
+
   test('la segunda calculadora también responde', async ({ terminal }) => {
     await terminal.run('calculadora');
     await terminal.run('calculadora');
@@ -212,14 +304,16 @@ test.describe('formularios', () => {
     await expect(terminal.last.locator('#calculator-results')).toBeVisible();
   });
 
-  test('el formulario de contacto envía el mensaje', async ({ terminal }) => {
+  test('el formulario de contacto envía el mensaje', async ({ terminal, page }) => {
     test.skip(live, 'no enviar correos reales');
-    await terminal.run('contacto');
-    const form = terminal.last.locator('form');
+    // El fixture instala la API simulada y abre la terminal: se cierra y se usa la página.
+    await terminal.page.keyboard.press('Escape');
+    await expect(page.locator('#terminal-sheet')).toBeHidden();
+    const form = page.locator('#contacto form');
     await form.locator('[name="name"]').fill('Prueba');
     await form.locator('[name="email"]').fill('prueba@example.com');
     await form.locator('[name="message"]').fill('Mensaje de prueba e2e');
     await form.locator('button[type="submit"]').click();
-    await expect(terminal.last).toContainText('Mensaje enviado');
+    await expect(form).toContainText('Mensaje enviado');
   });
 });

@@ -1,72 +1,10 @@
 ---
-interface Props {
-  title?: string;
-}
-
-// const { title = "BLADE RUNNER TERMINAL v1.0" } = Astro.props;
+// Contenido de la terminal (salida, atajos y entrada). Vive dentro de TerminalSheet.
 ---
 
 <div class="terminal-container">
-  <div class="terminal-screen crt-flicker">
-    <div class="terminal-header">
-      <!-- Logo compacto solo en móvil: el ASCII completo desbordaba y provocaba
-           scroll horizontal, así que se reserva para sm+ (abajo). -->
-      <div class="mobile-logo sm:hidden" aria-label="GUSI.DEV — Sistema Nexus-7">
-        <span class="mobile-logo__title">GUSI.DEV</span>
-        <span class="mobile-logo__sub">SISTEMA NEXUS-7</span>
-      </div>
-      <!-- ASCII Art Header -->
-      <div
-        id="ascii-header-panel"
-        class="ascii-header text-terminal-bright mb-4 hidden text-center sm:block"
-      >
-        <div class="ascii-title">
-          <pre
-            class="ascii-art glitch font-mono"
-            data-text="╠═════════════════════════════════════════════════════════╣
-║                                                         ║
-║     ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ███████╗██╗   ██╗ ║
-║    ██╔════╝ ██║   ██║██╔════╝██║    ██╔══██╗██╔════╝██║   ██║ ║
-║    ██║  ███╗██║   ██║███████╗██║    ██║  ██║█████╗  ██║   ██║ ║
-║    ██║   ██║██║   ██║╚════██║██║    ██║  ██║██╔══╝  ╚██╗ ██╔╝ ║
-║    ╚██████╔╝╚██████╔╝███████║██║ ██╗██████╔╝███████╗ ╚████╔╝  ║
-║     ╚═════╝  ╚═════╝ ╚══════╝╚═╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝   ║
-║                                                         ║
-║               ╔═══════════════════════════╗             ║
-║               ║   SISTEMA NEXUS-7        ║             ║
-║               ╚═══════════════════════════╝             ║
-║                                                         ║
-╚═════════════════════════════════════════════════════════╝"
-          >
-╠═════════════════════════════════════════════════════════╣
-║                                                         ║
-║     ██████╗ ██╗   ██╗███████╗██╗    ██████╗ ███████╗██╗   ██╗ ║
-║    ██╔════╝ ██║   ██║██╔════╝██║    ██╔══██╗██╔════╝██║   ██║ ║
-║    ██║  ███╗██║   ██║███████╗██║    ██║  ██║█████╗  ██║   ██║ ║
-║    ██║   ██║██║   ██║╚════██║██║    ██║  ██║██╔══╝  ╚██╗ ██╔╝ ║
-║    ╚██████╔╝╚██████╔╝███████║██║ ██╗██████╔╝███████╗ ╚████╔╝  ║
-║     ╚═════╝  ╚═════╝ ╚══════╝╚═╝ ╚═╝╚═════╝ ╚══════╝  ╚═══╝   ║
-║                                                         ║
-║               ╔═══════════════════════════╗             ║
-║               ║   SISTEMA NEXUS-7        ║             ║
-║               ╚═══════════════════════════╝             ║
-║                                                         ║
-╚═════════════════════════════════════════════════════════╝
-         </pre>
-        </div>
-      </div>
-
-      <div class="text-terminal-dim flex flex-col items-start justify-between gap-2 text-xs sm:flex-row sm:items-center">
-        <span>
-          CONECTADO: <span id="terminal-datetime"></span>
-        </span>
-        <span>
-          STATUS: <span class="text-green-400">ONLINE</span>
-        </span>
-      </div>
-    </div>
-
-    <div id="terminal-content" class="min-h-[calc(100vh-200px)]">
+  <div class="terminal-screen">
+    <div id="terminal-content" class="pt-3">
       <div
         id="boot-output"
         class="terminal-output"
@@ -74,12 +12,8 @@ interface Props {
         aria-live="polite"
         aria-label="Terminal output"
       >
-        <p class="text-terminal-bright mb-2">Inicializando sistema...</p>
-        <p class="mb-2">Cargando módulos del kernel...</p>
-        <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
-        <p class="success-text mb-4">✓ Sistema listo</p>
-        <p class="mb-2">Escribe 'help' para ver los comandos disponibles.</p>
-        <p class="mb-4">Escribe 'menu' para acceder al menú principal.</p>
+        <p class="success-text mb-1">✓ Nexus-7 listo.</p>
+        <p class="text-terminal-dim mb-4">Toca un atajo o escribe 'help' para ver los comandos.</p>
       </div>
 
       <div
@@ -89,89 +23,50 @@ interface Props {
         aria-label="Contenido dinámico de la terminal"
       ></div>
 
-      <div id="quick-actions" class="quick-actions" role="toolbar" aria-label="Acciones rápidas">
-        <button type="button" class="quick-chip" data-cmd="menu">
-          <span class="quick-chip__key" aria-hidden="true">
-            F1
-          </span>{' '}
-          Menú
-        </button>
-        <button type="button" class="quick-chip" data-cmd="noticias">
-          <span class="quick-chip__key" aria-hidden="true">
-            F2
-          </span>{' '}
-          Noticias
-        </button>
-        <button type="button" class="quick-chip" data-cmd="apod">
-          <span class="quick-chip__key" aria-hidden="true">
-            F3
-          </span>{' '}
-          APOD
-        </button>
-        <button type="button" class="quick-chip" data-cmd="chat">
-          <span class="quick-chip__key" aria-hidden="true">
-            F4
-          </span>{' '}
-          Chat
-        </button>
-      </div>
-
-      <div class="terminal-input-line mt-2">
-        <span class="terminal-prompt" aria-label="Prompt del sistema">
-          gusi@nexus:~$ <span class="prompt-cursor" aria-hidden="true"></span>
-        </span>
-        <div class="terminal-input-wrap">
-          <input
-            type="text"
-            id="terminal-input"
-            class="terminal-input"
-            autocomplete="off"
-            spellcheck="false"
-            aria-label="Entrada de comandos de terminal"
-            aria-describedby="terminal-help"
-          />
-          <span class="input-mirror" aria-hidden="true">
-            <span id="mirror-text"></span>
-            <span class="terminal-cursor"></span>
+      <!-- Pie fijo: atajos (según la vista, ver chips.ts) + campo de entrada -->
+      <div class="terminal-footer">
+        <div id="quick-actions" class="quick-actions" role="toolbar" aria-label="Atajos"></div>
+        <div class="terminal-input-line">
+          <span class="terminal-prompt" aria-label="Prompt del sistema">
+            <span class="hidden sm:inline">gusi@nexus:~</span>$
           </span>
+          <div class="terminal-input-wrap">
+            <input
+              type="text"
+              id="terminal-input"
+              class="terminal-input"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Entrada de comandos de terminal"
+              aria-describedby="terminal-help"
+            />
+            <span class="input-mirror" aria-hidden="true">
+              <span id="mirror-text"></span>
+              <span class="terminal-cursor"></span>
+            </span>
+          </div>
+          <button
+            type="button"
+            id="terminal-send"
+            class="terminal-send"
+            aria-label="Ejecutar comando"
+          >
+            ▶
+          </button>
         </div>
-        <button
-          type="button"
-          id="terminal-send"
-          class="terminal-send"
-          aria-label="Ejecutar comando"
-        >
-          ▶
-        </button>
+        <div
+          id="completion-hint"
+          class="text-terminal-dim mt-1 hidden text-xs"
+          aria-hidden="true"
+        ></div>
       </div>
-      <div
-        id="completion-hint"
-        class="text-terminal-dim mt-1 hidden text-xs"
-        aria-hidden="true"
-      ></div>
     </div>
   </div>
-
-  <!-- Scanline effect -->
-  <div class="scanline"></div>
 </div>
-
-<script>
-  import { runBootSequence } from '../lib/terminal/boot';
-  import { TerminalController, startHeaderClock } from '../lib/terminal/controller';
-  import { initMatrixBackground } from '../lib/effects/matrixBackground';
-
-  window.terminal = new TerminalController();
-  startHeaderClock();
-  initMatrixBackground();
-
-  const bootOutput = document.getElementById('boot-output');
-  if (bootOutput) void runBootSequence(bootOutput);
-</script>
 
 <!-- Área de ayuda accesible -->
 <div id="terminal-help" class="sr-only">
-  Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, menu, noticias, juegos, etc.
-  Navegación: flechas arriba/abajo para historial, Tab para autocompletar, Enter para ejecutar,
+  Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, proyectos, noticias, juegos,
+  etc. Navegación: flechas arriba/abajo para historial, Tab para autocompletar, Enter para ejecutar,
   Ctrl+L para limpiar.
 </div>

@@ -1,0 +1,107 @@
+---
+import Terminal from './Terminal.astro';
+---
+
+<dialog id="terminal-sheet" class="terminal-sheet" aria-label="Terminal Nexus-7">
+  <header class="terminal-sheet__bar">
+    <button
+      type="button"
+      class="terminal-sheet__close"
+      data-close-terminal
+      aria-label="Cerrar terminal"
+    >
+      ✕
+    </button>
+    <span class="terminal-sheet__path font-mono">
+      nexus-7{' '}
+      <span id="sheet-path" class="text-muted">
+        ~/
+      </span>
+    </span>
+  </header>
+  <div id="output-scroll" class="terminal-sheet__body">
+    <Terminal />
+  </div>
+  <!-- Plantillas de las vistas: lazy.ts las trae de /terminal-vistas/ al abrir la capa -->
+  <div id="terminal-view-templates" hidden></div>
+</dialog>
+
+<script>
+  // Ruta de la vista en la cabecera: nexus-7 ~/news
+  const path = document.getElementById('sheet-path');
+  document.addEventListener('viewchange', e => {
+    if (path) path.textContent = `~/${(e as CustomEvent).detail.view}`;
+  });
+</script>
+
+<style is:global>
+  .terminal-sheet {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    /* Solo se desplaza el cuerpo (#output-scroll): la cabecera y la entrada no se mueven. */
+    overflow: hidden;
+    background: var(--color-terminal-bg);
+    color: var(--color-terminal-text);
+  }
+  .terminal-sheet[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  /* Efecto retro opcional (matrixBackground.ts): detrás del contenido de la capa */
+  .terminal-sheet {
+    isolation: isolate;
+  }
+  .matrix-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.18;
+    pointer-events: none;
+  }
+  .terminal-sheet::backdrop {
+    background: rgb(0 0 0 / 0.7);
+  }
+  @media (min-width: 1024px) {
+    .terminal-sheet {
+      margin: auto;
+      width: min(960px, 92vw);
+      height: 90vh;
+      border: 1px solid var(--color-line-strong);
+      border-radius: 14px;
+    }
+  }
+  .terminal-sheet__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .terminal-sheet__close {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-line-strong);
+  }
+  .terminal-sheet__body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .terminal-sheet__body {
+      padding-inline: 1.5rem;
+    }
+  }
+  html.sheet-open {
+    overflow: hidden;
+  }
+</style>

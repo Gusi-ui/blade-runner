@@ -1,0 +1,48 @@
+/* Tokens de diseño de gusi.dev (spec §3). Única fuente de colores y fuentes. */
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
+
+@theme {
+  --color-bg: #0b0d10;
+  --color-surface: #0f1317;
+  --color-surface-2: #11151a;
+  --color-line: #1f262e;
+  --color-line-strong: #2b333d;
+  --color-body: #c9d1db;
+  --color-strong: #f5f7fa;
+  --color-muted: #7d8896; /* ≥ 5:1 sobre bg, surface y surface-2 (WCAG AA) */
+  --color-accent: #4ade80;
+  --color-accent-ink: #04140a;
+
+  /* Colores heredados de la terminal (text-terminal-*, border-terminal-*…): se
+     reasignan a la paleta nueva para que las vistas cambien sin tocar sus plantillas. */
+  --color-terminal-bg: var(--color-bg);
+  --color-terminal-text: var(--color-body);
+  --color-terminal-dim: var(--color-muted);
+  --color-terminal-bright: var(--color-strong);
+
+  --font-sans: 'Space Grotesk Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --animate-blink: blink 1s step-end infinite;
+  @keyframes blink {
+    from,
+    to {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
+/* Temas de la terminal (comando `theme`): cambian el acento solo dentro de la capa. */
+html[data-theme='retro'] .terminal-sheet {
+  --color-accent: #fbbf24;
+}
+html[data-theme='cyberpunk'] .terminal-sheet {
+  --color-accent: #22d3ee;
+}
+html[data-theme='phosphor'] .terminal-sheet {
+  --color-accent: #e5e7eb;
+}

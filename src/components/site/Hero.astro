@@ -1,0 +1,23 @@
+---
+import { profile } from '../../data/profile';
+import LiveTerminal from './LiveTerminal.astro';
+---
+
+<section class="section grid items-center gap-8 pt-8 lg:grid-cols-2 lg:pt-16">
+  <div>
+    <p class="kicker">// {profile.role.toLowerCase()}</p>
+    <h1 class="text-strong text-[2rem] leading-tight font-bold tracking-tight sm:text-5xl">
+      {profile.headline} <span class="text-accent">{profile.headlineAccent}</span>.
+    </h1>
+    <p class="text-muted mt-4 max-w-prose text-base sm:text-lg">{profile.intro}</p>
+    <div class="mt-6 grid grid-cols-2 gap-3 sm:flex">
+      <a href="#contacto" class="btn-primary" data-cta="hero">
+        Hablemos
+      </a>
+      <a href="#proyectos" class="btn-secondary">
+        Ver proyectos
+      </a>
+    </div>
+  </div>
+  <LiveTerminal />
+</section>

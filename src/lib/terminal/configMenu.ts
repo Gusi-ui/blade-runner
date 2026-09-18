@@ -1,23 +1,27 @@
 import { isSoundEnabled, toggleSound } from '../audio/keySounds';
+import { effectsEnabled } from '../effects/matrixBackground';
 import type { TerminalContext } from './registry';
 
 // Menú interactivo de configuración (tema, efectos, sonido), extraído del
 // controlador. Solo se ejecuta en el navegador.
 
 export const THEMES: Record<string, string> = {
-  classic: 'Clásico (Verde Matrix)',
-  cyberpunk: 'Cyberpunk (Azul Neón)',
-  retro: 'Retro (Ámbar)',
-  phosphor: 'Phosphor (Blanco CRT)',
+  classic: 'Clásico (verde)',
+  cyberpunk: 'Cyberpunk (cian)',
+  retro: 'Retro (ámbar)',
+  phosphor: 'Phosphor (blanco)',
 };
 
 export const applyTheme = (ctx: TerminalContext, theme: string | null): void => {
-  const body = document.body;
-  body.classList.remove(...Object.keys(THEMES).map(name => `theme-${name}`));
-
+  // El tema cambia --color-accent dentro de la terminal (tokens.css).
   const selected = theme && THEMES[theme] ? theme : 'classic';
-  body.classList.add(`theme-${selected}`);
-  localStorage.setItem('nexus-theme', selected);
+  if (selected === 'classic') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = selected;
+  try {
+    localStorage.setItem('nexus-theme', selected);
+  } catch {
+    /* sin almacenamiento: el tema dura solo esta visita */
+  }
   ctx.print(`<div class="success-text">Tema ${THEMES[selected]} aplicado.</div>`);
 };
 
@@ -36,37 +40,18 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
    <div class="mt-2 space-y-2">${items}</div>
  </div>
       `);
-      setTimeout(() => {
-        document.querySelectorAll('[data-theme]').forEach(item => {
-          item.addEventListener('click', () => {
-            applyTheme(ctx, item.getAttribute('data-theme'));
-          });
-        });
-      }, 100);
       break;
     }
     case 'effects': {
-      const reduced = document.body.classList.contains('reduced-effects');
+      const on = effectsEnabled();
       ctx.print(`
  <div class="border border-terminal-dim p-4 rounded">
-   <div class="text-terminal-bright">Efectos Visuales:</div>
+   <div class="text-terminal-bright">Efecto retro</div>
    <div class="mt-2 space-y-2">
-     <button type="button" class="menu-item" data-effect="toggle">${reduced ? 'Activar efectos visuales' : 'Modo solo texto (ahorro batería)'}</button>
+     <button type="button" class="menu-item" data-effect="toggle">${on ? 'Desactivar efecto retro' : 'Activar efecto retro (lluvia Matrix)'}</button>
    </div>
  </div>
       `);
-      setTimeout(() => {
-        document.querySelector('[data-effect="toggle"]')?.addEventListener('click', () => {
-          document.body.classList.toggle('reduced-effects');
-          const isReduced = document.body.classList.contains('reduced-effects');
-          localStorage.setItem('nexus-reduced-effects', String(isReduced));
-          // Que el fondo Matrix (y otros efectos JS) reaccionen al cambio.
-          document.dispatchEvent(new CustomEvent('effectschange'));
-          ctx.print(
-            `<div class="success-text">Efectos visuales ${isReduced ? 'desactivados' : 'activados'}.</div>`
-          );
-        });
-      }, 100);
       break;
     }
     case 'sound':
@@ -79,20 +64,14 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
    </div>
  </div>
       `);
-      setTimeout(() => {
-        document.querySelector('[data-sound="toggle"]')?.addEventListener('click', () => {
-          const enabled = toggleSound();
-          ctx.print(
-            `<div class="success-text">Sonido de teclas ${enabled ? 'activado' : 'desactivado'}.</div>`
-          );
-        });
-      }, 100);
       break;
     case 'reset':
       localStorage.removeItem('nexus-theme');
       localStorage.removeItem('nexus-reduced-effects');
       localStorage.removeItem('nexus-sound');
+      localStorage.removeItem('nexus-effects');
       document.body.classList.remove('reduced-effects');
+      document.dispatchEvent(new CustomEvent('effectschange'));
       ctx.print(
         '<div class="success-text">Configuración restaurada a valores predeterminados.</div>'
       );
@@ -101,7 +80,47 @@ const handleConfig = (ctx: TerminalContext, config: string | null): void => {
   }
 };
 
+const toggleEffect = (ctx: TerminalContext): void => {
+  const next = !effectsEnabled();
+  try {
+    localStorage.setItem('nexus-effects', next ? 'on' : 'off');
+  } catch {
+    /* sin almacenamiento: el cambio dura solo esta visita */
+  }
+  document.dispatchEvent(new CustomEvent('effectschange'));
+  ctx.print(`<div class="success-text">Efecto retro ${next ? 'activado' : 'desactivado'}.</div>`);
+};
+
+const toggleKeySound = (ctx: TerminalContext): void => {
+  const enabled = toggleSound();
+  ctx.print(
+    `<div class="success-text">Sonido de teclas ${enabled ? 'activado' : 'desactivado'}.</div>`
+  );
+};
+
+// Una sola escucha delegada para todos los botones de configuración: sin esperas
+// (un toque rápido no se pierde) y sin duplicar escuchas al abrir config varias veces.
+let configCtx: TerminalContext | null = null;
+const installDelegation = (ctx: TerminalContext): void => {
+  if (configCtx) {
+    configCtx = ctx;
+    return;
+  }
+  configCtx = ctx;
+  document.addEventListener('click', e => {
+    const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(
+      '[data-config], [data-theme], [data-effect], [data-sound]'
+    );
+    if (!el || !configCtx) return;
+    if (el.dataset.config) handleConfig(configCtx, el.dataset.config);
+    else if (el.dataset.theme) applyTheme(configCtx, el.dataset.theme);
+    else if (el.dataset.effect) toggleEffect(configCtx);
+    else if (el.dataset.sound) toggleKeySound(configCtx);
+  });
+};
+
 export const showConfig = (ctx: TerminalContext): void => {
+  installDelegation(ctx);
   ctx.print(`
  <div class="section-title">
    Configuración del Sistema
@@ -111,7 +130,7 @@ export const showConfig = (ctx: TerminalContext): void => {
      <div class="text-terminal-bright">Opciones de Personalización</div>
      <div class="mt-2 space-y-2">
        <button type="button" class="menu-item" data-config="theme">Tema de Color</button>
-       <button type="button" class="menu-item" data-config="effects">Efectos Visuales</button>
+       <button type="button" class="menu-item" data-config="effects">Efecto retro</button>
        <button type="button" class="menu-item" data-config="sound">Sonido de Teclas</button>
        <button type="button" class="menu-item" data-config="reset">Restaurar Predeterminados</button>
      </div>
@@ -119,12 +138,4 @@ export const showConfig = (ctx: TerminalContext): void => {
    <div class="text-sm text-terminal-dim">Selecciona una opción para personalizar.</div>
  </div>
   `);
-
-  setTimeout(() => {
-    document.querySelectorAll('[data-config]').forEach(item => {
-      item.addEventListener('click', () => {
-        handleConfig(ctx, item.getAttribute('data-config'));
-      });
-    });
-  }, 100);
 };
