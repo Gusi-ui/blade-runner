@@ -15,6 +15,13 @@ export interface GameClass {
 declare global {
   interface Window {
     terminal?: TerminalController;
+    terminalSheet?: {
+      open(command?: string): void;
+      close(): void;
+      isOpen(): boolean;
+      show?(): void;
+      hide?(): void;
+    };
     Snake?: GameClass;
     Tetris?: GameClass;
     Hangman?: GameClass;

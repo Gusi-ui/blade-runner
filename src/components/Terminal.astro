@@ -157,16 +157,29 @@ interface Props {
 </div>
 
 <script>
-  import { runBootSequence } from '../lib/terminal/boot';
+  import { renderBootInstant } from '../lib/terminal/boot';
   import { TerminalController, startHeaderClock } from '../lib/terminal/controller';
-  import { initMatrixBackground } from '../lib/effects/matrixBackground';
+  import { createTerminalSheet } from '../lib/terminal/sheet';
 
   window.terminal = new TerminalController();
   startHeaderClock();
-  initMatrixBackground();
 
+  // La terminal vive en una capa a pantalla completa (TerminalSheet). Se crea en
+  // el mismo tick que el controlador: su navegación inicial por hash la usa.
+  const dialog = document.getElementById('terminal-sheet') as HTMLDialogElement;
+  const input = document.getElementById('terminal-input') as HTMLInputElement;
+  window.terminalSheet = createTerminalSheet(
+    dialog,
+    cmd => window.terminal?.run?.(cmd),
+    () => input.focus()
+  );
+  document
+    .querySelector('[data-close-terminal]')
+    ?.addEventListener('click', () => window.terminalSheet?.close());
+
+  // El arranque animado no aporta en una capa que se abre bajo demanda.
   const bootOutput = document.getElementById('boot-output');
-  if (bootOutput) void runBootSequence(bootOutput);
+  if (bootOutput) renderBootInstant(bootOutput);
 </script>
 
 <!-- Área de ayuda accesible -->

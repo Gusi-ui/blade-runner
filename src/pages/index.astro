@@ -1,5 +1,5 @@
 ---
-import Terminal from '../components/Terminal.astro';
+import TerminalSheet from '../components/TerminalSheet.astro';
 import Menu from '../components/Menu.astro';
 import NewsFeed from '../components/NewsFeed.astro';
 import CV from '../components/CV.astro';
@@ -19,9 +19,12 @@ const description =
 
 <BaseLayout title={title} description={description}>
   <h1 class="sr-only">Webs rápidas y a medida para tu negocio</h1>
+  <button type="button" data-open-terminal>
+    Abrir terminal
+  </button>
 
-  <!-- Componente Principal de Terminal -->
-  <Terminal />
+  <!-- Terminal en capa a pantalla completa -->
+  <TerminalSheet />
 
   <!-- Componentes Ocultos (se cargan dinámicamente) -->
   <Menu />
