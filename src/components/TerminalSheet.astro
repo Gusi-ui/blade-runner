@@ -22,6 +22,8 @@ import Terminal from './Terminal.astro';
   <div id="output-scroll" class="terminal-sheet__body">
     <Terminal />
   </div>
+  <!-- Plantillas de las vistas: lazy.ts las trae de /terminal-vistas/ al abrir la capa -->
+  <div id="terminal-view-templates" hidden></div>
 </dialog>
 
 <script>

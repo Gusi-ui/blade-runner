@@ -36,15 +36,12 @@ const script = buildLiveScript(profile, projects.length);
 </button>
 
 <script>
-  import { profile } from '../../data/profile';
-  import { projects } from '../../data/projects';
-  import { buildLiveScript, renderLive } from '../../lib/site/liveTerminal';
+  import { readLiveScript, renderLive } from '../../lib/site/liveTerminal';
 
+  // El guion ya viene escrito en el HTML: se lee de ahí (sin importar los datos).
   const el = document.querySelector<HTMLElement>('[data-live-output]');
   const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (el && !instant) {
-    void renderLive(el, buildLiveScript(profile, projects.length), { instant });
-  }
+  if (el && !instant) void renderLive(el, readLiveScript(el), { instant });
 </script>
 
 <style>

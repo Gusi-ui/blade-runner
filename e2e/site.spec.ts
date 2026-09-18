@@ -74,6 +74,29 @@ test.describe('secciones', () => {
   });
 });
 
+test.describe('peso de la página', () => {
+  test('no descarga la terminal hasta abrirla', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    const js = await page.evaluate(() =>
+      performance
+        .getEntriesByType('resource')
+        .filter(r => r.name.endsWith('.js'))
+        .map(r => ({ name: r.name, size: (r as PerformanceResourceTiming).decodedBodySize }))
+    );
+    // Ni el controlador ni las vistas; el HTML tampoco lleva sus plantillas.
+    expect(js.some(r => /controller|mount|views|calculator|NewsFeed|APOD/i.test(r.name))).toBe(
+      false
+    );
+    expect(js.reduce((n, r) => n + r.size, 0)).toBeLessThan(20_000);
+    expect(await page.content()).not.toContain('calculator-component');
+
+    await page.locator('[data-open-terminal]').first().click();
+    await expect(page.locator('#terminal-input')).toBeVisible();
+    await expect(page.locator('#terminal-view-templates #calculator-component')).toBeAttached();
+  });
+});
+
 test.describe('terminal en capa', () => {
   test('se abre al tocar y se cierra con ✕, Esc y atrás', async ({ page }) => {
     await page.goto('/');

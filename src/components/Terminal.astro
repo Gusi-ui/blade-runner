@@ -64,52 +64,6 @@
   </div>
 </div>
 
-<script>
-  import { renderBootInstant } from '../lib/terminal/boot';
-  import { TerminalController } from '../lib/terminal/controller';
-  import { chipsFor } from '../lib/terminal/chips';
-  import { createTerminalSheet } from '../lib/terminal/sheet';
-  import { initMatrixBackground } from '../lib/effects/matrixBackground';
-
-  window.terminal = new TerminalController();
-
-  // La terminal vive en una capa a pantalla completa (TerminalSheet). Se crea en
-  // el mismo tick que el controlador: su navegación inicial por hash la usa.
-  const dialog = document.getElementById('terminal-sheet') as HTMLDialogElement;
-  const input = document.getElementById('terminal-input') as HTMLInputElement;
-  window.terminalSheet = createTerminalSheet(
-    dialog,
-    cmd => window.terminal?.run?.(cmd),
-    () => input.focus()
-  );
-  initMatrixBackground(dialog);
-  document
-    .querySelector('[data-close-terminal]')
-    ?.addEventListener('click', () => window.terminalSheet?.close());
-
-  // Atajos según la vista activa (evento 'viewchange' del controlador).
-  const quickActions = document.getElementById('quick-actions');
-  const renderChips = (view: string): void => {
-    if (!quickActions) return;
-    quickActions.replaceChildren(
-      ...chipsFor(view).map(cmd => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'quick-chip';
-        chip.dataset.cmd = cmd;
-        chip.textContent = cmd;
-        return chip;
-      })
-    );
-  };
-  renderChips('');
-  document.addEventListener('viewchange', e => renderChips((e as CustomEvent).detail.view));
-
-  // El arranque animado no aporta en una capa que se abre bajo demanda.
-  const bootOutput = document.getElementById('boot-output');
-  if (bootOutput) renderBootInstant(bootOutput);
-</script>
-
 <!-- Área de ayuda accesible -->
 <div id="terminal-help" class="sr-only">
   Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, proyectos, noticias, juegos,

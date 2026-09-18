@@ -208,6 +208,26 @@ test.describe('APOD', () => {
     }
   });
 
+  test('la imagen a pantalla completa se ve por encima de la terminal', async ({
+    terminal,
+    page,
+  }) => {
+    test.skip(live, 'depende de la imagen simulada');
+    await terminal.run('apod');
+    await terminal.last.locator('.apod-image').click();
+    const overlay = page.locator('#apod-fullscreen-overlay');
+    await expect(overlay).toBeVisible();
+    // Visible de verdad: el elemento en el centro de la pantalla es el visor.
+    const onTop = await page.evaluate(() => {
+      const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return !!el?.closest('#apod-fullscreen-overlay');
+    });
+    expect(onTop).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(overlay).toBeHidden();
+    await expect(page.locator('#terminal-sheet')).toBeVisible();
+  });
+
   test('apod random carga una imagen aleatoria', async ({ terminal }) => {
     await terminal.run('apod random');
     await expect(terminal.last.locator('.apod-title')).toBeVisible();

@@ -101,6 +101,11 @@
     display: none;
   }
 
+  /* Visor a pantalla completa del APOD (se mueve dentro de la capa al abrirla) */
+  .apod-fullscreen-overlay:focus {
+    outline: none;
+  }
+
   /* Juegos */
   .game-canvas {
     @apply border-line-strong mx-auto my-4 max-w-full rounded-xl border;

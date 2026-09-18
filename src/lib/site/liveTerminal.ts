@@ -15,6 +15,16 @@ export const buildLiveScript = (
   { cmd: 'proyectos --count', out: `${projectCount} webs en producción` },
 ];
 
+/** Reconstruye el guion desde el HTML ya renderizado (pares .live-cmd / .live-out). */
+export const readLiveScript = (el: HTMLElement): LiveLine[] => {
+  const cmds = Array.from(el.querySelectorAll('.live-cmd:not(.live-cursor)'));
+  const outs = Array.from(el.querySelectorAll('.live-out'));
+  return cmds.map((c, i) => ({
+    cmd: (c.textContent ?? '').replace(/^\$\s*/, ''),
+    out: outs[i]?.textContent ?? '',
+  }));
+};
+
 const wait = (ms: number): Promise<void> => new Promise(r => setTimeout(r, ms));
 
 const line = (el: HTMLElement, cls: string, text: string): HTMLElement => {

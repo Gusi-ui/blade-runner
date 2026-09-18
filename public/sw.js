@@ -42,7 +42,9 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
 
-  if (request.mode === 'navigate') {
+  // Navegación y plantillas de la terminal: red primero (nunca HTML viejo con
+  // código nuevo tras un despliegue).
+  if (request.mode === 'navigate' || url.pathname.startsWith('/terminal-vistas')) {
     event.respondWith(
       fetch(request)
         .then(response => putInCache(request, response))
