@@ -14,7 +14,7 @@ export const projects: Project[] = [
     name: 'viandalucia.org',
     url: 'https://viandalucia.org',
     summary:
-      'Web de asociación migrada desde WordPress: más rápida y sin mantenimiento de plugins.',
+      'Asociación de Vida Independiente de Andalucía: web migrada desde WordPress, más rápida y sin mantenimiento de plugins.',
     tags: ['Astro', 'Workers', 'R2', 'Turnstile'],
     featured: true,
   },
@@ -22,7 +22,8 @@ export const projects: Project[] = [
     slug: 'divermataro',
     name: 'divermataro.org',
     url: 'https://divermataro.org',
-    summary: 'Web de club de buceo con gestión de contenidos propia.',
+    summary:
+      'Asociación por la accesibilidad universal en Mataró: web accesible con blog y documentos gestionables.',
     tags: ['Astro', 'D1', 'Workers'],
     featured: true,
   },
@@ -30,7 +31,8 @@ export const projects: Project[] = [
     slug: 'irenepuigdemont',
     name: 'irenepuigdemont.com',
     url: 'https://irenepuigdemont.com',
-    summary: 'Web profesional con contenidos editables y carga instantánea.',
+    summary:
+      'Nutricionista especializada en autismo: web en tres idiomas con reserva de consultas online.',
     tags: ['Astro', 'D1', 'KV'],
     featured: true,
   },

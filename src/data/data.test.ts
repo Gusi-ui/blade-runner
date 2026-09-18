@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { profile } from './profile';
 import { featuredProjects, projects } from './projects';
@@ -30,5 +31,11 @@ describe('datos del sitio', () => {
   it('el perfil tiene email y GitHub válidos', () => {
     expect(profile.email).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]+$/);
     expect(profile.github).toMatch(/^https:\/\/github\.com\//);
+  });
+
+  it('cada proyecto tiene su captura', () => {
+    for (const p of projects) {
+      expect(existsSync(`src/assets/projects/${p.slug}.png`)).toBe(true);
+    }
   });
 });
