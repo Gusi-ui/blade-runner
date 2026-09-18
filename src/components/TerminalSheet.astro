@@ -35,6 +35,8 @@ import Terminal from './Terminal.astro';
     margin: 0;
     padding: 0;
     border: 0;
+    /* Solo se desplaza el cuerpo (#output-scroll): la cabecera y la entrada no se mueven. */
+    overflow: hidden;
     background: var(--color-terminal-bg);
     color: var(--color-terminal-text);
   }
@@ -71,6 +73,12 @@ import Terminal from './Terminal.astro';
     flex: 1;
     overflow-y: auto;
     overscroll-behavior: contain;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .terminal-sheet__body {
+      padding-inline: 1.5rem;
+    }
   }
   html.sheet-open {
     overflow: hidden;

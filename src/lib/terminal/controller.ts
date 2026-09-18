@@ -278,8 +278,14 @@ export class TerminalController {
    * referencia, cae al scroll al final.
    */
   private scrollCommandIntoView(promptLine: HTMLElement | null): void {
-    if (promptLine) promptLine.scrollIntoView({ block: 'start' });
-    else this.scrollToBottom();
+    // Sin scrollIntoView: desplazaría también el <dialog> y la cabecera de la capa.
+    const scroller = document.getElementById('output-scroll');
+    if (!promptLine || !scroller) {
+      this.scrollToBottom();
+      return;
+    }
+    const offset = promptLine.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    scroller.scrollTop += offset;
   }
 
   private loadView(view: string, args: string[] = []): void {

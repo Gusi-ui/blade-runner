@@ -53,6 +53,36 @@ test.describe('carga de la página', () => {
   });
 });
 
+test.describe('aspecto de la terminal', () => {
+  test('usa la paleta nueva', async ({ terminal, page }) => {
+    await terminal.run('help');
+    const colors = await page.evaluate(() => {
+      const sheet = document.getElementById('terminal-sheet')!;
+      const bright = document.querySelector('#output-container .text-terminal-bright')!;
+      return {
+        bg: getComputedStyle(sheet).backgroundColor,
+        bright: getComputedStyle(bright).color,
+        shadow: getComputedStyle(bright).textShadow,
+      };
+    });
+    expect(colors.bg).toBe('rgb(11, 13, 16)');
+    expect(colors.bright).toBe('rgb(245, 247, 250)');
+    expect(colors.shadow).toBe('none');
+  });
+
+  test('el tema ámbar cambia el acento', async ({ terminal, page }) => {
+    await terminal.run('theme retro');
+    const accent = await page.evaluate(() => ({
+      sheet: getComputedStyle(document.getElementById('terminal-sheet')!)
+        .getPropertyValue('--color-accent')
+        .trim(),
+      page: getComputedStyle(document.body).getPropertyValue('--color-accent').trim(),
+    }));
+    expect(accent.sheet).toBe('#fbbf24');
+    expect(accent.page).toBe('#4ade80');
+  });
+});
+
 test.describe('comandos básicos', () => {
   test('help lista los comandos', async ({ terminal }) => {
     await terminal.run('help');

@@ -93,6 +93,21 @@ test.describe('terminal en capa', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
+  test('la cabecera de la capa no se desplaza al ejecutar comandos', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-open-terminal]').first().click();
+    for (const cmd of ['help', 'help', 'edad 1990-05-12']) {
+      await page.locator('#terminal-input').fill(cmd);
+      await page.locator('#terminal-input').press('Enter');
+    }
+    const top = await page
+      .locator('.terminal-sheet__bar')
+      .evaluate(el => el.getBoundingClientRect().top);
+    expect(Math.round(top)).toBeGreaterThanOrEqual(0);
+    const sheetTop = await page.locator('#terminal-sheet').evaluate(d => d.scrollTop);
+    expect(sheetTop).toBe(0);
+  });
+
   test('un enlace #apod abre la terminal en esa vista', async ({ page }) => {
     await page.goto('/#apod');
     await expect(page.locator('#terminal-sheet')).toBeVisible();

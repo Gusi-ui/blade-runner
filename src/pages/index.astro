@@ -48,10 +48,12 @@ const description =
   <Contact />
 
   <script>
-    // Preferencias guardadas de la terminal (tema y efectos).
+    // Tema guardado de la terminal (solo cambia el acento dentro de la capa).
     try {
       const savedTheme = localStorage.getItem('nexus-theme');
-      if (savedTheme) document.body.classList.add(`theme-${savedTheme}`);
+      if (savedTheme && savedTheme !== 'classic') {
+        document.documentElement.dataset.theme = savedTheme;
+      }
       if (localStorage.getItem('nexus-reduced-effects') === 'true') {
         document.body.classList.add('reduced-effects');
       }
