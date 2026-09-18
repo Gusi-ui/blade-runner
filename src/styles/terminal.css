@@ -1,66 +1,13 @@
-@import 'tailwindcss';
-@import './tokens.css';
-
 @layer base {
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  html {
-    font-size: 16px;
-    /* Ocultar la barra de scroll vertical (el scroll sigue funcionando): una
-       terminal con scrollbar visible rompe la estética. */
-    scrollbar-width: none; /* Firefox */
-  }
-
-  html::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none; /* WebKit/Blink */
-  }
-
-  body {
-    @apply bg-terminal-bg text-terminal-text font-mono;
+  /* Estilo de la terminal clásica, limitado a su capa: la página tiene el suyo. */
+  .terminal-sheet {
+    @apply font-mono;
     text-shadow: 0 0 5px currentColor;
     font-size: 1rem;
-    overflow-x: hidden;
   }
 
-  /* Asegurar tamaño mínimo de fuente de 0.9rem en todo el contenido */
-  p,
-  div,
-  span,
-  a,
-  li,
-  td,
-  th,
-  label,
-  input,
-  button,
-  textarea,
-  select {
+  .terminal-sheet :is(p, div, span, a, li, td, th, label, input, button, textarea, select) {
     font-size: clamp(0.9rem, 1em, 2rem);
-  }
-
-  /* Tamaño base responsivo */
-  @media (max-width: 640px) {
-    html {
-      font-size: 16px;
-    }
-  }
-
-  @media (min-width: 641px) and (max-width: 1024px) {
-    html {
-      font-size: 16px;
-    }
-  }
-
-  @media (min-width: 1025px) {
-    html {
-      font-size: 16px;
-    }
   }
 }
 
@@ -581,13 +528,13 @@
     image-rendering: pixelated;
   }
 
-  /* Lazy loading for images */
-  img[loading='lazy'] {
+  /* Aparición suave de imágenes diferidas de la terminal (el APOD añade .loaded). */
+  .terminal-sheet img[loading='lazy'] {
     opacity: 0;
     transition: opacity 0.3s;
   }
 
-  img[loading='lazy'].loaded {
+  .terminal-sheet img[loading='lazy'].loaded {
     opacity: 1;
   }
 

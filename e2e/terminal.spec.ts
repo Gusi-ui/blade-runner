@@ -24,14 +24,16 @@ test.describe('carga de la página', () => {
     page.on('pageerror', error => errors.push(error.message));
 
     await page.goto('/');
-    await expect(page.getByText('Sistema listo')).toBeVisible();
+    await page.locator('[data-open-terminal]').first().click();
+    await expect(page.locator('#terminal-sheet')).toBeVisible();
 
-    // Sin la hoja de estilos el fondo sería blanco y la pantalla no tendría borde.
+    // Sin la hoja de estilos el fondo sería blanco y la barra de la capa no
+    // tendría borde (la capa en sí no lo lleva en móvil: ocupa toda la pantalla).
     const styles = await page.evaluate(() => {
-      const screen = document.querySelector('.terminal-screen');
+      const bar = document.querySelector('.terminal-sheet__bar');
       return {
         body: getComputedStyle(document.body).backgroundColor,
-        border: screen ? getComputedStyle(screen).borderTopStyle : 'none',
+        border: bar ? getComputedStyle(bar).borderBottomStyle : 'none',
         sheets: document.styleSheets.length,
       };
     });
@@ -212,14 +214,16 @@ test.describe('formularios', () => {
     await expect(terminal.last.locator('#calculator-results')).toBeVisible();
   });
 
-  test('el formulario de contacto envía el mensaje', async ({ terminal }) => {
+  test('el formulario de contacto envía el mensaje', async ({ terminal, page }) => {
     test.skip(live, 'no enviar correos reales');
-    await terminal.run('contacto');
-    const form = terminal.last.locator('form');
+    // El fixture instala la API simulada y abre la terminal: se cierra y se usa la página.
+    await terminal.page.keyboard.press('Escape');
+    await expect(page.locator('#terminal-sheet')).toBeHidden();
+    const form = page.locator('#contacto form');
     await form.locator('[name="name"]').fill('Prueba');
     await form.locator('[name="email"]').fill('prueba@example.com');
     await form.locator('[name="message"]').fill('Mensaje de prueba e2e');
     await form.locator('button[type="submit"]').click();
-    await expect(terminal.last).toContainText('Mensaje enviado');
+    await expect(form).toContainText('Mensaje enviado');
   });
 });

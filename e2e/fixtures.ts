@@ -112,9 +112,16 @@ export class Terminal {
     return this.page.locator('#output-container');
   }
 
+  /** Carga la página y abre la terminal (si un enlace #vista no la abrió ya). */
   async open(path = '/'): Promise<void> {
     await this.page.goto(path);
-    await expect(this.page.getByText('Sistema listo')).toBeVisible();
+    const dialog = this.page.locator('#terminal-sheet');
+    await this.page.waitForLoadState('domcontentloaded');
+    if (!(await dialog.evaluate(d => (d as HTMLDialogElement).open))) {
+      await this.page.locator('[data-open-terminal]').first().click();
+    }
+    await expect(dialog).toBeVisible();
+    await expect(this.input).toBeVisible();
   }
 
   async run(command: string): Promise<void> {

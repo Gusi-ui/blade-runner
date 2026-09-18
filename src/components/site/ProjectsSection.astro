@@ -1,0 +1,42 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import { featuredProjects } from '../../data/projects';
+
+// Capturas generadas con `pnpm capture:projects`; Astro las sirve como WebP.
+const shots = import.meta.glob<{ default: ImageMetadata }>('../../assets/projects/*.png', {
+  eager: true,
+});
+const shotFor = (slug: string) => shots[`../../assets/projects/${slug}.png`].default;
+---
+
+<section id="proyectos" class="section">
+  <p class="kicker">// proyectos</p>
+  <h2 class="section-heading">Webs en producción</h2>
+  <ul class="grid gap-4 md:grid-cols-2">
+    {featuredProjects().map(p => (
+      <li class="card flex flex-col gap-3">
+        <Image
+          src={shotFor(p.slug)}
+          alt={`Portada de ${p.name}`}
+          widths={[640, 1280]}
+          sizes="(min-width: 768px) 480px, 100vw"
+          class="border-line aspect-[16/10] w-full rounded-xl border object-cover object-top"
+          loading="lazy"
+        />
+        {p.label && <span class="tag text-accent w-fit">{p.label}</span>}
+        <h3 class="text-strong text-lg font-semibold">
+          <a href={p.url} rel="noopener" target="_blank" class="hover:text-accent">
+            {p.name} ↗
+          </a>
+        </h3>
+        <p class="text-muted">{p.summary}</p>
+        <div class="flex flex-wrap gap-1.5">
+          {p.tags.map(t => (
+            <span class="tag">{t}</span>
+          ))}
+        </div>
+      </li>
+    ))}
+  </ul>
+</section>

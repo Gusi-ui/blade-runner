@@ -1,0 +1,106 @@
+import { expect, test } from '@playwright/test';
+
+test.describe('página', () => {
+  test('el HTML servido incluye el contenido profesional y el JSON-LD', async ({ request }) => {
+    const html = await (await request.get('/')).text();
+    expect(html).toContain('Webs rápidas y a medida');
+    expect(html).toContain('"@type":"ProfessionalService"');
+    expect(html).toContain('<meta name="description"');
+  });
+});
+
+test.describe('presentación', () => {
+  test('la presentación y los botones llevan a su sitio', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Webs rápidas');
+    await expect(page.locator('[data-cta="header"]')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Hablemos' })).toHaveAttribute('href', '#contacto');
+  });
+
+  test('con movimiento reducido la terminal viva aparece ya escrita', async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await ctx.newPage();
+    await page.goto('/');
+    await expect(page.locator('[data-live-output]')).toContainText('webs en producción');
+    await ctx.close();
+  });
+});
+
+test.describe('secciones', () => {
+  test('secciones visibles y «Hablemos» lleva al formulario', async ({ page }) => {
+    await page.goto('/');
+    for (const id of ['proyectos', 'sobre-mi', 'contacto']) {
+      await expect(page.locator(`#${id}`)).toBeAttached();
+    }
+    await expect(page.locator('#proyectos li')).toHaveCount(4);
+    await expect(page.locator('#proyectos')).toContainText('Mi estudio');
+    await page.getByRole('link', { name: 'Hablemos' }).click();
+    await expect(page.locator('#contacto form')).toBeInViewport();
+    await expect(page.locator('#terminal-sheet')).toBeHidden();
+  });
+
+  test('no hay scroll horizontal', async ({ page }) => {
+    await page.goto('/');
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('las capturas de los proyectos cargan', async ({ page }) => {
+    await page.goto('/');
+    const imgs = page.locator('#proyectos img');
+    for (const img of await imgs.all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect(img).toHaveJSProperty('complete', true);
+      expect(await img.evaluate(i => (i as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+      await expect(img).not.toHaveCSS('opacity', '0');
+    }
+  });
+
+  test('las tarifas enlazan a alamia.es y lo a medida al formulario', async ({ page }) => {
+    await page.goto('/');
+    const about = page.locator('#sobre-mi');
+    await expect(about.getByRole('link', { name: /Contratar en alamia\.es/ })).toHaveCount(4);
+    await expect(about.getByRole('link', { name: /Pedir presupuesto/ })).toHaveAttribute(
+      'href',
+      '#contacto'
+    );
+    await expect(about).toContainText('250 €');
+  });
+});
+
+test.describe('terminal en capa', () => {
+  test('se abre al tocar y se cierra con ✕, Esc y atrás', async ({ page }) => {
+    await page.goto('/');
+    const sheet = page.locator('#terminal-sheet');
+    await expect(sheet).toBeHidden();
+
+    await page.locator('[data-open-terminal]').first().click();
+    await expect(sheet).toBeVisible();
+    await page.locator('[data-close-terminal]').click();
+    await expect(sheet).toBeHidden();
+
+    await page.locator('[data-open-terminal]').first().click();
+    await expect(sheet).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+
+    await page.locator('[data-open-terminal]').first().click();
+    await expect(sheet).toBeVisible();
+    await page.goBack();
+    await expect(sheet).toBeHidden();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test('un enlace #apod abre la terminal en esa vista', async ({ page }) => {
+    await page.goto('/#apod');
+    await expect(page.locator('#terminal-sheet')).toBeVisible();
+    await expect(page.locator('#output-container')).toContainText('Imagen Astronómica');
+  });
+
+  test('un enlace de sección no abre la terminal', async ({ page }) => {
+    await page.goto('/#contacto');
+    await expect(page.locator('#terminal-sheet')).toBeHidden();
+  });
+});
