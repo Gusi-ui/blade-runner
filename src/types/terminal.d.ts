@@ -28,7 +28,6 @@ declare global {
     TicTacToe?: GameClass;
     apodViewer?: unknown;
     newsFeed?: unknown;
-    handleNASAImageError?: (imgElement: HTMLImageElement, date: string | undefined) => void;
   }
 }
 

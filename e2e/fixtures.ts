@@ -82,6 +82,8 @@ const installApiMocks = async (page: Page): Promise<void> => {
     }
   });
 
+  // Efemérides de Wikipedia (calculadora): sin red, se usan las de respaldo.
+  await page.route('https://api.wikimedia.org/**', route => route.abort());
   await page.route('https://apod.nasa.gov/**', route =>
     route.fulfill({ status: 200, contentType: 'image/png', body: PIXEL })
   );

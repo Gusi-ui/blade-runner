@@ -252,6 +252,16 @@ test.describe('formularios', () => {
     await expect(terminal.last.locator('#calculator-results')).toBeVisible();
   });
 
+  test('la calculadora muestra zodiaco, planetas y efemérides', async ({ terminal }) => {
+    await terminal.run('calculadora');
+    await terminal.last.locator('#birthdate').fill('1990-05-12');
+    await terminal.last.locator('#calculator-submit').click();
+    await expect(terminal.last).toContainText('Tauro');
+    await expect(terminal.last).toContainText('Marte');
+    await expect(terminal.last.locator('#calc-events')).not.toContainText('Buscando');
+    await expect(terminal.last.locator('#calc-solar')).toBeVisible();
+  });
+
   test('la segunda calculadora también responde', async ({ terminal }) => {
     await terminal.run('calculadora');
     await terminal.run('calculadora');
