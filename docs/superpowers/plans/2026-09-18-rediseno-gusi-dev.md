@@ -151,7 +151,7 @@ git commit -m "feat(estilos): tokens @theme y fuentes autoalojadas; fuera tailwi
 
 - Produces:
   - `profile: Profile` con `{ name: string; role: string; headline: string; headlineAccent: string; intro: string; about: string[]; email: string; github: string; stack: string[] }`
-  - `services: Service[]` con `{ title: string; description: string }`
+  - `services: Service[]` con `{ title: string; description: string; price: string; priceNote: string; href: string }` y `ALAMIA_URL` (tarifas iguales a alamia.es: el contenido definitivo está en `src/data/services.ts` de la fase 1, que sustituye al del Step 3)
   - `projects: Project[]` con `{ slug: string; name: string; url: string; summary: string; tags: string[]; featured: boolean }`
   - `featuredProjects(): Project[]`
 
@@ -1202,6 +1202,7 @@ const shotFor = (slug: string) => shots[`../../assets/projects/${slug}.png`].def
           class="border-line aspect-[16/10] w-full rounded-xl border object-cover object-top"
           loading="lazy"
         />
+        {p.label && <span class="tag text-accent w-fit">{p.label}</span>}
         <h3 class="text-strong text-lg font-semibold">
           <a href={p.url} rel="noopener" target="_blank" class="hover:text-accent">
             {p.name} ↗
@@ -1224,7 +1225,7 @@ const shotFor = (slug: string) => shots[`../../assets/projects/${slug}.png`].def
 ```astro
 ---
 import { profile } from '../../data/profile';
-import { services } from '../../data/services';
+import { ALAMIA_URL, services } from '../../data/services';
 ---
 
 <section id="sobre-mi" class="section">
@@ -1240,9 +1241,28 @@ import { services } from '../../data/services';
       {services.map((s, i) => (
         <li class="flex gap-4 py-4">
           <span class="text-accent font-mono text-sm">{String(i + 1).padStart(2, '0')}</span>
-          <div>
-            <h3 class="text-strong font-semibold">{s.title}</h3>
+          <div class="flex-1">
+            <div class="flex items-baseline justify-between gap-3">
+              <h3 class="text-strong font-semibold">{s.title}</h3>
+              <span class="text-strong font-mono whitespace-nowrap">
+                {s.price} <span class="text-muted text-xs">{s.priceNote}</span>
+              </span>
+            </div>
             <p class="text-muted">{s.description}</p>
+            {s.href === ALAMIA_URL ? (
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noopener"
+                class="text-accent mt-1 inline-block text-sm"
+              >
+                Contratar en alamia.es ↗
+              </a>
+            ) : (
+              <a href={s.href} class="text-accent mt-1 inline-block text-sm">
+                Pedir presupuesto →
+              </a>
+            )}
           </div>
         </li>
       ))}
