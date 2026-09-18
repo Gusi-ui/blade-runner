@@ -9,6 +9,8 @@ export interface Profile {
   email: string;
   github: string;
   stack: string[];
+  /** Versión corta del stack para la terminal viva (cabe en una línea en móvil). */
+  terminalStack: string[];
 }
 
 export const profile: Profile = {
@@ -26,4 +28,5 @@ export const profile: Profile = {
   email: 'webmaster@gusi.dev',
   github: 'https://github.com/Gusi-ui',
   stack: ['Astro', 'TypeScript', 'Cloudflare Workers', 'Tailwind CSS', 'IA'],
+  terminalStack: ['astro', 'typescript', 'workers', 'ia'],
 };

@@ -1,0 +1,5 @@
+/* Punto de entrada único de estilos: Tailwind se genera una sola vez. */
+@import 'tailwindcss';
+@import './tokens.css';
+@import './terminal.css';
+@import './site.css';

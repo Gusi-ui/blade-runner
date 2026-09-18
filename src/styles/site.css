@@ -1,0 +1,35 @@
+/* Estilos de la página (secciones, botones, tarjetas). Se importa desde global.css. */
+
+@layer components {
+  .section {
+    @apply mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:py-20;
+  }
+  .kicker {
+    @apply text-accent mb-2 font-mono text-xs;
+  }
+  .section-heading {
+    @apply text-strong mb-6 text-2xl font-bold tracking-tight sm:text-3xl;
+  }
+  .btn-primary {
+    @apply bg-accent text-accent-ink inline-flex min-h-11 items-center justify-center rounded-xl px-5 font-semibold transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent);
+  }
+  .btn-secondary {
+    @apply border-line-strong text-strong inline-flex min-h-11 items-center justify-center rounded-xl border px-5 transition-colors hover:border-(--color-accent) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-accent);
+  }
+  .card {
+    @apply bg-surface border-line rounded-2xl border p-4;
+  }
+  .tag {
+    @apply bg-surface-2 border-line-strong text-muted rounded-md border px-2 py-0.5 font-mono text-xs;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

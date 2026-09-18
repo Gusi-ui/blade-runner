@@ -10,7 +10,9 @@ import APOD from '../components/APOD.astro';
 import Chat from '../components/Chat.astro';
 import Contact from '../components/Contact.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import '../styles/terminal.css';
+import Hero from '../components/site/Hero.astro';
+import SiteHeader from '../components/site/SiteHeader.astro';
+import '../styles/global.css';
 
 const title = 'Gusi · Desarrollador Full Stack — webs rápidas y a medida';
 const description =
@@ -18,10 +20,10 @@ const description =
 ---
 
 <BaseLayout title={title} description={description}>
-  <h1 class="sr-only">Webs rápidas y a medida para tu negocio</h1>
-  <button type="button" data-open-terminal>
-    Abrir terminal
-  </button>
+  <SiteHeader />
+  <main>
+    <Hero />
+  </main>
 
   <!-- Terminal en capa a pantalla completa -->
   <TerminalSheet />

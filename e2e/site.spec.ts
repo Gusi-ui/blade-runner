@@ -9,6 +9,23 @@ test.describe('página', () => {
   });
 });
 
+test.describe('presentación', () => {
+  test('la presentación y los botones llevan a su sitio', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Webs rápidas');
+    await expect(page.locator('[data-cta="header"]')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Hablemos' })).toHaveAttribute('href', '#contacto');
+  });
+
+  test('con movimiento reducido la terminal viva aparece ya escrita', async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await ctx.newPage();
+    await page.goto('/');
+    await expect(page.locator('[data-live-output]')).toContainText('webs en producción');
+    await ctx.close();
+  });
+});
+
 test.describe('terminal en capa', () => {
   test('se abre al tocar y se cierra con ✕, Esc y atrás', async ({ page }) => {
     await page.goto('/');
