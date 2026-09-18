@@ -14,11 +14,12 @@
   --color-accent: #4ade80;
   --color-accent-ink: #04140a;
 
-  /* Colores heredados de la terminal: se reasignan a los tokens en la fase 3. */
-  --color-terminal-bg: #000000;
-  --color-terminal-text: #00ff41;
-  --color-terminal-dim: #008f11;
-  --color-terminal-bright: #39ff14;
+  /* Colores heredados de la terminal (text-terminal-*, border-terminal-*…): se
+     reasignan a la paleta nueva para que las vistas cambien sin tocar sus plantillas. */
+  --color-terminal-bg: var(--color-bg);
+  --color-terminal-text: var(--color-body);
+  --color-terminal-dim: var(--color-muted);
+  --color-terminal-bright: var(--color-strong);
 
   --font-sans: 'Space Grotesk Variable', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
@@ -33,4 +34,15 @@
       opacity: 0;
     }
   }
+}
+
+/* Temas de la terminal (comando `theme`): cambian el acento solo dentro de la capa. */
+html[data-theme='retro'] .terminal-sheet {
+  --color-accent: #fbbf24;
+}
+html[data-theme='cyberpunk'] .terminal-sheet {
+  --color-accent: #22d3ee;
+}
+html[data-theme='phosphor'] .terminal-sheet {
+  --color-accent: #e5e7eb;
 }

@@ -1,20 +1,21 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import { featuredProjects } from '../../data/projects';
+import { clientProjects, ownStudio } from '../../data/projects';
 
 // Capturas generadas con `pnpm capture:projects`; Astro las sirve como WebP.
 const shots = import.meta.glob<{ default: ImageMetadata }>('../../assets/projects/*.png', {
   eager: true,
 });
 const shotFor = (slug: string) => shots[`../../assets/projects/${slug}.png`].default;
+const studio = ownStudio();
 ---
 
 <section id="proyectos" class="section">
   <p class="kicker">// proyectos</p>
-  <h2 class="section-heading">Webs en producción</h2>
+  <h2 class="section-heading">Webs para mis clientes</h2>
   <ul class="grid gap-4 md:grid-cols-2">
-    {featuredProjects().map(p => (
+    {clientProjects().map(p => (
       <li class="card flex flex-col gap-3">
         <Image
           src={shotFor(p.slug)}
@@ -24,7 +25,6 @@ const shotFor = (slug: string) => shots[`../../assets/projects/${slug}.png`].def
           class="border-line aspect-[16/10] w-full rounded-xl border object-cover object-top"
           loading="lazy"
         />
-        {p.label && <span class="tag text-accent w-fit">{p.label}</span>}
         <h3 class="text-strong text-lg font-semibold">
           <a href={p.url} rel="noopener" target="_blank" class="hover:text-accent">
             {p.name} ↗
@@ -39,4 +39,27 @@ const shotFor = (slug: string) => shots[`../../assets/projects/${slug}.png`].def
       </li>
     ))}
   </ul>
+
+  <!-- Negocio propio: franja aparte para no mezclarlo con los proyectos de clientes -->
+  <aside
+    class="border-accent/40 bg-surface mt-6 flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center"
+    aria-label={studio.label}
+  >
+    <Image
+      src={shotFor(studio.slug)}
+      alt={`Portada de ${studio.name}`}
+      widths={[320, 640]}
+      sizes="(min-width: 640px) 200px, 100vw"
+      class="border-line hidden aspect-[16/10] w-48 rounded-xl border object-cover object-top sm:block"
+      loading="lazy"
+    />
+    <div class="flex-1">
+      <p class="kicker mb-1">// {studio.label?.toLowerCase()}</p>
+      <h3 class="text-strong text-lg font-semibold">{studio.name}</h3>
+      <p class="text-muted">{studio.summary}</p>
+    </div>
+    <a href={studio.url} target="_blank" rel="noopener" class="btn-secondary shrink-0">
+      Ver tarifas en alamia.es ↗
+    </a>
+  </aside>
 </section>

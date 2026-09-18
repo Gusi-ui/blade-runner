@@ -1,12 +1,13 @@
-// Proyectos reales en producción. `summary`: BORRADOR, a validar por el usuario.
+// Proyectos reales en producción (textos validados por el usuario el 2026-09-18).
 export interface Project {
   slug: string;
   name: string;
   url: string;
   summary: string;
   tags: string[];
-  featured: boolean;
-  /** Etiqueta destacada en la tarjeta (p. ej. 'Mi estudio' para alamia.es). */
+  /** 'client': proyecto para un cliente (cuadrícula); 'own': negocio propio (franja aparte). */
+  kind: 'client' | 'own';
+  /** Etiqueta destacada (p. ej. 'Mi estudio' para alamia.es). */
   label?: string;
 }
 
@@ -18,7 +19,7 @@ export const projects: Project[] = [
     summary:
       'Asociación de Vida Independiente de Andalucía: web migrada desde WordPress, más rápida y sin mantenimiento de plugins.',
     tags: ['Astro', 'Workers', 'R2', 'Turnstile'],
-    featured: true,
+    kind: 'client',
   },
   {
     slug: 'divermataro',
@@ -27,7 +28,7 @@ export const projects: Project[] = [
     summary:
       'Asociación por la accesibilidad universal en Mataró: web accesible con blog y documentos gestionables.',
     tags: ['Astro', 'D1', 'Workers'],
-    featured: true,
+    kind: 'client',
   },
   {
     slug: 'irenepuigdemont',
@@ -36,7 +37,16 @@ export const projects: Project[] = [
     summary:
       'Nutricionista especializada en autismo: web en tres idiomas con reserva de consultas online.',
     tags: ['Astro', 'D1', 'KV'],
-    featured: true,
+    kind: 'client',
+  },
+  {
+    slug: 'amparomedium',
+    name: 'amparomedium.com',
+    url: 'https://amparomedium.com',
+    summary:
+      'Guía espiritual: web con reserva de sesiones, área de clientes e inscripción a cursos.',
+    tags: ['Next.js', 'React', 'Vercel'],
+    kind: 'client',
   },
   {
     slug: 'alamia',
@@ -45,9 +55,16 @@ export const projects: Project[] = [
     summary:
       'Mi estudio para pequeños negocios: webs y mantenimiento con precio cerrado y contratación online.',
     tags: ['Astro', 'Workers', 'Pagos online'],
-    featured: true,
+    kind: 'own',
     label: 'Mi estudio',
   },
 ];
 
-export const featuredProjects = (): Project[] => projects.filter(p => p.featured);
+export const clientProjects = (): Project[] => projects.filter(p => p.kind === 'client');
+
+/** El estudio propio (alamia.es): se muestra aparte, como franja bajo los clientes. */
+export const ownStudio = (): Project => {
+  const studio = projects.find(p => p.kind === 'own');
+  if (!studio) throw new Error('Falta el estudio propio en src/data/projects.ts');
+  return studio;
+};

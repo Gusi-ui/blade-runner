@@ -16,11 +16,19 @@ export const createTerminalSheet = (
 ): TerminalSheet => {
   let scrollY = 0;
 
+  // Con el teclado del móvil abierto, la capa se ajusta a la altura visible para
+  // que el campo de entrada (pie fijo) quede justo encima del teclado.
+  const fitToViewport = (): void => {
+    const vv = window.visualViewport;
+    if (vv) dialog.style.height = `${vv.height}px`;
+  };
+
   const show = (): void => {
     if (dialog.open) return;
     scrollY = window.scrollY;
     dialog.showModal();
     document.documentElement.classList.add('sheet-open');
+    window.visualViewport?.addEventListener('resize', fitToViewport);
     focusInput();
   };
 
@@ -28,6 +36,8 @@ export const createTerminalSheet = (
     if (!dialog.open) return;
     dialog.close();
     document.documentElement.classList.remove('sheet-open');
+    window.visualViewport?.removeEventListener('resize', fitToViewport);
+    dialog.style.height = '';
     window.scrollTo({ top: scrollY });
   };
 

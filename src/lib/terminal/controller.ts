@@ -60,11 +60,10 @@ export class TerminalController {
     const sendBtn = document.getElementById('terminal-send');
     sendBtn?.addEventListener('click', () => this.submitCommand());
 
-    document.querySelectorAll('.quick-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const cmd = chip.getAttribute('data-cmd');
-        if (cmd) this.run(cmd);
-      });
+    // Los atajos se regeneran al cambiar de vista: delegación en su contenedor.
+    document.getElementById('quick-actions')?.addEventListener('click', e => {
+      const chip = (e.target as HTMLElement | null)?.closest<HTMLElement>('.quick-chip');
+      if (chip?.dataset.cmd) this.run(chip.dataset.cmd);
     });
 
     // Deep links: #cv, #projects, #news… cargan la vista al entrar y con
@@ -278,8 +277,14 @@ export class TerminalController {
    * referencia, cae al scroll al final.
    */
   private scrollCommandIntoView(promptLine: HTMLElement | null): void {
-    if (promptLine) promptLine.scrollIntoView({ block: 'start' });
-    else this.scrollToBottom();
+    // Sin scrollIntoView: desplazaría también el <dialog> y la cabecera de la capa.
+    const scroller = document.getElementById('output-scroll');
+    if (!promptLine || !scroller) {
+      this.scrollToBottom();
+      return;
+    }
+    const offset = promptLine.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    scroller.scrollTop += offset;
   }
 
   private loadView(view: string, args: string[] = []): void {
@@ -290,6 +295,7 @@ export class TerminalController {
     // (así «atrás» cierra la capa en lugar de ir vista por vista).
     if (location.hash.slice(1) !== view) history.replaceState(history.state, '', `#${view}`);
     document.dispatchEvent(new CustomEvent('loadView', { detail: { view, args } }));
+    document.dispatchEvent(new CustomEvent('viewchange', { detail: { view } }));
   }
 
   /**
@@ -297,11 +303,16 @@ export class TerminalController {
    * esa vista. Los hashes de sección de la página (#proyectos…) no la tocan.
    */
   private navigateToHash(): void {
-    const target = classifyHash(location.hash, token => {
-      const spec = this.registry.resolveToken(token);
-      return !!spec && (!!spec.view || spec.name === 'menu');
-    });
-    if (target.kind === 'section' || target.kind === 'none') return;
+    const target = classifyHash(location.hash, token => !!this.registry.resolveToken(token)?.view);
+    if (target.kind === 'none') return;
+    if (target.kind === 'section') {
+      // Enlaces antiguos (#cv, #projects…): llevar a su sección nueva de la página.
+      if (location.hash.slice(1) !== target.id) {
+        history.replaceState(history.state, '', `#${target.id}`);
+        document.getElementById(target.id)?.scrollIntoView();
+      }
+      return;
+    }
     window.terminalSheet?.show?.();
     if (target.kind === 'terminal' || target.token === this.currentView) return;
     const spec = this.registry.resolveToken(target.token);
@@ -313,6 +324,8 @@ export class TerminalController {
 
   private clear(): void {
     this.outputContainer.innerHTML = '';
+    this.currentView = '';
+    document.dispatchEvent(new CustomEvent('viewchange', { detail: { view: '' } }));
   }
 
   printOutput(html: string): void {

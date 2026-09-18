@@ -5,19 +5,22 @@ import type { TerminalContext } from './registry';
 // controlador. Solo se ejecuta en el navegador.
 
 export const THEMES: Record<string, string> = {
-  classic: 'Clásico (Verde Matrix)',
-  cyberpunk: 'Cyberpunk (Azul Neón)',
-  retro: 'Retro (Ámbar)',
-  phosphor: 'Phosphor (Blanco CRT)',
+  classic: 'Clásico (verde)',
+  cyberpunk: 'Cyberpunk (cian)',
+  retro: 'Retro (ámbar)',
+  phosphor: 'Phosphor (blanco)',
 };
 
 export const applyTheme = (ctx: TerminalContext, theme: string | null): void => {
-  const body = document.body;
-  body.classList.remove(...Object.keys(THEMES).map(name => `theme-${name}`));
-
+  // El tema cambia --color-accent dentro de la terminal (tokens.css).
   const selected = theme && THEMES[theme] ? theme : 'classic';
-  body.classList.add(`theme-${selected}`);
-  localStorage.setItem('nexus-theme', selected);
+  if (selected === 'classic') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = selected;
+  try {
+    localStorage.setItem('nexus-theme', selected);
+  } catch {
+    /* sin almacenamiento: el tema dura solo esta visita */
+  }
   ctx.print(`<div class="success-text">Tema ${THEMES[selected]} aplicado.</div>`);
 };
 

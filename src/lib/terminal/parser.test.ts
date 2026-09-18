@@ -30,7 +30,7 @@ describe('parseInput', () => {
 
   it('preserva los alias multi-palabra', () => {
     expect(parseInput('imagen nasa', registry)?.spec.name).toBe('apod');
-    expect(parseInput('proyectos debussy', registry)?.spec.name).toBe('projects');
+    expect(parseInput('imagen  nasa', registry)?.spec.name).toBe('apod');
     expect(parseInput('foto  nasa', registry)?.spec.name).toBe('apod');
   });
 

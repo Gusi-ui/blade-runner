@@ -3,8 +3,16 @@
 
 export const SECTION_IDS = ['proyectos', 'sobre-mi', 'contacto'] as const;
 
-// Enlaces antiguos que ahora son secciones de la página.
-const LEGACY_SECTIONS: Record<string, string> = { projects: 'proyectos', contact: 'contacto' };
+// Enlaces antiguos (#cv, #projects…) que ahora son secciones de la página.
+const LEGACY_SECTIONS: Record<string, string> = {
+  projects: 'proyectos',
+  contact: 'contacto',
+  cv: 'sobre-mi',
+  resume: 'sobre-mi',
+  curriculum: 'sobre-mi',
+};
+// Enlaces antiguos que abren la terminal sin vista concreta (el menú ya no existe).
+const LEGACY_TERMINAL = new Set(['terminal', 'menu', 'help']);
 
 export type HashTarget =
   | { kind: 'none' }
@@ -17,7 +25,7 @@ export const classifyHash = (hash: string, isViewToken: (token: string) => boole
   if (!token) return { kind: 'none' };
   if ((SECTION_IDS as readonly string[]).includes(token)) return { kind: 'section', id: token };
   if (LEGACY_SECTIONS[token]) return { kind: 'section', id: LEGACY_SECTIONS[token] };
-  if (token === 'terminal') return { kind: 'terminal' };
+  if (LEGACY_TERMINAL.has(token)) return { kind: 'terminal' };
   if (isViewToken(token)) return { kind: 'view', token };
   return { kind: 'none' };
 };

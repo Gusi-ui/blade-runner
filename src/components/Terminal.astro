@@ -74,12 +74,8 @@ interface Props {
         aria-live="polite"
         aria-label="Terminal output"
       >
-        <p class="text-terminal-bright mb-2">Inicializando sistema...</p>
-        <p class="mb-2">Cargando módulos del kernel...</p>
-        <p class="mb-2">Estableciendo conexión con MAINFRAME...</p>
-        <p class="success-text mb-4">✓ Sistema listo</p>
-        <p class="mb-2">Escribe 'help' para ver los comandos disponibles.</p>
-        <p class="mb-4">Escribe 'menu' para acceder al menú principal.</p>
+        <p class="success-text mb-1">✓ Nexus-7 listo.</p>
+        <p class="text-terminal-dim mb-4">Toca un atajo o escribe 'help' para ver los comandos.</p>
       </div>
 
       <div
@@ -89,66 +85,43 @@ interface Props {
         aria-label="Contenido dinámico de la terminal"
       ></div>
 
-      <div id="quick-actions" class="quick-actions" role="toolbar" aria-label="Acciones rápidas">
-        <button type="button" class="quick-chip" data-cmd="menu">
-          <span class="quick-chip__key" aria-hidden="true">
-            F1
-          </span>{' '}
-          Menú
-        </button>
-        <button type="button" class="quick-chip" data-cmd="noticias">
-          <span class="quick-chip__key" aria-hidden="true">
-            F2
-          </span>{' '}
-          Noticias
-        </button>
-        <button type="button" class="quick-chip" data-cmd="apod">
-          <span class="quick-chip__key" aria-hidden="true">
-            F3
-          </span>{' '}
-          APOD
-        </button>
-        <button type="button" class="quick-chip" data-cmd="chat">
-          <span class="quick-chip__key" aria-hidden="true">
-            F4
-          </span>{' '}
-          Chat
-        </button>
-      </div>
-
-      <div class="terminal-input-line mt-2">
-        <span class="terminal-prompt" aria-label="Prompt del sistema">
-          gusi@nexus:~$ <span class="prompt-cursor" aria-hidden="true"></span>
-        </span>
-        <div class="terminal-input-wrap">
-          <input
-            type="text"
-            id="terminal-input"
-            class="terminal-input"
-            autocomplete="off"
-            spellcheck="false"
-            aria-label="Entrada de comandos de terminal"
-            aria-describedby="terminal-help"
-          />
-          <span class="input-mirror" aria-hidden="true">
-            <span id="mirror-text"></span>
-            <span class="terminal-cursor"></span>
+      <!-- Pie fijo: atajos (según la vista, ver chips.ts) + campo de entrada -->
+      <div class="terminal-footer">
+        <div id="quick-actions" class="quick-actions" role="toolbar" aria-label="Atajos"></div>
+        <div class="terminal-input-line">
+          <span class="terminal-prompt" aria-label="Prompt del sistema">
+            <span class="hidden sm:inline">gusi@nexus:~</span>$
           </span>
+          <div class="terminal-input-wrap">
+            <input
+              type="text"
+              id="terminal-input"
+              class="terminal-input"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Entrada de comandos de terminal"
+              aria-describedby="terminal-help"
+            />
+            <span class="input-mirror" aria-hidden="true">
+              <span id="mirror-text"></span>
+              <span class="terminal-cursor"></span>
+            </span>
+          </div>
+          <button
+            type="button"
+            id="terminal-send"
+            class="terminal-send"
+            aria-label="Ejecutar comando"
+          >
+            ▶
+          </button>
         </div>
-        <button
-          type="button"
-          id="terminal-send"
-          class="terminal-send"
-          aria-label="Ejecutar comando"
-        >
-          ▶
-        </button>
+        <div
+          id="completion-hint"
+          class="text-terminal-dim mt-1 hidden text-xs"
+          aria-hidden="true"
+        ></div>
       </div>
-      <div
-        id="completion-hint"
-        class="text-terminal-dim mt-1 hidden text-xs"
-        aria-hidden="true"
-      ></div>
     </div>
   </div>
 
@@ -159,6 +132,7 @@ interface Props {
 <script>
   import { renderBootInstant } from '../lib/terminal/boot';
   import { TerminalController, startHeaderClock } from '../lib/terminal/controller';
+  import { chipsFor } from '../lib/terminal/chips';
   import { createTerminalSheet } from '../lib/terminal/sheet';
 
   window.terminal = new TerminalController();
@@ -177,6 +151,24 @@ interface Props {
     .querySelector('[data-close-terminal]')
     ?.addEventListener('click', () => window.terminalSheet?.close());
 
+  // Atajos según la vista activa (evento 'viewchange' del controlador).
+  const quickActions = document.getElementById('quick-actions');
+  const renderChips = (view: string): void => {
+    if (!quickActions) return;
+    quickActions.replaceChildren(
+      ...chipsFor(view).map(cmd => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'quick-chip';
+        chip.dataset.cmd = cmd;
+        chip.textContent = cmd;
+        return chip;
+      })
+    );
+  };
+  renderChips('');
+  document.addEventListener('viewchange', e => renderChips((e as CustomEvent).detail.view));
+
   // El arranque animado no aporta en una capa que se abre bajo demanda.
   const bootOutput = document.getElementById('boot-output');
   if (bootOutput) renderBootInstant(bootOutput);
@@ -184,7 +176,7 @@ interface Props {
 
 <!-- Área de ayuda accesible -->
 <div id="terminal-help" class="sr-only">
-  Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, menu, noticias, juegos, etc.
-  Navegación: flechas arriba/abajo para historial, Tab para autocompletar, Enter para ejecutar,
+  Terminal interactiva estilo Blade Runner. Usa comandos como ayuda, proyectos, noticias, juegos,
+  etc. Navegación: flechas arriba/abajo para historial, Tab para autocompletar, Enter para ejecutar,
   Ctrl+L para limpiar.
 </div>

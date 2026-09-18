@@ -1,11 +1,11 @@
 ---
 import { profile } from '../../data/profile';
-import { featuredProjects } from '../../data/projects';
+import { projects } from '../../data/projects';
 import { buildLiveScript } from '../../lib/site/liveTerminal';
 
 // El HTML inicial ya lleva el guion completo: sin JS o con movimiento reducido
 // se ve escrito; con JS se vuelve a escribir con animación.
-const script = buildLiveScript(profile, featuredProjects().length);
+const script = buildLiveScript(profile, projects.length);
 ---
 
 <button
@@ -37,13 +37,13 @@ const script = buildLiveScript(profile, featuredProjects().length);
 
 <script>
   import { profile } from '../../data/profile';
-  import { featuredProjects } from '../../data/projects';
+  import { projects } from '../../data/projects';
   import { buildLiveScript, renderLive } from '../../lib/site/liveTerminal';
 
   const el = document.querySelector<HTMLElement>('[data-live-output]');
   const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (el && !instant) {
-    void renderLive(el, buildLiveScript(profile, featuredProjects().length), { instant });
+    void renderLive(el, buildLiveScript(profile, projects.length), { instant });
   }
 </script>
 

@@ -9,6 +9,7 @@ const targets = [
   ['viandalucia', 'https://viandalucia.org'],
   ['divermataro', 'https://divermataro.org'],
   ['irenepuigdemont', 'https://irenepuigdemont.com'],
+  ['amparomedium', 'https://amparomedium.com'],
   ['alamia', 'https://alamia.es'],
 ];
 

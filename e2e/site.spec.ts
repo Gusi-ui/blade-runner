@@ -33,7 +33,10 @@ test.describe('secciones', () => {
       await expect(page.locator(`#${id}`)).toBeAttached();
     }
     await expect(page.locator('#proyectos li')).toHaveCount(4);
-    await expect(page.locator('#proyectos')).toContainText('Mi estudio');
+    await expect(page.locator('#proyectos li')).toContainText(['amparomedium.com']);
+    const studio = page.getByRole('complementary', { name: 'Mi estudio' });
+    await expect(studio).toContainText('alamia.es');
+    await expect(page.locator('#proyectos li').filter({ hasText: 'alamia.es' })).toHaveCount(0);
     await page.getByRole('link', { name: 'Hablemos' }).click();
     await expect(page.locator('#contacto form')).toBeInViewport();
     await expect(page.locator('#terminal-sheet')).toBeHidden();
@@ -49,7 +52,8 @@ test.describe('secciones', () => {
 
   test('las capturas de los proyectos cargan', async ({ page }) => {
     await page.goto('/');
-    const imgs = page.locator('#proyectos img');
+    // La captura de la franja del estudio solo se muestra desde sm (en móvil va oculta).
+    const imgs = page.locator('#proyectos li img');
     for (const img of await imgs.all()) {
       await img.scrollIntoViewIfNeeded();
       await expect(img).toHaveJSProperty('complete', true);
@@ -91,6 +95,33 @@ test.describe('terminal en capa', () => {
     await page.goBack();
     await expect(sheet).toBeHidden();
     await expect(page).toHaveURL(/\/$/);
+  });
+
+  test('la cabecera de la capa no se desplaza al ejecutar comandos', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-open-terminal]').first().click();
+    for (const cmd of ['help', 'help', 'edad 1990-05-12']) {
+      await page.locator('#terminal-input').fill(cmd);
+      await page.locator('#terminal-input').press('Enter');
+    }
+    const top = await page
+      .locator('.terminal-sheet__bar')
+      .evaluate(el => el.getBoundingClientRect().top);
+    expect(Math.round(top)).toBeGreaterThanOrEqual(0);
+    const sheetTop = await page.locator('#terminal-sheet').evaluate(d => d.scrollTop);
+    expect(sheetTop).toBe(0);
+  });
+
+  test('los atajos y la ruta cambian con la vista', async ({ page }) => {
+    await page.goto('/#news');
+    const chips = page.locator('#quick-actions .quick-chip');
+    await expect(chips.last()).toHaveText('clear');
+    await expect(page.locator('#sheet-path')).toHaveText('~/news');
+    await chips.filter({ hasText: 'proyectos' }).click();
+    await expect(page.locator('#output-container')).toContainText('viandalucia.org');
+    await chips.filter({ hasText: 'clear' }).click();
+    await expect(page.locator('#sheet-path')).toHaveText('~/');
+    await expect(chips.first()).toHaveText('proyectos');
   });
 
   test('un enlace #apod abre la terminal en esa vista', async ({ page }) => {
