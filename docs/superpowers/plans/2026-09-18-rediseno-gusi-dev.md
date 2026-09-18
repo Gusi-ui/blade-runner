@@ -1548,7 +1548,7 @@ git commit -m "feat(terminal): paleta nueva, estilos limpios y temas por variabl
 - Modify: `src/lib/terminal/registry.ts` (`group`)
 - Create: `src/lib/terminal/contentCommands.ts`
 - Modify: `src/lib/terminal/commands.ts`, `src/lib/terminal/commands.test.ts`
-- Modify: `src/components/CV.astro` / `Projects.astro` (dejan de registrarse; se borran en la Task 11)
+- Modify: `src/components/CV.astro` / `Projects.astro` (dejan de registrarse; se borran en la Task 13)
 
 **Interfaces:**
 
@@ -1736,13 +1736,256 @@ test('los atajos cambian con la vista', async ({ page }) => {
 
 Run: `pnpm test && PW_CHANNEL=chrome pnpm test:e2e` → verde.
 
-- [ ] **Step 5: Commit, PR de la fase 3**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add src/lib/terminal/ src/components/Terminal.astro src/components/TerminalSheet.astro e2e/site.spec.ts
 git commit -m "feat(terminal): atajos contextuales, ruta en la cabecera y ajuste al teclado móvil"
+```
+
+(La PR de la fase 3 se abre al terminar la Task 12.)
+
+### Task 11: Un solo `escapeHtml`
+
+**Files:**
+
+- Modify: `src/components/APOD.astro`, `src/components/NewsFeed.astro`, `src/components/CosmicCalculator.astro`
+- Test: `src/lib/terminal/sanitize.test.ts`
+
+**Interfaces:**
+
+- Consumes: `escapeHtml(text: string): string` de `src/lib/terminal/sanitize.ts` (escapa `& < > " '`).
+
+- [ ] **Step 1: Prueba de regresión** (añadir a `sanitize.test.ts`)
+
+```ts
+it('escapa comillas para usarse dentro de atributos', () => {
+  expect(escapeHtml(`"a" 'b' <c>`)).toBe('&quot;a&quot; &#39;b&#39; &lt;c&gt;');
+});
+```
+
+Run: `pnpm exec vitest run src/lib/terminal/sanitize` → PASS (la función compartida ya lo hace; las copias privadas basadas en `div.textContent` NO escapaban comillas).
+
+- [ ] **Step 2: Sustituir las copias**
+
+En los tres componentes: borrar el método `private escapeHtml(text: string): string { … }`, añadir `import { escapeHtml } from '../lib/terminal/sanitize';` (APOD y NewsFeed ya importan `safeUrl` de ese módulo: ampliar ese import) y reemplazar `this.escapeHtml(` por `escapeHtml(`.
+
+```bash
+grep -rn "private escapeHtml\|this.escapeHtml" src
+```
+
+Expected: sin resultados.
+
+- [ ] **Step 3: Verificar y commit**
+
+Run: `pnpm test && PW_CHANNEL=chrome pnpm test:e2e` → verde.
+
+```bash
+git add src/components/APOD.astro src/components/NewsFeed.astro src/components/CosmicCalculator.astro src/lib/terminal/sanitize.test.ts
+git commit -m "refactor: un solo escapeHtml (también escapa comillas) en APOD, noticias y calculadora"
+```
+
+### Task 12: Aligerar la calculadora cósmica
+
+Objetivo: `CosmicCalculator.astro` pasa de ~1.180 líneas a ≤ 200, sin perder funciones (edades por planeta, edad en texto, zodiaco, APOD del día de nacimiento o alternativa, acontecimientos de Wikipedia traducidos, efemérides de respaldo, sistema solar animado, salir al menú).
+
+**Files:**
+
+- Modify: `src/lib/terminal/planetaryAge.ts`, `src/lib/terminal/planetaryAge.test.ts`
+- Create: `src/lib/calculator/humanAge.ts`, `zodiac.ts`, `birthDay.ts`, `solarSystem.ts`, `render.ts`, `index.ts` (+ `humanAge.test.ts`, `zodiac.test.ts`, `birthDay.test.ts`)
+- Create: `src/data/techEvents.ts`
+- Modify: `src/components/CosmicCalculator.astro`
+- Test: `e2e/terminal.spec.ts`
+
+**Interfaces:**
+
+- Produces:
+  - `ORBITAL_PERIODS: Record<string, number>` y `planetaryAgesFromDays(days: number): { planet: string; age: number; orbitalPeriod: number }[]` (en `planetaryAge.ts`; `calculatePlanetaryAges` se reescribe sobre ella).
+  - `formatHumanAge(birth: Date, today?: Date): string` y `formatDecimalAge(decimal: number): string`.
+  - `zodiacSign(month0: number, day: number): string` (mes 0–11).
+  - `techEventsFor(year: number): TechNewsEvent[]` y `interface TechNewsEvent` (en `src/data/techEvents.ts`).
+  - `fetchOnThisDay(month: number, day: number): Promise<WikipediaEvent[]>` y `fetchBirthDayApod(birthdate: string): Promise<APODData | null>` (null si la fecha es anterior a 1995-06-16 o falla).
+  - `startSolarSystem(canvas: HTMLCanvasElement, ages: { planet: string; age: number }[]): () => void` (devuelve la función que la detiene).
+  - `renderResults(...)`, `renderNasa(...)`, `renderAlternative(...)`, `renderBirthYearNews(...)`: funciones puras que devuelven HTML usando `escapeHtml`/`safeUrl`.
+  - `mountCalculator(root: ParentNode, terminal: TerminalController): void` (en `index.ts`).
+
+- [ ] **Step 1: Pruebas de las funciones puras (fallan)**
+
+`src/lib/calculator/humanAge.test.ts`:
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { formatDecimalAge, formatHumanAge } from './humanAge';
+
+describe('edad en texto', () => {
+  it('años, meses y días', () => {
+    expect(formatHumanAge(new Date(2000, 0, 15), new Date(2026, 8, 18))).toBe(
+      '26 años, 8 meses, 3 días'
+    );
+  });
+  it('singulares', () => {
+    expect(formatHumanAge(new Date(2025, 7, 17), new Date(2026, 8, 18))).toBe(
+      '1 año, 1 mes, 1 día'
+    );
+  });
+  it('mismo día', () => {
+    expect(formatHumanAge(new Date(2026, 8, 18), new Date(2026, 8, 18))).toBe('Menos de un día');
+  });
+  it('decimal', () => {
+    expect(formatDecimalAge(2.5)).toBe('2 años, 6 meses');
+  });
+});
+```
+
+`src/lib/calculator/zodiac.test.ts`:
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { zodiacSign } from './zodiac';
+
+describe('zodiacSign', () => {
+  it.each([
+    [0, 1, '♑ Capricornio'],
+    [0, 20, '♒ Acuario'],
+    [4, 12, '♉ Tauro'],
+    [11, 22, '♑ Capricornio'],
+  ])('mes %i día %i → %s', (m, d, sign) => expect(zodiacSign(m, d)).toBe(sign));
+});
+```
+
+Y en `planetaryAge.test.ts`:
+
+```ts
+it('planetaryAgesFromDays: un año terrestre = 1 en la Tierra', () => {
+  const earth = planetaryAgesFromDays(365.26).find(a => a.planet === 'Tierra');
+  expect(earth?.age).toBeCloseTo(1, 5);
+});
+```
+
+Run: `pnpm exec vitest run src/lib/calculator src/lib/terminal/planetaryAge` → FAIL.
+
+- [ ] **Step 2: Implementar las funciones puras**
+
+`humanAge.ts`: mover el cuerpo de `calculateHumanAge` (hoy `CosmicCalculator.astro`, método en la línea ~251) como `formatHumanAge(birth, today = new Date())`, sustituyendo `new Date()` por `today`; y `calculateHumanAgeFromDecimal` como `formatDecimalAge`. Extraer el formateo común:
+
+```ts
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const join = (y: number, m: number, d: number): string =>
+  [
+    y > 0 && plural(y, 'año', 'años'),
+    m > 0 && plural(m, 'mes', 'meses'),
+    d > 0 && plural(d, 'día', 'días'),
+  ]
+    .filter(Boolean)
+    .join(', ') || 'Menos de un día';
+```
+
+`zodiac.ts`: mover `getZodiacSign` (línea ~556) tal cual como `zodiacSign`.
+
+`planetaryAge.ts`: exportar `ORBITAL_PERIODS` y
+
+```ts
+export const planetaryAgesFromDays = (days: number) =>
+  Object.entries(ORBITAL_PERIODS).map(([planet, orbitalPeriod]) => ({
+    planet,
+    orbitalPeriod,
+    age: days / orbitalPeriod,
+  }));
+
+export const calculatePlanetaryAges = (birthdate: string) => {
+  const days = (Date.now() - new Date(birthdate).getTime()) / 86_400_000;
+  return planetaryAgesFromDays(days).map(({ planet, age }) => ({
+    planet,
+    age: Math.round(age * 100) / 100,
+  }));
+};
+```
+
+Run → PASS.
+
+- [ ] **Step 3: Datos y red**
+
+- `src/data/techEvents.ts`: mover `interface TechNewsEvent` y el contenido de `getFallbackTechEvents` (línea ~922) como `techEventsFor(year)`.
+- `birthDay.ts`: mover la llamada a `https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/all/{MM}/{DD}` (línea ~775) como `fetchOnThisDay(month, day)` (devuelve `[]` si falla) y la lógica de APOD del día de nacimiento de `fetchNASAData` como `fetchBirthDayApod(birthdate)` usando `fetchAPOD` de `../api/client`. Prueba en `birthDay.test.ts` con `vi.stubGlobal('fetch', …)`:
+
+```ts
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fetchBirthDayApod, fetchOnThisDay } from './birthDay';
+
+afterEach(() => vi.unstubAllGlobals());
+
+describe('datos del día de nacimiento', () => {
+  it('antes de 1995-06-16 no hay APOD', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await fetchBirthDayApod('1990-05-12')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it('Wikipedia caída → lista vacía', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('', { status: 503 }))
+    );
+    expect(await fetchOnThisDay(5, 12)).toEqual([]);
+  });
+});
+```
+
+- `solarSystem.ts`: mover `initializeAlternativeSolarSystem` (línea ~484) como `startSolarSystem(canvas, ages)`, guardando el id de `requestAnimationFrame` y devolviendo `() => cancelAnimationFrame(id)`; si `prefers-reduced-motion`, dibuja un único fotograma.
+- `render.ts`: mover los bloques de HTML de `displayResults`, la parte visual de `fetchNASAData`, `displayAlternativeAstronomyData` y `displayBirthYearNews` como funciones puras que reciben datos y devuelven `string`, usando `escapeHtml` y `safeUrl`.
+
+Run: `pnpm exec vitest run src/lib/calculator` → PASS.
+
+- [ ] **Step 4: Componente mínimo**
+
+`src/lib/calculator/index.ts` → `mountCalculator(root, terminal)`: engancha `#calculator-submit`, `#calculator-exit` y Enter en `#birthdate` (dentro de `root`), valida la fecha (mensajes con `terminal.printOutput('<div class="error-text">…</div>')`), pinta `renderResults`, y en paralelo `fetchBirthDayApod` + `fetchOnThisDay` (traducidos con `translateBatch`) + `techEventsFor`. Sin `console.log`.
+
+`CosmicCalculator.astro` queda con su plantilla HTML y:
+
+```astro
+<script>
+  import { mountCalculator } from '../lib/calculator';
+  document.addEventListener('loadView', e => {
+    const { view } = (e as CustomEvent).detail;
+    if (view !== 'calculator' || !window.terminal) return;
+    const tpl = document.getElementById('calculator-component');
+    if (!tpl) return;
+    window.terminal.printOutput(tpl.innerHTML);
+    const blocks = document.querySelectorAll('#output-container .terminal-output');
+    const root = blocks[blocks.length - 1];
+    if (root) mountCalculator(root, window.terminal);
+  });
+</script>
+```
+
+- [ ] **Step 5: Verificar**
+
+```bash
+wc -l src/components/CosmicCalculator.astro   # ≤ 200
+grep -rn "console.log" src | grep -v test      # sin resultados
+```
+
+Añadir a `e2e/terminal.spec.ts`:
+
+```ts
+test('la calculadora muestra zodiaco y edades por planeta', async ({ terminal }) => {
+  await terminal.run('calculadora');
+  await terminal.last.locator('#birthdate').fill('1990-05-12');
+  await terminal.last.locator('#calculator-submit').click();
+  await expect(terminal.last).toContainText('Tauro');
+  await expect(terminal.last).toContainText('Marte');
+});
+```
+
+Run: `pnpm test && PW_CHANNEL=chrome pnpm test:e2e` → verde (incluidas las pruebas de calculadora existentes).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/lib/calculator/ src/lib/terminal/planetaryAge.ts src/lib/terminal/planetaryAge.test.ts src/data/techEvents.ts src/components/CosmicCalculator.astro e2e/terminal.spec.ts
+git commit -m "refactor(calculadora): de 1.180 a ≤200 líneas en módulos probados, sin perder funciones"
 git push -u origin feat/rediseno-terminal
-gh pr create --base develop --title "feat(rediseño): fase 3 · terminal con el aspecto nuevo"
+gh pr create --base develop --title "feat(rediseño): fase 3 · terminal nueva, calculadora ligera"
 ```
 
 ---
@@ -1751,7 +1994,7 @@ gh pr create --base develop --title "feat(rediseño): fase 3 · terminal con el 
 
 Rama: `git switch -c chore/rediseno-limpieza develop`
 
-### Task 11: Eliminar lo antiguo y service worker v5
+### Task 13: Eliminar lo antiguo y service worker v5
 
 **Files:**
 
@@ -1807,7 +2050,201 @@ git commit -m "chore(rediseño): fuera CV/proyectos ficticios, menú, efectos CR
 
 (`git add -u` solo añade cambios y borrados de ficheros ya versionados; no incluye nada nuevo accidental.)
 
-### Task 12: Auditoría de rendimiento y accesibilidad en móvil
+### Task 14: La terminal se descarga solo al abrirla
+
+Objetivo: quien solo visita la página descarga ≤ 5 KB de JS (gzip) en lugar de ~27 KB, y el HTML deja de incluir las plantillas ocultas de las vistas.
+
+**Files:**
+
+- Create: `src/lib/views/news.ts`, `apod.ts`, `chat.ts`, `games.ts` (el `<script>` de cada componente, movido)
+- Modify: `src/components/NewsFeed.astro`, `APOD.astro`, `Chat.astro`, `Games.astro`, `CosmicCalculator.astro` (solo plantilla, sin `<script>`)
+- Create: `src/pages/terminal-vistas.astro` (plantillas de las vistas en una página aparte)
+- Create: `src/lib/terminal/viewTokens.ts`, `src/lib/terminal/viewTokens.test.ts`
+- Create: `src/lib/terminal/lazy.ts`
+- Modify: `src/components/TerminalSheet.astro`, `src/components/Terminal.astro`, `src/pages/index.astro`, `public/robots.txt`
+- Test: `e2e/site.spec.ts`
+
+**Interfaces:**
+
+- Consumes: `classifyHash` (Task 5), `createTerminalSheet` (Task 5), `mountCalculator` (Task 12).
+- Produces:
+  - `VIEW_TOKENS: readonly string[]` — tokens que abren la terminal por hash, sin cargar el registro.
+  - `ensureTerminal(): Promise<TerminalSheet>` — carga una sola vez plantillas + controlador + vistas y devuelve la capa.
+  - Cada `src/lib/views/<vista>.ts` exporta `install(): void` (idempotente) con el listener `loadView` que hoy vive en el componente.
+
+- [ ] **Step 1: Prueba que falla** (`src/lib/terminal/viewTokens.test.ts`)
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { buildCommands } from './commands';
+import { CommandRegistry } from './registry';
+import { VIEW_TOKENS } from './viewTokens';
+
+describe('VIEW_TOKENS', () => {
+  it('coincide con los tokens navegables del registro', () => {
+    const registry = new CommandRegistry();
+    registry.registerAll(
+      buildCommands({ history: { list: () => [], clear: () => undefined } as never })
+    );
+    const navigable = registry
+      .specs()
+      .filter(s => s.view)
+      .flatMap(s => [s.name, ...(s.aliases ?? [])])
+      .filter(t => /^[\p{L}-]+$/u.test(t))
+      .map(t => t.toLowerCase())
+      .sort();
+    expect([...VIEW_TOKENS].sort()).toEqual(navigable);
+  });
+});
+```
+
+Run: `pnpm exec vitest run src/lib/terminal/viewTokens` → FAIL.
+
+- [ ] **Step 2: `viewTokens.ts`**
+
+Crear el fichero con la lista literal que imprime la prueba al fallar (copiar el array `Expected`), con el comentario `// Mantener sincronizado con commands.ts (lo vigila viewTokens.test.ts).`. Run → PASS.
+
+- [ ] **Step 3: Mover los scripts de las vistas**
+
+Para `NewsFeed`, `APOD`, `Chat` y `Games`: mover todo el contenido de su `<script>` a `src/lib/views/<vista>.ts`, envolviendo los `document.addEventListener(...)` de nivel superior en
+
+```ts
+let installed = false;
+export const install = (): void => {
+  if (installed) return;
+  installed = true;
+  // …listeners movidos sin cambios…
+};
+```
+
+Las clases y funciones auxiliares quedan a nivel de módulo. Los imports relativos pasan de `'../lib/…'` a `'../…'`. El componente conserva solo su plantilla HTML. Para la calculadora, crear `src/lib/views/calculator.ts` con el listener del Step 4 de la Task 12 dentro de `install()`.
+
+- [ ] **Step 4: Plantillas fuera de la página principal**
+
+`src/pages/terminal-vistas.astro`:
+
+```astro
+---
+// Plantillas de las vistas de la terminal. La capa las descarga al abrirse por
+// primera vez (lazy.ts); no es una página para visitantes (robots: Disallow).
+import APOD from '../components/APOD.astro';
+import Chat from '../components/Chat.astro';
+import CosmicCalculator from '../components/CosmicCalculator.astro';
+import Games from '../components/Games.astro';
+import NewsFeed from '../components/NewsFeed.astro';
+---
+
+<div id="terminal-vistas">
+  <NewsFeed />
+  <APOD />
+  <Chat />
+  <Games />
+  <CosmicCalculator />
+</div>
+```
+
+Quitar esos cinco componentes de `index.astro`. En `public/robots.txt` añadir `Disallow: /terminal-vistas/`.
+
+- [ ] **Step 5: `src/lib/terminal/lazy.ts`**
+
+```ts
+import type { TerminalSheet } from './sheet';
+
+let loading: Promise<TerminalSheet> | null = null;
+
+/** Descarga (una vez) plantillas, controlador y vistas, y devuelve la capa lista. */
+export const ensureTerminal = (): Promise<TerminalSheet> =>
+  (loading ??= (async () => {
+    const [html, { TerminalController }, { createTerminalSheet }, ...views] = await Promise.all([
+      fetch('/terminal-vistas/').then(r => r.text()),
+      import('./controller'),
+      import('./sheet'),
+      import('../views/news'),
+      import('../views/apod'),
+      import('../views/chat'),
+      import('../views/games'),
+      import('../views/calculator'),
+    ]);
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const holder = document.getElementById('terminal-view-templates');
+    const vistas = doc.getElementById('terminal-vistas');
+    if (holder && vistas) holder.replaceChildren(...vistas.children);
+    views.forEach(v => v.install());
+
+    window.terminal = new TerminalController();
+    const dialog = document.getElementById('terminal-sheet') as HTMLDialogElement;
+    const input = document.getElementById('terminal-input') as HTMLInputElement;
+    const sheet = createTerminalSheet(
+      dialog,
+      cmd => window.terminal?.run?.(cmd),
+      () => input.focus()
+    );
+    window.terminalSheet = sheet;
+    return sheet;
+  })());
+```
+
+En `TerminalSheet.astro` añadir `<div id="terminal-view-templates" hidden></div>` dentro del `<dialog>`. En `Terminal.astro`, quitar del `<script>` la creación del controlador y de la capa (ahora la hace `ensureTerminal`); dejar solo el cierre por `[data-close-terminal]`.
+
+- [ ] **Step 6: Arranque ligero en la página** (`index.astro`)
+
+```astro
+<script>
+  import { classifyHash } from '../lib/terminal/hashRoute';
+  import { VIEW_TOKENS } from '../lib/terminal/viewTokens';
+
+  const isView = (t: string) => VIEW_TOKENS.includes(t);
+  const openFromHash = async () => {
+    const target = classifyHash(location.hash, isView);
+    if (target.kind !== 'terminal' && target.kind !== 'view') return;
+    const { ensureTerminal } = await import('../lib/terminal/lazy');
+    (await ensureTerminal()).show();
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  };
+
+  document.addEventListener('click', async e => {
+    const trigger = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-open-terminal]');
+    if (!trigger || window.terminalSheet) return; // una vez cargada, sheet.ts gestiona los clics
+    e.preventDefault();
+    const { ensureTerminal } = await import('../lib/terminal/lazy');
+    (await ensureTerminal()).open(trigger.dataset.command);
+  });
+  void openFromHash();
+</script>
+```
+
+- [ ] **Step 7: e2e de peso y funcionamiento** (añadir a `e2e/site.spec.ts`)
+
+```ts
+test('la página no descarga la terminal hasta abrirla', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  const jsBytes = await page.evaluate(() =>
+    performance
+      .getEntriesByType('resource')
+      .filter(r => r.name.endsWith('.js'))
+      .reduce((n, r) => n + (r as PerformanceResourceTiming).encodedBodySize, 0)
+  );
+  expect(jsBytes).toBeLessThan(8_000);
+  expect(await page.content()).not.toContain('calculator-component');
+
+  await page.locator('[data-open-terminal]').first().click();
+  await expect(page.locator('#terminal-input')).toBeVisible();
+});
+```
+
+(`encodedBodySize` es 0 con el servidor de `astro preview` si no comprime; en ese caso la prueba compara tamaño sin comprimir: umbral 20 000. Ajustar la constante a lo que dé el build tras comprobar que la terminal no aparece en la lista de recursos: `expect(names.some(n => n.includes('controller'))).toBe(false)`.)
+
+Run: `pnpm test && PW_CHANNEL=chrome pnpm test:e2e` → verde (todas las pruebas de la terminal siguen pasando porque `Terminal.open()` hace clic en `[data-open-terminal]`).
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add src/lib/views/ src/lib/terminal/lazy.ts src/lib/terminal/viewTokens.ts src/lib/terminal/viewTokens.test.ts src/pages/ src/components/ public/robots.txt e2e/site.spec.ts
+git commit -m "perf(terminal): la terminal y sus vistas se descargan solo al abrirla"
+```
+
+### Task 15: Auditoría de rendimiento y accesibilidad en móvil
 
 **Files:**
 
@@ -1825,7 +2262,7 @@ node -e "const r=require('./lh.json').categories;for(const k in r)console.log(k,
 
 Expected: `performance`, `accessibility`, `best-practices`, `seo` ≥ 90. (Staging devuelve `X-Robots-Tag: noindex`, que penaliza SEO: para esa categoría, medir `https://gusi.dev` tras la release o ignorar solo la auditoría `is-crawlable`.)
 
-- [ ] **Step 3: Corregir** cada auditoría fallida (típicas: tamaño de imágenes → ajustar `widths`/`sizes`; contraste → subir `muted` a `#7d8896` si no llega a 4.5:1; JS inicial > 60 KB gzip → mover los `<script>` de `NewsFeed`, `APOD`, `Games`, `CosmicCalculator`, `Chat` a `import()` dentro de un listener `loadView` que se registra al abrir la capa). Repetir el Step 2 hasta cumplir.
+- [ ] **Step 3: Corregir** cada auditoría fallida (típicas: tamaño de imágenes → ajustar `widths`/`sizes`; contraste → subir `muted` a `#7d8896` si no llega a 4.5:1; JS inicial > 5 KB gzip → revisar qué módulo entra en el bundle de la página (`pnpm build` y mirar `dist/_astro/`)). Repetir el Step 2 hasta cumplir.
 
 - [ ] **Step 4: Guardar resultados y commit**
 
@@ -1834,7 +2271,7 @@ git add docs/superpowers/specs/2026-09-18-rediseno-lighthouse.md <ficheros corre
 git commit -m "perf(rediseño): ajustes tras Lighthouse móvil (≥90 en las cuatro categorías)"
 ```
 
-### Task 13: Release a producción
+### Task 16: Release a producción
 
 - [ ] **Step 1:** Confirmar con el usuario que ha validado en `https://dev.gusi.dev` los textos de `src/data/*` y el comportamiento en su móvil.
 - [ ] **Step 2:** `gh pr create --base main --head develop --title "release: rediseño de gusi.dev"`; esperar `verify` en verde.

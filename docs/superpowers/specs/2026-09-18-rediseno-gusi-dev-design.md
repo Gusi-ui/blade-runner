@@ -94,7 +94,7 @@ Maqueta `terminal-completa.html`.
 - `<title>`, meta description, Open Graph y Twitter Card orientados a servicios.
 - JSON-LD `Person` + `ProfessionalService` con los servicios.
 - `sitemap.xml` y `robots.txt` actualizados; staging mantiene `noindex` (ya lo hace el Worker).
-- Presupuesto en móvil: LCP < 2,5 s, CLS < 0,1, JS inicial de la página < 60 KB gzip. Si los scripts de la terminal superan el presupuesto, se cargan con `import()` al abrirla.
+- Presupuesto en móvil: LCP < 2,5 s, CLS < 0,1, JS inicial de la página ≤ 5 KB gzip (hoy ~27 KB). La terminal, sus vistas y sus plantillas se descargan **solo al abrirla** (`import()` + `/terminal-vistas/`).
 - Service worker: subir `CACHE_NAME` a `nexus-terminal-v5` para descartar recursos antiguos.
 
 ## 9. Código que se elimina o sustituye
@@ -104,6 +104,7 @@ Maqueta `terminal-completa.html`.
 - `tailwind.config.mjs` y `@config` → `@theme` en CSS.
 - Cabecera ASCII, `matrixBackground` en la página y efectos CRT por defecto.
 - Accesos rápidos F1–F4 (sustituidos por los chips).
+- **Aligerado de componentes pesados:** `CosmicCalculator.astro` (≈1.180 líneas) se divide en módulos probados en `src/lib/calculator/` y queda ≤ 200 líneas, sin perder funciones; las copias privadas de `escapeHtml` (APOD, noticias, calculadora) se sustituyen por la de `sanitize.ts`; fuera los `console.log`.
 
 ## 10. Pruebas
 
