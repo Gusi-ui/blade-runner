@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { profile } from './profile';
 import { featuredProjects, projects } from './projects';
@@ -34,8 +33,9 @@ describe('datos del sitio', () => {
   });
 
   it('cada proyecto tiene su captura', () => {
+    const shots = Object.keys(import.meta.glob('../assets/projects/*.png'));
     for (const p of projects) {
-      expect(existsSync(`src/assets/projects/${p.slug}.png`)).toBe(true);
+      expect(shots).toContain(`../assets/projects/${p.slug}.png`);
     }
   });
 });
