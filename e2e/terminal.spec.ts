@@ -204,6 +204,14 @@ test.describe('formularios', () => {
     await expect(terminal.last.locator('#calculator-results')).toBeVisible();
   });
 
+  test('la segunda calculadora también responde', async ({ terminal }) => {
+    await terminal.run('calculadora');
+    await terminal.run('calculadora');
+    await terminal.last.locator('#birthdate').fill('2000-01-01');
+    await terminal.last.locator('#calculator-submit').click();
+    await expect(terminal.last.locator('#calculator-results')).toBeVisible();
+  });
+
   test('el formulario de contacto envía el mensaje', async ({ terminal }) => {
     test.skip(live, 'no enviar correos reales');
     await terminal.run('contacto');
