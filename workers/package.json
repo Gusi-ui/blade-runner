@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "release": "wrangler deploy",
-    "tail": "wrangler tail"
+    "release": "wrangler deploy --env=\"\"",
+    "tail": "wrangler tail",
+    "release:staging": "wrangler deploy --env staging"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260917.1",
