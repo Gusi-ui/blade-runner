@@ -19,9 +19,12 @@
     "test:e2e": "playwright test",
     "test:e2e:live": "E2E_LIVE=1 playwright test",
     "pre-commit": "pnpm lint:check && pnpm format:check && pnpm type-check && pnpm test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "capture:projects": "node scripts/capture-projects.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.3",
     "tailwindcss": "^4.3.3",

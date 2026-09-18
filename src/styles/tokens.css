@@ -1,0 +1,36 @@
+/* Tokens de diseño de gusi.dev (spec §3). Única fuente de colores y fuentes. */
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
+
+@theme {
+  --color-bg: #0b0d10;
+  --color-surface: #0f1317;
+  --color-surface-2: #11151a;
+  --color-line: #1f262e;
+  --color-line-strong: #2b333d;
+  --color-body: #c9d1db;
+  --color-strong: #f5f7fa;
+  --color-muted: #6b7684;
+  --color-accent: #4ade80;
+  --color-accent-ink: #04140a;
+
+  /* Colores heredados de la terminal: se reasignan a los tokens en la fase 3. */
+  --color-terminal-bg: #000000;
+  --color-terminal-text: #00ff41;
+  --color-terminal-dim: #008f11;
+  --color-terminal-bright: #39ff14;
+
+  --font-sans: 'Space Grotesk Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --animate-blink: blink 1s step-end infinite;
+  @keyframes blink {
+    from,
+    to {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+}
