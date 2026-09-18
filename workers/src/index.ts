@@ -11,6 +11,9 @@ interface EmailSendBinding {
 }
 
 export interface Env {
+  // Ficheros estáticos de la web (dist/ de Astro), servidos por este mismo Worker.
+  ASSETS: Fetcher;
+  ENVIRONMENT?: 'production' | 'staging';
   CACHE: KVNamespace;
   AI: Ai;
   NASA_API_KEY: string;
@@ -176,22 +179,26 @@ const setCached = async (cache: KVNamespace, key: string, data: unknown, ttl: nu
   await cache.put(key, JSON.stringify(data), { expirationTtl: ttl });
 };
 
+const randomApodDate = (): string => {
+  const start = new Date(`${APOD_FIRST_DATE}T00:00:00Z`).getTime();
+  return new Date(start + Math.random() * (Date.now() - start)).toISOString().slice(0, 10);
+};
+
 const fetchAPOD = async (env: Env, date?: string, random?: boolean): Promise<APODData> => {
   const nasaKey = env.NASA_API_KEY || 'DEMO_KEY';
-  let url = `https://api.nasa.gov/planetary/apod?api_key=${nasaKey}`;
+  // En modo aleatorio se reintenta con otra fecha: algunos días no tienen APOD
+  // o la NASA devuelve error puntual para ellos.
+  const attempts = random ? 3 : 1;
+  let status = 0;
 
-  if (random) {
-    const start = new Date('1995-06-16').getTime();
-    const end = Date.now();
-    const randomDate = new Date(start + Math.random() * (end - start)).toISOString().split('T')[0];
-    url += `&date=${randomDate}`;
-  } else if (date) {
-    url += `&date=${date}`;
+  for (let i = 0; i < attempts; i++) {
+    const day = random ? randomApodDate() : date;
+    const url = `https://api.nasa.gov/planetary/apod?api_key=${nasaKey}${day ? `&date=${day}` : ''}`;
+    const response = await fetch(url);
+    if (response.ok) return response.json();
+    status = response.status;
   }
-
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`NASA APOD: ${response.status}`);
-  return response.json();
+  throw new Error(`NASA APOD: ${status}`);
 };
 
 const fetchGuardianNews = async (env: Env): Promise<NewsArticle[]> => {
@@ -405,278 +412,326 @@ const translateCached = async (env: Env, text: string): Promise<string> => {
   return translatedText;
 };
 
+// Cabeceras de seguridad para la web (la API ya añade las suyas).
+const SECURITY_HEADERS: Record<string, string> = {
+  'Strict-Transport-Security': 'max-age=31536000',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+};
+
+/**
+ * Política de caché de la web:
+ * - /_astro/* lleva hash en el nombre → inmutable un año.
+ * - HTML y sw.js → siempre revalidar (evita el HTML viejo que pedía CSS borrada).
+ * - Resto (imágenes, manifest…) → 1 hora.
+ */
+export const cacheControlFor = (pathname: string): string => {
+  if (pathname.startsWith('/_astro/')) return 'public, max-age=31536000, immutable';
+  const isHtml = pathname.endsWith('/') || pathname.endsWith('.html') || !pathname.includes('.');
+  if (isHtml || pathname === '/sw.js') return 'no-cache';
+  return 'public, max-age=3600';
+};
+
+const serveStatic = async (request: Request, env: Env, url: URL): Promise<Response> => {
+  const asset = await env.ASSETS.fetch(request);
+  const response = new Response(asset.body, asset);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(name, value);
+  }
+  if (asset.ok || asset.status === 304) {
+    response.headers.set('Cache-Control', cacheControlFor(url.pathname));
+  }
+  // El entorno de pruebas no debe aparecer en buscadores.
+  if (env.ENVIRONMENT === 'staging') response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return response;
+};
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const origin = request.headers.get('Origin') || env.ALLOWED_ORIGIN || 'https://gusi.dev';
 
-    if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
-      });
+    // www.gusi.dev → gusi.dev (antes lo hacía GitHub Pages).
+    if (url.hostname.startsWith('www.')) {
+      url.hostname = url.hostname.slice(4);
+      return Response.redirect(url.toString(), 301);
     }
 
-    try {
-      if (url.pathname === '/api/health') {
-        return jsonResponse(
-          { ok: true, endpoints: { apod: true, news: true, translate: true, chat: true } },
-          origin,
-          env
-        );
+    if (url.pathname.startsWith('/api/')) return handleApi(request, env, url);
+    return serveStatic(request, env, url);
+  },
+};
+
+const handleApi = async (request: Request, env: Env, url: URL): Promise<Response> => {
+  const origin = request.headers.get('Origin') || env.ALLOWED_ORIGIN || 'https://gusi.dev';
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
+    });
+  }
+
+  try {
+    if (url.pathname === '/api/health') {
+      return jsonResponse(
+        { ok: true, endpoints: { apod: true, news: true, translate: true, chat: true } },
+        origin,
+        env
+      );
+    }
+
+    if (url.pathname === '/api/apod' && request.method === 'GET') {
+      const date = url.searchParams.get('date') || undefined;
+      if (date && !isValidApodDate(date)) {
+        return jsonResponse({ error: 'Fecha inválida (YYYY-MM-DD)' }, origin, env, 400);
       }
+      const random = url.searchParams.get('random') === 'true';
 
-      if (url.pathname === '/api/apod' && request.method === 'GET') {
-        const date = url.searchParams.get('date') || undefined;
-        if (date && !isValidApodDate(date)) {
-          return jsonResponse({ error: 'Fecha inválida (YYYY-MM-DD)' }, origin, env, 400);
-        }
-        const random = url.searchParams.get('random') === 'true';
+      // 'random' no se cachea por su clave (devolvería siempre la misma imagen
+      // durante el TTL); se cachea por la fecha resuelta que devuelve la NASA.
+      if (!random) {
+        const cacheKey = `apod:${date || 'today'}`;
+        const cached = await getCached<APODData>(env.CACHE, cacheKey);
+        if (cached) return jsonResponse(cached, origin, env);
 
-        // 'random' no se cachea por su clave (devolvería siempre la misma imagen
-        // durante el TTL); se cachea por la fecha resuelta que devuelve la NASA.
-        if (!random) {
-          const cacheKey = `apod:${date || 'today'}`;
-          const cached = await getCached<APODData>(env.CACHE, cacheKey);
-          if (cached) return jsonResponse(cached, origin, env);
-
-          const data = await fetchAPOD(env, date);
-          await setCached(env.CACHE, cacheKey, data, 21600);
-          return jsonResponse(data, origin, env);
-        }
-
-        const data = await fetchAPOD(env, undefined, true);
-        if (data.date) {
-          await setCached(env.CACHE, `apod:${data.date}`, data, 21600);
-        }
+        const data = await fetchAPOD(env, date);
+        await setCached(env.CACHE, cacheKey, data, 21600);
         return jsonResponse(data, origin, env);
       }
 
-      if (url.pathname === '/api/news' && request.method === 'GET') {
-        const filterParam = url.searchParams.get('filter') || 'all';
-        const filter = NEWS_FILTERS.has(filterParam) ? filterParam : 'all';
-        const pageParam = url.searchParams.get('page');
-        const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : null;
-        const PAGE_SIZE = 10;
+      const data = await fetchAPOD(env, undefined, true);
+      if (data.date) {
+        await setCached(env.CACHE, `apod:${data.date}`, data, 21600);
+      }
+      return jsonResponse(data, origin, env);
+    }
 
-        const paginate = (articles: NewsArticle[]): { articles: NewsArticle[] } =>
-          page
-            ? { articles: articles.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) }
-            : { articles };
+    if (url.pathname === '/api/news' && request.method === 'GET') {
+      const filterParam = url.searchParams.get('filter') || 'all';
+      const filter = NEWS_FILTERS.has(filterParam) ? filterParam : 'all';
+      const pageParam = url.searchParams.get('page');
+      const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : null;
+      const PAGE_SIZE = 10;
 
-        const cacheKey = `news:${filter}`;
-        const cached = await getCached<{ articles: NewsArticle[] }>(env.CACHE, cacheKey);
-        if (cached) return jsonResponse(paginate(cached.articles), origin, env);
+      const paginate = (articles: NewsArticle[]): { articles: NewsArticle[] } =>
+        page
+          ? { articles: articles.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) }
+          : { articles };
 
-        const [guardian, arxiv, nasa, hackerNews] = await Promise.allSettled([
-          fetchGuardianNews(env),
-          fetchArXivNews(),
-          fetchNasaRSS(),
-          fetchHackerNews(),
-        ]);
-        const all: NewsArticle[] = [];
-        if (guardian.status === 'fulfilled') all.push(...guardian.value);
-        if (arxiv.status === 'fulfilled') all.push(...arxiv.value);
-        if (nasa.status === 'fulfilled') all.push(...nasa.value);
-        if (hackerNews.status === 'fulfilled') all.push(...hackerNews.value);
+      const cacheKey = `news:${filter}`;
+      const cached = await getCached<{ articles: NewsArticle[] }>(env.CACHE, cacheKey);
+      if (cached) return jsonResponse(paginate(cached.articles), origin, env);
 
-        const unique = all.filter((a, i, self) => i === self.findIndex(x => x.title === a.title));
-        const articles = filterNews(unique, filter)
-          .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-          .slice(0, 20);
-        const result = { articles };
-        await setCached(env.CACHE, cacheKey, result, 900);
-        return jsonResponse(paginate(articles), origin, env);
+      const [guardian, arxiv, nasa, hackerNews] = await Promise.allSettled([
+        fetchGuardianNews(env),
+        fetchArXivNews(),
+        fetchNasaRSS(),
+        fetchHackerNews(),
+      ]);
+      const all: NewsArticle[] = [];
+      if (guardian.status === 'fulfilled') all.push(...guardian.value);
+      if (arxiv.status === 'fulfilled') all.push(...arxiv.value);
+      if (nasa.status === 'fulfilled') all.push(...nasa.value);
+      if (hackerNews.status === 'fulfilled') all.push(...hackerNews.value);
+
+      const unique = all.filter((a, i, self) => i === self.findIndex(x => x.title === a.title));
+      const articles = filterNews(unique, filter)
+        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+        .slice(0, 20);
+      const result = { articles };
+      await setCached(env.CACHE, cacheKey, result, 900);
+      return jsonResponse(paginate(articles), origin, env);
+    }
+
+    // Acepta { text } → { translatedText } o, por lotes, { texts } → { translations }.
+    if (url.pathname === '/api/translate' && request.method === 'POST') {
+      const body = await readJson<{ text?: unknown; texts?: unknown }>(request);
+      const clip = (value: unknown) =>
+        typeof value === 'string' ? value.slice(0, TRANSLATE_MAX_CHARS) : '';
+      const batch = Array.isArray(body.texts);
+      const texts = batch ? (body.texts as unknown[]).map(clip) : [clip(body.text)];
+      if (texts.length > TRANSLATE_MAX_BATCH) {
+        return jsonResponse(
+          { error: `Máximo ${TRANSLATE_MAX_BATCH} textos por petición` },
+          origin,
+          env,
+          400
+        );
       }
 
-      // Acepta { text } → { translatedText } o, por lotes, { texts } → { translations }.
-      if (url.pathname === '/api/translate' && request.method === 'POST') {
-        const body = await readJson<{ text?: unknown; texts?: unknown }>(request);
-        const clip = (value: unknown) =>
-          typeof value === 'string' ? value.slice(0, TRANSLATE_MAX_CHARS) : '';
-        const batch = Array.isArray(body.texts);
-        const texts = batch ? (body.texts as unknown[]).map(clip) : [clip(body.text)];
-        if (texts.length > TRANSLATE_MAX_BATCH) {
-          return jsonResponse(
-            { error: `Máximo ${TRANSLATE_MAX_BATCH} textos por petición` },
-            origin,
-            env,
-            400
-          );
+      if (await isRateLimited(env.TRANSLATE_LIMITER, request)) {
+        return jsonResponse({ error: 'Demasiadas peticiones' }, origin, env, 429);
+      }
+      const translations = await Promise.all(
+        texts.map(text => (text.trim() ? translateCached(env, text) : text))
+      );
+      return jsonResponse(
+        batch ? { translations } : { translatedText: translations[0] },
+        origin,
+        env
+      );
+    }
+
+    if (url.pathname === '/api/chat' && request.method === 'POST') {
+      const body = await readJson<{
+        message?: unknown;
+        history?: unknown;
+        stream?: boolean;
+      }>(request);
+      const message =
+        typeof body.message === 'string'
+          ? body.message.trim().slice(0, CHAT_MAX_MESSAGE_CHARS)
+          : '';
+      if (!message) return jsonResponse({ error: 'Mensaje vacío' }, origin, env, 400);
+
+      if (await isRateLimited(env.CHAT_LIMITER, request)) {
+        return jsonResponse(
+          { error: 'Demasiadas peticiones. Espera un momento.' },
+          origin,
+          env,
+          429
+        );
+      }
+
+      // Solo turnos user/assistant: el cliente nunca puede inyectar mensajes 'system'.
+      const history = (Array.isArray(body.history) ? body.history : [])
+        .filter(
+          (h): h is { role: 'user' | 'assistant'; content: string } =>
+            typeof h === 'object' &&
+            h !== null &&
+            (h.role === 'user' || h.role === 'assistant') &&
+            typeof h.content === 'string'
+        )
+        .slice(-CHAT_MAX_HISTORY);
+      const messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...history.map(h => ({
+          role: h.role,
+          content: h.content.slice(0, CHAT_MAX_MESSAGE_CHARS),
+        })),
+        { role: 'user', content: message },
+      ];
+
+      try {
+        if (body.stream) {
+          const stream = (await env.AI.run(CHAT_MODEL, {
+            messages,
+            max_tokens: CHAT_MAX_TOKENS,
+            stream: true,
+          })) as ReadableStream;
+
+          return new Response(stream, {
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              ...corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
+            },
+          });
         }
 
-        if (await isRateLimited(env.TRANSLATE_LIMITER, request)) {
-          return jsonResponse({ error: 'Demasiadas peticiones' }, origin, env, 429);
-        }
-        const translations = await Promise.all(
-          texts.map(text => (text.trim() ? translateCached(env, text) : text))
-        );
+        const result = await env.AI.run(CHAT_MODEL, {
+          messages,
+          max_tokens: CHAT_MAX_TOKENS,
+        });
+
+        const text =
+          typeof result === 'object' && result !== null && 'response' in result
+            ? String((result as { response: string }).response)
+            : String(result);
+
+        return jsonResponse({ response: text }, origin, env);
+      } catch {
         return jsonResponse(
-          batch ? { translations } : { translatedText: translations[0] },
+          {
+            response:
+              'El asistente no está disponible temporalmente. Prueba los comandos: help, cv, projects, apod.',
+          },
           origin,
           env
         );
       }
-
-      if (url.pathname === '/api/chat' && request.method === 'POST') {
-        const body = await readJson<{
-          message?: unknown;
-          history?: unknown;
-          stream?: boolean;
-        }>(request);
-        const message =
-          typeof body.message === 'string'
-            ? body.message.trim().slice(0, CHAT_MAX_MESSAGE_CHARS)
-            : '';
-        if (!message) return jsonResponse({ error: 'Mensaje vacío' }, origin, env, 400);
-
-        if (await isRateLimited(env.CHAT_LIMITER, request)) {
-          return jsonResponse(
-            { error: 'Demasiadas peticiones. Espera un momento.' },
-            origin,
-            env,
-            429
-          );
-        }
-
-        // Solo turnos user/assistant: el cliente nunca puede inyectar mensajes 'system'.
-        const history = (Array.isArray(body.history) ? body.history : [])
-          .filter(
-            (h): h is { role: 'user' | 'assistant'; content: string } =>
-              typeof h === 'object' &&
-              h !== null &&
-              (h.role === 'user' || h.role === 'assistant') &&
-              typeof h.content === 'string'
-          )
-          .slice(-CHAT_MAX_HISTORY);
-        const messages = [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...history.map(h => ({
-            role: h.role,
-            content: h.content.slice(0, CHAT_MAX_MESSAGE_CHARS),
-          })),
-          { role: 'user', content: message },
-        ];
-
-        try {
-          if (body.stream) {
-            const stream = (await env.AI.run(CHAT_MODEL, {
-              messages,
-              max_tokens: CHAT_MAX_TOKENS,
-              stream: true,
-            })) as ReadableStream;
-
-            return new Response(stream, {
-              headers: {
-                'Content-Type': 'text/event-stream',
-                'Cache-Control': 'no-cache',
-                ...corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
-              },
-            });
-          }
-
-          const result = await env.AI.run(CHAT_MODEL, {
-            messages,
-            max_tokens: CHAT_MAX_TOKENS,
-          });
-
-          const text =
-            typeof result === 'object' && result !== null && 'response' in result
-              ? String((result as { response: string }).response)
-              : String(result);
-
-          return jsonResponse({ response: text }, origin, env);
-        } catch {
-          return jsonResponse(
-            {
-              response:
-                'El asistente no está disponible temporalmente. Prueba los comandos: help, cv, projects, apod.',
-            },
-            origin,
-            env
-          );
-        }
-      }
-
-      if (url.pathname === '/api/contact' && request.method === 'POST') {
-        const body = (await request.json().catch(() => ({}))) as {
-          name?: string;
-          email?: string;
-          message?: string;
-          website?: string; // honeypot anti-bots
-        };
-
-        // Honeypot: los bots rellenan el campo oculto 'website'. Fingimos éxito.
-        if (body.website) return jsonResponse({ ok: true }, origin, env);
-
-        const str = (v: unknown, max: number) =>
-          typeof v === 'string' ? v.trim().slice(0, max) : '';
-        // Sin saltos de línea en nombre/email: acaban en cabeceras (Subject, Reply-To).
-        const name = str(body.name, 100).replace(/[\r\n]+/g, ' ');
-        const email = str(body.email, 200);
-        const message = str(body.message, 2000);
-        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-        if (!name || !emailOk || message.length < 5) {
-          return jsonResponse(
-            { ok: false, error: 'Revisa el nombre, el email y el mensaje (mínimo 5 caracteres).' },
-            origin,
-            env,
-            400
-          );
-        }
-
-        if (await isRateLimited(env.CONTACT_LIMITER, request)) {
-          return jsonResponse(
-            { ok: false, error: 'Has enviado demasiados mensajes. Inténtalo más tarde.' },
-            origin,
-            env,
-            429
-          );
-        }
-
-        // Rate limit por IP: 3 mensajes/hora (KV, complementa al binding por minuto).
-        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-        const rlKey = `contact:${await hashKey(ip)}`;
-        const count = (await getCached<number>(env.CACHE, rlKey)) || 0;
-        if (count >= 3) {
-          return jsonResponse(
-            { ok: false, error: 'Has enviado demasiados mensajes. Inténtalo más tarde.' },
-            origin,
-            env,
-            429
-          );
-        }
-
-        try {
-          await env.EMAIL.send({
-            to: env.CONTACT_TO || 'webmaster@gusi.dev',
-            from: { email: 'contacto@gusi.dev', name: 'Contacto gusi.dev' },
-            replyTo: email,
-            subject: `[gusi.dev] Mensaje de ${name}`,
-            text: `De: ${name} <${email}>\n\n${message}`,
-            html: `<p><strong>De:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><p style="white-space:pre-wrap">${escapeHtml(message)}</p>`,
-          });
-        } catch (err) {
-          const code = (err as { code?: string })?.code || '';
-          const friendly =
-            code === 'E_SENDER_NOT_VERIFIED' || code === 'E_SENDER_DOMAIN_NOT_AVAILABLE'
-              ? 'El envío de email aún no está configurado en el servidor.'
-              : 'No se pudo enviar el mensaje. Inténtalo más tarde.';
-          return jsonResponse({ ok: false, error: friendly }, origin, env, 502);
-        }
-
-        await setCached(env.CACHE, rlKey, count + 1, 3600);
-        return jsonResponse({ ok: true }, origin, env);
-      }
-
-      return jsonResponse({ error: 'Not found' }, origin, env, 404);
-    } catch (error) {
-      if (error instanceof HttpError) {
-        return jsonResponse({ error: error.message }, origin, env, error.status);
-      }
-      // No exponer detalles internos al cliente; quedan en los logs del Worker.
-      console.error('Unhandled error', url.pathname, error);
-      return jsonResponse({ error: 'Error interno' }, origin, env, 500);
     }
-  },
+
+    if (url.pathname === '/api/contact' && request.method === 'POST') {
+      const body = (await request.json().catch(() => ({}))) as {
+        name?: string;
+        email?: string;
+        message?: string;
+        website?: string; // honeypot anti-bots
+      };
+
+      // Honeypot: los bots rellenan el campo oculto 'website'. Fingimos éxito.
+      if (body.website) return jsonResponse({ ok: true }, origin, env);
+
+      const str = (v: unknown, max: number) =>
+        typeof v === 'string' ? v.trim().slice(0, max) : '';
+      // Sin saltos de línea en nombre/email: acaban en cabeceras (Subject, Reply-To).
+      const name = str(body.name, 100).replace(/[\r\n]+/g, ' ');
+      const email = str(body.email, 200);
+      const message = str(body.message, 2000);
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      if (!name || !emailOk || message.length < 5) {
+        return jsonResponse(
+          { ok: false, error: 'Revisa el nombre, el email y el mensaje (mínimo 5 caracteres).' },
+          origin,
+          env,
+          400
+        );
+      }
+
+      if (await isRateLimited(env.CONTACT_LIMITER, request)) {
+        return jsonResponse(
+          { ok: false, error: 'Has enviado demasiados mensajes. Inténtalo más tarde.' },
+          origin,
+          env,
+          429
+        );
+      }
+
+      // Rate limit por IP: 3 mensajes/hora (KV, complementa al binding por minuto).
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const rlKey = `contact:${await hashKey(ip)}`;
+      const count = (await getCached<number>(env.CACHE, rlKey)) || 0;
+      if (count >= 3) {
+        return jsonResponse(
+          { ok: false, error: 'Has enviado demasiados mensajes. Inténtalo más tarde.' },
+          origin,
+          env,
+          429
+        );
+      }
+
+      try {
+        await env.EMAIL.send({
+          to: env.CONTACT_TO || 'webmaster@gusi.dev',
+          from: { email: 'contacto@gusi.dev', name: 'Contacto gusi.dev' },
+          replyTo: email,
+          subject: `[gusi.dev] Mensaje de ${name}`,
+          text: `De: ${name} <${email}>\n\n${message}`,
+          html: `<p><strong>De:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><p style="white-space:pre-wrap">${escapeHtml(message)}</p>`,
+        });
+      } catch (err) {
+        const code = (err as { code?: string })?.code || '';
+        const friendly =
+          code === 'E_SENDER_NOT_VERIFIED' || code === 'E_SENDER_DOMAIN_NOT_AVAILABLE'
+            ? 'El envío de email aún no está configurado en el servidor.'
+            : 'No se pudo enviar el mensaje. Inténtalo más tarde.';
+        return jsonResponse({ ok: false, error: friendly }, origin, env, 502);
+      }
+
+      await setCached(env.CACHE, rlKey, count + 1, 3600);
+      return jsonResponse({ ok: true }, origin, env);
+    }
+
+    return jsonResponse({ error: 'Not found' }, origin, env, 404);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return jsonResponse({ error: error.message }, origin, env, error.status);
+    }
+    // No exponer detalles internos al cliente; quedan en los logs del Worker.
+    console.error('Unhandled error', url.pathname, error);
+    return jsonResponse({ error: 'Error interno' }, origin, env, 500);
+  }
 };

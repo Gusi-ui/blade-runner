@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import worker, { type Env } from './index';
+import worker, { cacheControlFor, type Env } from './index';
 
 const makeEnv = (overrides: Partial<Record<keyof Env, unknown>> = {}): Env => {
   const store = new Map<string, string>();
@@ -9,6 +9,7 @@ const makeEnv = (overrides: Partial<Record<keyof Env, unknown>> = {}): Env => {
       put: async (k: string, v: string) => void store.set(k, v),
     },
     AI: { run: vi.fn(async () => ({ response: 'hola' })) },
+    ASSETS: { fetch: vi.fn(async () => new Response('<html></html>', { status: 200 })) },
     EMAIL: { send: vi.fn(async () => ({ messageId: '1' })) },
     ALLOWED_ORIGIN: 'https://gusi.dev',
     CONTACT_TO: 'webmaster@gusi.dev',
@@ -37,6 +38,17 @@ describe('worker /api/apod', () => {
       expect(fetchMock).not.toHaveBeenCalled();
     }
   );
+
+  it('apod aleatorio reintenta con otra fecha si la NASA falla', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('', { status: 500 }))
+      .mockResolvedValueOnce(Response.json({ title: 't', date: '2001-01-01', url: 'https://x' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await call('/api/apod?random=true');
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 
   it('acepta una fecha válida', async () => {
     vi.stubGlobal(
@@ -162,5 +174,49 @@ describe('worker /api/translate', () => {
       makeEnv({ AI: { run } })
     );
     expect(await res.json()).toEqual({ translatedText: 'M2M(hi)' });
+  });
+});
+
+describe('worker: web estática', () => {
+  it('redirige www a gusi.dev conservando ruta y query', async () => {
+    const res = await worker.fetch(new Request('https://www.gusi.dev/#x?y'), makeEnv());
+    expect(res.status).toBe(301);
+    const res2 = await worker.fetch(new Request('https://www.gusi.dev/sw.js?v=1'), makeEnv());
+    expect(res2.headers.get('Location')).toBe('https://gusi.dev/sw.js?v=1');
+  });
+
+  it('sirve la web desde ASSETS con cabeceras de seguridad y caché', async () => {
+    const env = makeEnv();
+    const res = await worker.fetch(new Request('https://gusi.dev/'), env);
+    expect(env.ASSETS.fetch).toHaveBeenCalled();
+    expect(res.headers.get('Cache-Control')).toBe('no-cache');
+    expect(res.headers.get('Strict-Transport-Security')).toContain('max-age=');
+    expect(res.headers.get('X-Frame-Options')).toBe('DENY');
+    expect(res.headers.get('X-Robots-Tag')).toBeNull();
+  });
+
+  it('no indexa el entorno de staging', async () => {
+    const res = await worker.fetch(
+      new Request('https://dev.gusi.dev/'),
+      makeEnv({ ENVIRONMENT: 'staging' })
+    );
+    expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+  });
+
+  it('no envía /api/* a ASSETS', async () => {
+    const env = makeEnv();
+    const res = await worker.fetch(new Request('https://gusi.dev/api/health'), env);
+    expect(res.status).toBe(200);
+    expect(env.ASSETS.fetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['/_astro/index.abc123.css', 'public, max-age=31536000, immutable'],
+    ['/', 'no-cache'],
+    ['/index.html', 'no-cache'],
+    ['/sw.js', 'no-cache'],
+    ['/og.png', 'public, max-age=3600'],
+  ])('Cache-Control de %s', (path, expected) => {
+    expect(cacheControlFor(path)).toBe(expected);
   });
 });

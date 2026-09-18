@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
@@ -71,6 +71,8 @@ jobs:
         working-directory: workers
         run: pnpm exec tsc --noEmit
 
-      - name: Dry-run del Worker
+      - name: Dry-run del Worker (producción y staging)
         working-directory: workers
-        run: pnpm exec wrangler deploy --dry-run
+        run: |
+          pnpm exec wrangler deploy --dry-run --env=""
+          pnpm exec wrangler deploy --dry-run --env staging

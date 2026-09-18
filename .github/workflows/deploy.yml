@@ -1,5 +1,8 @@
 name: Deploy to GitHub Pages
 
+# TRANSICIÓN: la web ya la sirve el Worker (deploy-worker.yml). Pages se mantiene
+# unos días como vuelta atrás rápida (quitar las rutas del Worker) y luego se elimina.
+
 on:
   push:
     branches: [main]

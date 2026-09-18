@@ -5,9 +5,20 @@
   // sesión o una caché antigua. El Account ID no es secreto.
   "account_id": "1f7c0d40473dbca21d83ed0495b171db",
   "main": "src/index.ts",
-  // La API se sirve en el mismo dominio que la web (sin CORS ni URL *.workers.dev).
-  // El resto de gusi.dev sigue yendo a GitHub Pages.
-  "routes": [{ "pattern": "gusi.dev/api/*", "zone_name": "gusi.dev" }],
+  // Este Worker sirve la web (dist/ de Astro) y la API (/api/*). Recibe todas las
+  // peticiones para poder redirigir www y fijar cabeceras de caché/seguridad.
+  // Compilar la web (pnpm build en la raíz) antes de desplegar.
+  "assets": {
+    "directory": "../dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+  },
+  // Producción (rama main). El DNS de gusi.dev no cambia: estas rutas tienen
+  // prioridad sobre el origen (GitHub Pages). Para volver atrás, quitar las rutas.
+  "routes": [
+    { "pattern": "gusi.dev/*", "zone_name": "gusi.dev" },
+    { "pattern": "www.gusi.dev/*", "zone_name": "gusi.dev" },
+  ],
   "compatibility_date": "2026-09-01",
   "observability": {
     "enabled": true,
@@ -44,5 +55,52 @@
   "vars": {
     "ALLOWED_ORIGIN": "https://gusi.dev",
     "CONTACT_TO": "webmaster@gusi.dev",
+    "ENVIRONMENT": "production",
+  },
+
+  "env": {
+    // Staging (rama develop) en https://dev.gusi.dev: mismo código y datos, para
+    // probar antes de pasar a producción. Las bindings no se heredan: se repiten.
+    // Secretos propios (opcionales): wrangler secret put NASA_API_KEY --env staging
+    "staging": {
+      "name": "blade-runner-staging",
+      "routes": [{ "pattern": "dev.gusi.dev", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      // KV propio: si compartiera el de producción, staging podría dejarle datos
+      // cacheados erróneos (pasó con las noticias sin claves de la API).
+      "kv_namespaces": [
+        {
+          "binding": "CACHE",
+          "id": "924b3cb56c6c44768c703e1325ae2df1",
+        },
+      ],
+      "ai": {
+        "binding": "AI",
+      },
+      "send_email": [{ "name": "EMAIL" }],
+      "ratelimits": [
+        {
+          "name": "CHAT_LIMITER",
+          "namespace_id": "2001",
+          "simple": { "limit": 10, "period": 60 },
+        },
+        {
+          "name": "TRANSLATE_LIMITER",
+          "namespace_id": "2003",
+          "simple": { "limit": 120, "period": 60 },
+        },
+        {
+          "name": "CONTACT_LIMITER",
+          "namespace_id": "2002",
+          "simple": { "limit": 2, "period": 60 },
+        },
+      ],
+      "vars": {
+        "ALLOWED_ORIGIN": "https://dev.gusi.dev",
+        "CONTACT_TO": "webmaster@gusi.dev",
+        "ENVIRONMENT": "staging",
+      },
+    },
   },
 }
