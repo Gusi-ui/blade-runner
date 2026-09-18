@@ -12,7 +12,6 @@ const script = buildLiveScript(profile, projects.length);
   type="button"
   data-open-terminal
   class="live-terminal card w-full p-0 text-left font-mono text-sm"
-  aria-label="Abrir la terminal interactiva"
 >
   <span class="border-line flex items-center gap-1.5 border-b px-3 py-2" aria-hidden="true">
     <i class="bg-line-strong size-2 rounded-full"></i>
@@ -36,15 +35,12 @@ const script = buildLiveScript(profile, projects.length);
 </button>
 
 <script>
-  import { profile } from '../../data/profile';
-  import { projects } from '../../data/projects';
-  import { buildLiveScript, renderLive } from '../../lib/site/liveTerminal';
+  import { readLiveScript, renderLive } from '../../lib/site/liveTerminal';
 
+  // El guion ya viene escrito en el HTML: se lee de ahí (sin importar los datos).
   const el = document.querySelector<HTMLElement>('[data-live-output]');
   const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (el && !instant) {
-    void renderLive(el, buildLiveScript(profile, projects.length), { instant });
-  }
+  if (el && !instant) void renderLive(el, readLiveScript(el), { instant });
 </script>
 
 <style>

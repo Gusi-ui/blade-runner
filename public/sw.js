@@ -4,7 +4,7 @@
 // - /_astro/* (nombres con hash, inmutables): caché primero.
 // - Resto de estáticos: se sirve la caché y se revalida en segundo plano.
 // - /api/*: nunca se cachea.
-const CACHE_NAME = 'nexus-terminal-v4';
+const CACHE_NAME = 'nexus-terminal-v5';
 const SHELL_ASSETS = ['/', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', event => {
@@ -42,7 +42,9 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
 
-  if (request.mode === 'navigate') {
+  // Navegación y plantillas de la terminal: red primero (nunca HTML viejo con
+  // código nuevo tras un despliegue).
+  if (request.mode === 'navigate' || url.pathname.startsWith('/terminal-vistas')) {
     event.respondWith(
       fetch(request)
         .then(response => putInCache(request, response))

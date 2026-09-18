@@ -89,6 +89,20 @@ test.describe('aspecto de la terminal', () => {
   });
 });
 
+test.describe('efecto retro', () => {
+  test('apagado por defecto', async ({ terminal, page }) => {
+    await terminal.run('help');
+    await expect(page.locator('#terminal-sheet canvas.matrix-bg')).toHaveCount(0);
+  });
+
+  test('se activa desde config y dibuja dentro de la capa', async ({ terminal, page }) => {
+    await terminal.run('config');
+    await terminal.last.getByRole('button', { name: /efect/i }).first().click();
+    await page.locator('[data-effect="toggle"]').last().click();
+    await expect(page.locator('#terminal-sheet canvas.matrix-bg')).toHaveCount(1);
+  });
+});
+
 test.describe('comandos básicos', () => {
   test('help lista los comandos', async ({ terminal }) => {
     await terminal.run('help');
@@ -192,6 +206,26 @@ test.describe('APOD', () => {
       });
       await expect(terminal.last.locator('.apod-title')).toHaveText(translated(APOD_TODAY.title));
     }
+  });
+
+  test('la imagen a pantalla completa se ve por encima de la terminal', async ({
+    terminal,
+    page,
+  }) => {
+    test.skip(live, 'depende de la imagen simulada');
+    await terminal.run('apod');
+    await terminal.last.locator('.apod-image').click();
+    const overlay = page.locator('#apod-fullscreen-overlay');
+    await expect(overlay).toBeVisible();
+    // Visible de verdad: el elemento en el centro de la pantalla es el visor.
+    const onTop = await page.evaluate(() => {
+      const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return !!el?.closest('#apod-fullscreen-overlay');
+    });
+    expect(onTop).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(overlay).toBeHidden();
+    await expect(page.locator('#terminal-sheet')).toBeVisible();
   });
 
   test('apod random carga una imagen aleatoria', async ({ terminal }) => {

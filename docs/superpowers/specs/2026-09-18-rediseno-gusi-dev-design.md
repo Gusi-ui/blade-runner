@@ -33,7 +33,7 @@ Criterios de éxito:
 - **Colores** (tokens únicos vía `@theme` de Tailwind 4):
   - `--color-bg` `#0b0d10` · `--color-surface` `#0f1317` · `--color-surface-2` `#11151a`
   - `--color-border` `#1f262e` / `#2b333d`
-  - `--color-text` `#c9d1db` · `--color-text-strong` `#f5f7fa` · `--color-muted` `#6b7684`
+  - `--color-text` `#c9d1db` · `--color-text-strong` `#f5f7fa` · `--color-muted` `#7d8896` (subido desde #6b7684 tras Lighthouse para cumplir AA)
   - `--color-accent` `#4ade80` · `--color-accent-ink` `#04140a` (texto sobre acento)
 - **Tipografía:** Space Grotesk (textos y titulares) y JetBrains Mono (terminal, etiquetas técnicas `// sección`, tags). Autoalojadas (paquetes `@fontsource-variable/*`), con `font-display: swap` y precarga del peso principal.
 - **Radios:** 10–12 px en tarjetas y botones; botones principales en verde sólido, secundarios con borde.

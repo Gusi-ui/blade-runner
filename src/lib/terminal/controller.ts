@@ -363,22 +363,3 @@ export class TerminalController {
     if (scroller) scroller.scrollTop = scroller.scrollHeight;
   }
 }
-
-/** Reloj de la cabecera ("CONECTADO: ..."), actualizado cada segundo. */
-export const startHeaderClock = (): void => {
-  const update = (): void => {
-    const datetimeEl = document.getElementById('terminal-datetime');
-    if (datetimeEl) {
-      datetimeEl.textContent = new Date().toLocaleString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-    }
-  };
-  update();
-  setInterval(update, 1000);
-};

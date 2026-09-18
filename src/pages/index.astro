@@ -1,14 +1,5 @@
 ---
 import TerminalSheet from '../components/TerminalSheet.astro';
-import Menu from '../components/Menu.astro';
-import NewsFeed from '../components/NewsFeed.astro';
-import CV from '../components/CV.astro';
-import Projects from '../components/Projects.astro';
-import Games from '../components/Games.astro';
-import CosmicCalculator from '../components/CosmicCalculator.astro';
-import APOD from '../components/APOD.astro';
-import Chat from '../components/Chat.astro';
-import Contact from '../components/Contact.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AboutSection from '../components/site/AboutSection.astro';
 import ContactSection from '../components/site/ContactSection.astro';
@@ -36,18 +27,33 @@ const description =
   <!-- Terminal en capa a pantalla completa -->
   <TerminalSheet />
 
-  <!-- Componentes Ocultos (se cargan dinámicamente) -->
-  <Menu />
-  <NewsFeed />
-  <CV />
-  <Projects />
-  <Games />
-  <CosmicCalculator />
-  <APOD />
-  <Chat />
-  <Contact />
-
   <script>
+    // Arranque ligero de la terminal: su código y el de sus vistas se descargan
+    // al abrirla por primera vez (lazy.ts). Aquí solo se decide cuándo.
+    import { classifyHash } from '../lib/terminal/hashRoute';
+    import { VIEW_TOKENS } from '../lib/terminal/viewTokens';
+
+    const load = () => import('../lib/terminal/lazy').then(m => m.ensureTerminal());
+
+    // Enlaces #terminal, #apod, #news…: cargar; el controlador abre la vista.
+    const target = classifyHash(location.hash, token => VIEW_TOKENS.includes(token));
+    if (target.kind === 'terminal' || target.kind === 'view') void load();
+    // Enlaces antiguos (#cv, #projects…) → su sección nueva de la página.
+    if (target.kind === 'section' && location.hash.slice(1) !== target.id) {
+      history.replaceState(null, '', `#${target.id}`);
+      document.getElementById(target.id)?.scrollIntoView();
+    }
+
+    // Primer toque en la terminal viva (luego lo gestiona la propia capa).
+    document.addEventListener('click', e => {
+      const trigger = (e.target as HTMLElement | null)?.closest<HTMLElement>(
+        '[data-open-terminal]'
+      );
+      if (!trigger || window.terminalSheet) return;
+      e.preventDefault();
+      void load().then(sheet => sheet.open(trigger.dataset.command));
+    });
+
     // Tema guardado de la terminal (solo cambia el acento dentro de la capa).
     try {
       const savedTheme = localStorage.getItem('nexus-theme');

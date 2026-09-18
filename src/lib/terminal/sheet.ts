@@ -29,6 +29,7 @@ export const createTerminalSheet = (
     dialog.showModal();
     document.documentElement.classList.add('sheet-open');
     window.visualViewport?.addEventListener('resize', fitToViewport);
+    document.dispatchEvent(new CustomEvent('sheetopen'));
     focusInput();
   };
 

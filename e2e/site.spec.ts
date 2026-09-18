@@ -74,6 +74,29 @@ test.describe('secciones', () => {
   });
 });
 
+test.describe('peso de la página', () => {
+  test('no descarga la terminal hasta abrirla', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    const js = await page.evaluate(() =>
+      performance
+        .getEntriesByType('resource')
+        .filter(r => r.name.endsWith('.js'))
+        .map(r => ({ name: r.name, size: (r as PerformanceResourceTiming).decodedBodySize }))
+    );
+    // Ni el controlador ni las vistas; el HTML tampoco lleva sus plantillas.
+    expect(js.some(r => /controller|mount|views|calculator|NewsFeed|APOD/i.test(r.name))).toBe(
+      false
+    );
+    expect(js.reduce((n, r) => n + r.size, 0)).toBeLessThan(20_000);
+    expect(await page.content()).not.toContain('calculator-component');
+
+    await page.locator('[data-open-terminal]').first().click();
+    await expect(page.locator('#terminal-input')).toBeVisible();
+    await expect(page.locator('#terminal-view-templates #calculator-component')).toBeAttached();
+  });
+});
+
 test.describe('terminal en capa', () => {
   test('se abre al tocar y se cierra con ✕, Esc y atrás', async ({ page }) => {
     await page.goto('/');
@@ -110,6 +133,17 @@ test.describe('terminal en capa', () => {
     expect(Math.round(top)).toBeGreaterThanOrEqual(0);
     const sheetTop = await page.locator('#terminal-sheet').evaluate(d => d.scrollTop);
     expect(sheetTop).toBe(0);
+  });
+
+  test('recién abierta, la entrada queda abajo de la pantalla', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-open-terminal]').first().click();
+    const gap = await page.evaluate(() => {
+      const footer = document.querySelector('.terminal-footer')!.getBoundingClientRect();
+      const sheet = document.getElementById('terminal-sheet')!.getBoundingClientRect();
+      return sheet.bottom - footer.bottom;
+    });
+    expect(gap).toBeLessThan(2);
   });
 
   test('los atajos y la ruta cambian con la vista', async ({ page }) => {
