@@ -39,3 +39,6 @@ dist-e2e/
 
 # Estado local de wrangler dev (KV, caché, trazas)
 .wrangler/
+
+# Maquetas del brainstorming visual
+.superpowers/
