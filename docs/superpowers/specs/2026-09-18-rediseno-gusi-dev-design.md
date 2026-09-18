@@ -17,16 +17,16 @@ Criterios de éxito:
 
 ## 2. Decisiones tomadas
 
-| Tema                                                         | Decisión                                                                                                                   |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| Concepto                                                     | Terminal renovada (no portfolio clásico ni cambio total).                                                                  |
-| Objetivo                                                     | Captar clientes / empleo.                                                                                                  |
-| Dirección visual                                             | **B · Terminal moderna**: fondo gris muy oscuro, verde como único acento, terminal como ventana.                           |
-| Estructura móvil                                             | **C · Página con terminal viva**: una página vertical; arriba una terminal que escribe sola y al tocarla se usa de verdad. |
-| Extras (noticias, APOD, juegos, calculadora, chat IA, temas) | **Solo desde la terminal** (sección «Laboratorio» del `help`). No aparecen en la página.                                   |
-| Proyectos destacados                                         | viandalucia.org, divermataro.org, irenepuigdemont.com, alamia.es (reales, en producción).                                  |
-| CV                                                           | Se sustituye por **«Sobre mí» + servicios**. El CV y los proyectos ficticios actuales se eliminan.                         |
-| Enfoque técnico                                              | **Página estática nueva + terminal a pantalla completa** que reutiliza el controlador actual.                              |
+| Tema                                                         | Decisión                                                                                                                                                           |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Concepto                                                     | Terminal renovada (no portfolio clásico ni cambio total).                                                                                                          |
+| Objetivo                                                     | Captar clientes / empleo.                                                                                                                                          |
+| Dirección visual                                             | **B · Terminal moderna**: fondo gris muy oscuro, verde como único acento, terminal como ventana.                                                                   |
+| Estructura móvil                                             | **C · Página con terminal viva**: una página vertical; arriba una terminal que escribe sola y al tocarla se usa de verdad.                                         |
+| Extras (noticias, APOD, juegos, calculadora, chat IA, temas) | **Solo desde la terminal** (sección «Laboratorio» del `help`). No aparecen en la página.                                                                           |
+| Proyectos destacados                                         | viandalucia.org, divermataro.org, irenepuigdemont.com y alamia.es («Mi estudio»), reales y en producción.                                                          |
+| CV                                                           | Se sustituye por **«Sobre mí» + servicios con tarifas** (mismos precios que alamia.es + proyectos a medida). El CV y los proyectos ficticios actuales se eliminan. |
+| Enfoque técnico                                              | **Página estática nueva + terminal a pantalla completa** que reutiliza el controlador actual.                                                                      |
 
 ## 3. Sistema visual
 
@@ -53,7 +53,7 @@ Orden de secciones (maqueta `pagina-movil.html`):
    - **`LiveTerminal`**: ventana con barra y 3 comandos que se escriben solos (`whoami`, `stack`, `proyectos --count`). Pie «▶ Toca para usar la terminal». Toda la ventana es un `<button>` accesible que abre la terminal completa.
    - Escritorio (≥ 1024 px): dos columnas, texto a la izquierda y terminal a la derecha.
 3. **`ProjectsSection`** (`#proyectos`): tarjeta por proyecto con captura, nombre, frase de valor para el cliente, tags de tecnología y enlace a la web. Móvil: 1 columna; tablet: 2; escritorio: 2×2.
-4. **`AboutSection`** (`#sobre-mi`): «Hola, soy Gusi» + 3–4 frases reales + lista numerada de servicios (01 Webs a medida · 02 Migración desde WordPress · 03 Mantenimiento y hosting) + stack.
+4. **`AboutSection`** (`#sobre-mi`): «Hola, soy Gusi» + 3 frases reales (incluida la presentación de alamia.es) + **tarifas**: las 4 de alamia.es con los **mismos precios** (Desarrollo web 250 € · Optimización 190 € · Backend y APIs 400 € · Mantenimiento 10 €/mes), cada una con «Contratar en alamia.es», y **Proyectos a medida** (presupuesto → `#contacto`). Estrategia acordada: diferenciar por tipo de cliente, no por precio.
 5. **`ContactSection`** (`#contacto`): el formulario actual (`/api/contact`, campo trampa `website`, límites del Worker) con el estilo nuevo, más email y GitHub.
 6. **`SiteFooter`**: © año, enlaces y guiño «escribe `help` en la terminal».
 
