@@ -2,3 +2,4 @@ pnpm-lock.yaml
 dist/
 .astro/
 node_modules/
+dist-e2e/

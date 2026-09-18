@@ -49,6 +49,24 @@ jobs:
       - name: Type-check y build (frontend)
         run: pnpm build
 
+      # Pruebas en navegador (API simulada): detectan vistas rotas, botones que no
+      # responden o una página sin estilos antes de que llegue a producción.
+      - name: Instalar Chromium para Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Pruebas e2e (Playwright)
+        run: pnpm test:e2e
+
+      - name: Subir informe de Playwright
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
       - name: Type-check Worker
         working-directory: workers
         run: pnpm exec tsc --noEmit

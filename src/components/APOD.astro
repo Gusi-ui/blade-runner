@@ -67,6 +67,8 @@
     // hay que consultar dentro de él, no con getElementById global (devolvía
     // siempre el primero/antiguo → la 2ª petición "no aparecía").
     private root: HTMLElement | null = null;
+    // Descarta resultados de cargas anteriores (p. ej. pulsar «Aleatoria» dos veces).
+    private loadId = 0;
 
     setRoot(el: HTMLElement | null): void {
       this.root = el;
@@ -126,37 +128,61 @@
       if (!apodContent) return;
 
       apodContent.innerHTML = '<div class="loading-dots">Cargando imagen astronómica</div>';
+      const id = ++this.loadId;
 
+      let data: APODData;
       try {
-        const data = await fetchAPOD(options);
-        await this.displayAPOD(data);
-        this.updateLastUpdateTime();
+        data = await fetchAPOD(options);
       } catch (error) {
         console.error('Error fetching APOD:', error);
-        this.displayError();
+        if (id === this.loadId) this.displayError();
+        return;
       }
+      if (id !== this.loadId) return;
+
+      // Se muestra ya en inglés y la traducción sustituye el texto al llegar:
+      // antes la vista esperaba a traducir y podía quedarse >20 s en «Cargando».
+      this.displayAPOD(data);
+      this.updateLastUpdateTime();
+      await this.translateAPOD(data, id);
     }
 
-    private async displayAPOD(data: APODData): Promise<void> {
-      const apodContent = this.content();
-      if (!apodContent) return;
-
-      // Título y explicación en paralelo (antes en serie → el doble de espera).
-      const [titleResult, explanationResult] = await Promise.all([
+    private async translateAPOD(data: APODData, id: number): Promise<void> {
+      const [title, explanation] = await Promise.all([
         translateToSpanish(data.title),
         translateToSpanish(data.explanation),
       ]);
-      const translatedTitle = titleResult.text;
-      const translatedExplanation = explanationResult.text;
+      const content = this.content();
+      if (id !== this.loadId || !content) return;
+
+      const set = (selector: string, text: string) => {
+        const el = content.querySelector(selector);
+        if (el) el.textContent = text;
+      };
+      set('.apod-title', title.text);
+      set('.apod-explanation', explanation.text);
+      content.querySelector('.apod-image')?.setAttribute('alt', title.text);
+      set(
+        '.apod-translation-note',
+        title.translated && explanation.translated
+          ? ''
+          : '[Traducción automática no disponible — texto en inglés]'
+      );
+    }
+
+    private displayAPOD(data: APODData): void {
+      const apodContent = this.content();
+      if (!apodContent) return;
+
+      const translatedTitle = data.title;
+      const translatedExplanation = data.explanation;
       const translationNote =
-        !titleResult.translated || !explanationResult.translated
-          ? '<div class="text-xs text-terminal-dim mt-2">[Traducción automática no disponible — texto en inglés]</div>'
-          : '';
+        '<div class="apod-translation-note text-xs text-terminal-dim mt-2">Traduciendo al español…</div>';
 
       let html = `
         <div class="border border-terminal-bright p-4 rounded">
           <div class="mb-4">
-            <div class="text-terminal-bright text-xl font-bold mb-2">
+            <div class="apod-title text-terminal-bright text-xl font-bold mb-2">
               ${this.escapeHtml(translatedTitle)}
             </div>
             <div class="text-sm text-terminal-dim">
@@ -212,7 +238,7 @@
       html += `
           <div class="mt-4">
             <div class="text-terminal-bright font-semibold mb-2 text-base">📖 Explicación:</div>
-            <div class="text-base leading-relaxed">
+            <div class="apod-explanation text-base leading-relaxed">
               ${this.escapeHtml(translatedExplanation)}
             </div>
           </div>

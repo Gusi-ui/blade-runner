@@ -16,6 +16,8 @@
     "type-check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:live": "E2E_LIVE=1 playwright test",
     "pre-commit": "pnpm lint:check && pnpm format:check && pnpm type-check && pnpm test",
     "prepare": "husky"
   },
@@ -28,6 +30,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "eslint": "^10.10.0",
     "eslint-plugin-astro": "^3.2.1",
     "husky": "^9.1.7",

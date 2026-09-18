@@ -125,16 +125,11 @@
     if (menuContainer && menuComponent) {
       menuContainer.innerHTML = menuComponent.innerHTML;
 
-      // Añadir event listeners a las opciones del menú
-      const menuItems = menuContainer.querySelectorAll('.menu-item');
-      menuItems.forEach(item => {
+      // Cada opción ejecuta su atajo numérico en la terminal.
+      menuContainer.querySelectorAll<HTMLElement>('.menu-row[data-option]').forEach(item => {
         item.addEventListener('click', () => {
-          const option = item.getAttribute('data-option');
-          const input = document.getElementById('terminal-input') as HTMLInputElement;
-          if (input && option) {
-            input.value = option;
-            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-          }
+          const option = item.dataset.option;
+          if (option) window.terminal?.run?.(option);
         });
       });
     }
