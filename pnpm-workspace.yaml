@@ -11,3 +11,5 @@ onlyBuiltDependencies:
 # Parches de seguridad en dependencias transitivas fijadas por terceros.
 overrides:
   yaml-language-server>yaml: ^2.8.3
+  # GHSA devalue < 5.9.1 (DoS), llega vía astro.
+  devalue: ^5.9.2
