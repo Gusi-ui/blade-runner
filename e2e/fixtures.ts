@@ -75,8 +75,13 @@ const installApiMocks = async (page: Page): Promise<void> => {
             'data: {"choices":[{"delta":{"content":"humano"}}]}\n\n' +
             'data: [DONE]\n\n',
         });
-      case '/api/contact':
-        return json({ ok: true });
+      case '/api/contact': {
+        // Como el Worker real: sin token de Turnstile, 403.
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        return body['cf-turnstile-response'] === TURNSTILE_TEST_TOKEN
+          ? json({ ok: true })
+          : json({ ok: false, error: 'turnstile' }, 403);
+      }
       default:
         return json({ error: 'not found' }, 404);
     }
@@ -89,7 +94,36 @@ const installApiMocks = async (page: Page): Promise<void> => {
   );
 };
 
-export const test = base.extend<{ terminal: Terminal }>({
+// Turnstile simulado: sin red ni reto real. Deja el token en el input oculto
+// como el widget de verdad y cuenta los reinicios.
+export const TURNSTILE_TEST_TOKEN = 'e2e-turnstile-token';
+const TURNSTILE_STUB = `
+  window.__turnstileResets = 0;
+  window.turnstile = {
+    render(el, opts) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'cf-turnstile-response';
+      input.value = '${TURNSTILE_TEST_TOKEN}';
+      el.appendChild(input);
+      el.dataset.action = opts.action;
+      return 'widget-1';
+    },
+    reset() { window.__turnstileResets++; },
+  };`;
+
+export const test = base.extend<{ terminal: Terminal; turnstileStub: void }>({
+  turnstileStub: [
+    async ({ page }, use) => {
+      if (!live) {
+        await page.route('https://challenges.cloudflare.com/turnstile/**', route =>
+          route.fulfill({ status: 200, contentType: 'text/javascript', body: TURNSTILE_STUB })
+        );
+      }
+      await use();
+    },
+    { auto: true },
+  ],
   terminal: async ({ page }, use) => {
     if (!live) await installApiMocks(page);
     const terminal = new Terminal(page);

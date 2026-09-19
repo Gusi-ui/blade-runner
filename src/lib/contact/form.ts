@@ -1,4 +1,5 @@
 import { getApiBase } from '../api/client';
+import { mountTurnstile, resetTurnstile, turnstileToken } from './turnstile';
 
 // Envío del formulario de contacto (página y vista de la terminal comparten
 // contrato: [data-contact-form] con [data-contact-status]). Delegado en document
@@ -32,12 +33,22 @@ export const installContactForm = (): void => {
       }
     };
 
+    // Turnstile: sin token todavía (widget cargando o reto sin completar) no se
+    // envía; el Worker lo rechazaría igualmente.
+    const token = turnstileToken(form);
+    if (!token) {
+      void mountTurnstile(form).catch(() => undefined);
+      setStatus('Un momento: completa la verificación de seguridad y vuelve a enviar.', 'error');
+      return;
+    }
+
     const data = new FormData(form);
     const payload = {
       name: String(data.get('name') || ''),
       email: String(data.get('email') || ''),
       message: String(data.get('message') || ''),
       website: String(data.get('website') || ''),
+      'cf-turnstile-response': token,
     };
 
     setStatus('Enviando…', 'pending');
@@ -62,6 +73,9 @@ export const installContactForm = (): void => {
     } catch {
       setStatus('No hay conexión con el servidor de contacto.', 'error');
       if (submit) submit.disabled = false;
+    } finally {
+      // El token ya se ha canjeado (o caducado): nuevo reto para el siguiente envío.
+      resetTurnstile(form);
     }
   });
 };

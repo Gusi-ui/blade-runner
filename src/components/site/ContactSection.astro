@@ -41,6 +41,8 @@ import { profile } from '../../data/profile';
       class="hidden"
       aria-hidden="true"
     />
+    <!-- Turnstile (anti-spam): se dibuja al acercarse el formulario (turnstile.ts) -->
+    <div data-turnstile class="min-h-[65px]"></div>
     <button type="submit" class="btn-primary">
       Enviar mensaje
     </button>
@@ -59,7 +61,10 @@ import { profile } from '../../data/profile';
 
 <script>
   import { installContactForm } from '../../lib/contact/form';
+  import { watchContactForm } from '../../lib/contact/turnstile';
   installContactForm();
+  const form = document.querySelector<HTMLFormElement>('#contacto [data-contact-form]');
+  if (form) watchContactForm(form);
 </script>
 
 <style>

@@ -313,7 +313,15 @@ test.describe('formularios', () => {
     await form.locator('[name="name"]').fill('Prueba');
     await form.locator('[name="email"]').fill('prueba@example.com');
     await form.locator('[name="message"]').fill('Mensaje de prueba e2e');
+    await expect(form.locator('input[name="cf-turnstile-response"]')).toHaveCount(1);
     await form.locator('button[type="submit"]').click();
     await expect(form).toContainText('Mensaje enviado');
+    // El widget se dibuja con la acción esperada y se reinicia tras el envío.
+    await expect(form.locator('[data-turnstile]')).toHaveAttribute('data-action', 'contact');
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __turnstileResets: number }).__turnstileResets
+      )
+    ).toBe(1);
   });
 });
