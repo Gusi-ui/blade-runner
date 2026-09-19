@@ -12,6 +12,8 @@ const makeEnv = (overrides: Partial<Record<keyof Env, unknown>> = {}): Env => {
     ASSETS: { fetch: vi.fn(async () => new Response('<html></html>', { status: 200 })) },
     EMAIL: { send: vi.fn(async () => ({ messageId: '1' })) },
     ALLOWED_ORIGIN: 'https://gusi.dev',
+    TURNSTILE_SECRET: 'secreto-de-prueba',
+    TURNSTILE_HOSTNAMES: 'gusi.dev',
     CONTACT_TO: 'webmaster@gusi.dev',
     NASA_API_KEY: 'k',
     GUARDIAN_API_KEY: 'k',
@@ -94,23 +96,95 @@ describe('worker /api/chat', () => {
 });
 
 describe('worker /api/contact', () => {
-  it('rechaza campos que no son texto', async () => {
-    const res = await post(
-      '/api/contact',
-      JSON.stringify({ name: { a: 1 }, email: 'a@b.co', message: 'hola hola' })
+  const valid = {
+    name: 'Ana',
+    email: 'a@b.co',
+    message: 'hola hola',
+    'cf-turnstile-response': 'tok',
+  };
+
+  // Simula la respuesta de siteverify de Cloudflare.
+  const siteverify = (result: Record<string, unknown>) =>
+    vi.fn(async () =>
+      Response.json({ success: true, action: 'contact', hostname: 'gusi.dev', ...result })
     );
+
+  const sent = (env: Env) =>
+    (env.EMAIL.send as unknown as ReturnType<typeof vi.fn>).mock.calls.length;
+
+  it('rechaza campos que no son texto', async () => {
+    vi.stubGlobal('fetch', siteverify({}));
+    const res = await post('/api/contact', JSON.stringify({ ...valid, name: { a: 1 } }));
     expect(res.status).toBe(400);
   });
 
   it('elimina saltos de línea del nombre antes de usarlo en el asunto', async () => {
+    vi.stubGlobal('fetch', siteverify({}));
     const env = makeEnv();
-    await post(
-      '/api/contact',
-      JSON.stringify({ name: 'Ana\r\nBcc: x@y.z', email: 'a@b.co', message: 'hola hola' }),
-      env
-    );
+    await post('/api/contact', JSON.stringify({ ...valid, name: 'Ana\r\nBcc: x@y.z' }), env);
     const send = env.EMAIL.send as unknown as ReturnType<typeof vi.fn>;
     expect((send.mock.calls[0][0] as { subject: string }).subject).not.toMatch(/[\r\n]/);
+  });
+
+  it('envía con un token de Turnstile válido y lo verifica con el secreto', async () => {
+    const fetchMock = siteverify({});
+    vi.stubGlobal('fetch', fetchMock);
+    const env = makeEnv();
+    const res = await post('/api/contact', JSON.stringify(valid), env);
+    expect(res.status).toBe(200);
+    expect(sent(env)).toBe(1);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    const form = new URLSearchParams(init.body as string);
+    expect(form.get('secret')).toBe('secreto-de-prueba');
+    expect(form.get('response')).toBe('tok');
+  });
+
+  it.each([
+    ['sin token', { 'cf-turnstile-response': undefined }, {}],
+    ['token rechazado', {}, { success: false }],
+    ['otra acción', {}, { action: 'login' }],
+    ['otro dominio', {}, { hostname: 'evil.example' }],
+    ['localhost en producción', {}, { hostname: 'localhost' }],
+  ])('rechaza (%s) sin enviar el correo', async (_caso, bodyPatch, result) => {
+    vi.stubGlobal('fetch', siteverify(result));
+    const env = makeEnv();
+    const res = await post('/api/contact', JSON.stringify({ ...valid, ...bodyPatch }), env);
+    expect(res.status).toBe(403);
+    expect(sent(env)).toBe(0);
+  });
+
+  it('falla cerrado si siteverify no responde', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('red caída');
+      })
+    );
+    const env = makeEnv();
+    const res = await post('/api/contact', JSON.stringify(valid), env);
+    expect(res.status).toBe(403);
+    expect(sent(env)).toBe(0);
+  });
+
+  it('falla cerrado si falta el secreto o los dominios', async () => {
+    vi.stubGlobal('fetch', siteverify({}));
+    for (const missing of ['TURNSTILE_SECRET', 'TURNSTILE_HOSTNAMES'] as const) {
+      const env = makeEnv({ [missing]: '' });
+      const res = await post('/api/contact', JSON.stringify(valid), env);
+      expect(res.status).toBe(403);
+      expect(sent(env)).toBe(0);
+    }
+  });
+
+  it('el campo trampa sigue fingiendo éxito sin verificar ni enviar', async () => {
+    const fetchMock = siteverify({});
+    vi.stubGlobal('fetch', fetchMock);
+    const env = makeEnv();
+    const res = await post('/api/contact', JSON.stringify({ ...valid, website: 'spam' }), env);
+    expect(res.status).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(sent(env)).toBe(0);
   });
 });
 

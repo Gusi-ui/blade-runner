@@ -56,6 +56,9 @@
     "ALLOWED_ORIGIN": "https://gusi.dev",
     "CONTACT_TO": "webmaster@gusi.dev",
     "ENVIRONMENT": "production",
+    // Dominios del frontend aceptados por Turnstile (nunca localhost en producción).
+    // El secreto TURNSTILE_SECRET va como secret del Worker.
+    "TURNSTILE_HOSTNAMES": "gusi.dev",
   },
 
   "env": {
@@ -100,6 +103,7 @@
         "ALLOWED_ORIGIN": "https://dev.gusi.dev",
         "CONTACT_TO": "webmaster@gusi.dev",
         "ENVIRONMENT": "staging",
+        "TURNSTILE_HOSTNAMES": "dev.gusi.dev",
       },
     },
   },

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('página', () => {
   test('el HTML servido incluye el contenido profesional y el JSON-LD', async ({ request }) => {
@@ -60,6 +60,25 @@ test.describe('secciones', () => {
       expect(await img.evaluate(i => (i as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
       await expect(img).not.toHaveCSS('opacity', '0');
     }
+  });
+
+  test('sin verificación de Turnstile no se envía el formulario', async ({ page }) => {
+    test.skip(!!process.env.E2E_LIVE, 'usa el widget simulado');
+    // Script de Turnstile inaccesible (bloqueado o sin red).
+    await page.route('https://challenges.cloudflare.com/turnstile/**', route => route.abort());
+    let posted = 0;
+    await page.route('**/api/contact', route => {
+      posted++;
+      return route.fulfill({ status: 200, json: { ok: true } });
+    });
+    await page.goto('/#contacto');
+    const form = page.locator('#contacto form');
+    await form.locator('[name="name"]').fill('Prueba');
+    await form.locator('[name="email"]').fill('prueba@example.com');
+    await form.locator('[name="message"]').fill('Mensaje de prueba');
+    await form.locator('button[type="submit"]').click();
+    await expect(form).toContainText('completa la verificación');
+    expect(posted).toBe(0);
   });
 
   test('las tarifas enlazan a alamia.es y lo a medida al formulario', async ({ page }) => {

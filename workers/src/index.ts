@@ -22,6 +22,10 @@ export interface Env {
   // Email Sending (binding send_email). Requiere onboarding del dominio en Cloudflare.
   EMAIL: EmailSendBinding;
   CONTACT_TO: string; // buzón destino del formulario de contacto
+  // Turnstile (formulario de contacto): secreto del widget y dominios del frontend
+  // aceptados en este entorno, separados por comas (producción: gusi.dev).
+  TURNSTILE_SECRET?: string;
+  TURNSTILE_HOSTNAMES?: string;
   // Rate Limiting bindings (opcionales: si no existen, no se limita).
   CHAT_LIMITER?: RateLimit;
   TRANSLATE_LIMITER?: RateLimit;
@@ -412,6 +416,61 @@ const translateCached = async (env: Env, text: string): Promise<string> => {
   return translatedText;
 };
 
+const TURNSTILE_SITEVERIFY = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
+/**
+ * Verifica un token de Turnstile con siteverify. Falla cerrado: sin secreto, sin
+ * dominios configurados, con error de red o respuesta inesperada → false. Exige
+ * éxito, la acción esperada y un dominio del frontend de este entorno. Los tokens
+ * son de un solo uso: siteverify rechaza uno ya canjeado.
+ */
+const verifyTurnstile = async (
+  env: Env,
+  token: unknown,
+  ip: string | null,
+  expectedAction: string
+): Promise<boolean> => {
+  const hostnames = new Set(
+    (env.TURNSTILE_HOSTNAMES ?? '')
+      .split(',')
+      .map(h => h.trim())
+      .filter(Boolean)
+  );
+  if (
+    !env.TURNSTILE_SECRET ||
+    hostnames.size === 0 ||
+    typeof token !== 'string' ||
+    token.length === 0 ||
+    token.length > 2048
+  ) {
+    return false;
+  }
+  try {
+    const body = new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token });
+    if (ip) body.set('remoteip', ip);
+    const response = await fetch(TURNSTILE_SITEVERIFY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) return false;
+    const result = (await response.json()) as {
+      success?: boolean;
+      action?: string;
+      hostname?: string;
+    };
+    return (
+      result.success === true &&
+      result.action === expectedAction &&
+      typeof result.hostname === 'string' &&
+      hostnames.has(result.hostname)
+    );
+  } catch {
+    return false;
+  }
+};
+
 // Cabeceras de seguridad para la web (la API ya añade las suyas).
 const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000',
@@ -659,6 +718,7 @@ const handleApi = async (request: Request, env: Env, url: URL): Promise<Response
         email?: string;
         message?: string;
         website?: string; // honeypot anti-bots
+        'cf-turnstile-response'?: unknown;
       };
 
       // Honeypot: los bots rellenan el campo oculto 'website'. Fingimos éxito.
@@ -678,6 +738,25 @@ const handleApi = async (request: Request, env: Env, url: URL): Promise<Response
           origin,
           env,
           400
+        );
+      }
+
+      const verified = await verifyTurnstile(
+        env,
+        body['cf-turnstile-response'],
+        request.headers.get('CF-Connecting-IP'),
+        'contact'
+      );
+      if (!verified) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              'No hemos podido verificar que no eres un robot. Recarga la página e inténtalo de nuevo.',
+          },
+          origin,
+          env,
+          403
         );
       }
 
