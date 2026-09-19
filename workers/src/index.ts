@@ -21,7 +21,9 @@ export interface Env {
   ALLOWED_ORIGIN: string;
   // Email Sending (binding send_email). Requiere onboarding del dominio en Cloudflare.
   EMAIL: EmailSendBinding;
-  CONTACT_TO: string; // buzón destino del formulario de contacto
+  // Buzón destino del formulario: en el plan gratuito debe ser una dirección de
+  // destino verificada en Email Routing (ver send_email en wrangler.jsonc).
+  CONTACT_TO: string;
   // Turnstile (formulario de contacto): secreto del widget y dominios del frontend
   // aceptados en este entorno, separados por comas (producción: gusi.dev).
   TURNSTILE_SECRET?: string;
@@ -793,6 +795,8 @@ const handleApi = async (request: Request, env: Env, url: URL): Promise<Response
         });
       } catch (err) {
         const code = (err as { code?: string })?.code || '';
+        // Sin datos del visitante: solo el motivo, para diagnosticar desde los logs.
+        console.error('contact: envío de correo fallido', code, (err as Error)?.message);
         const friendly =
           code === 'E_SENDER_NOT_VERIFIED' || code === 'E_SENDER_DOMAIN_NOT_AVAILABLE'
             ? 'El envío de email aún no está configurado en el servidor.'

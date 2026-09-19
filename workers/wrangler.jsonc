@@ -32,7 +32,15 @@
   "ai": {
     "binding": "AI",
   },
-  "send_email": [{ "name": "EMAIL" }],
+  "send_email": [
+    {
+      "name": "EMAIL",
+      // Plan gratuito: solo se puede enviar a direcciones de destino verificadas
+      // (Email Routing). Se restringe a ese único destinatario y remitente.
+      "destination_address": "gusideveloper@gmail.com",
+      "allowed_sender_addresses": ["contacto@gusi.dev"],
+    },
+  ],
   // Rate limiting por IP (period solo admite 10 o 60 segundos).
   "ratelimits": [
     {
@@ -54,7 +62,7 @@
   ],
   "vars": {
     "ALLOWED_ORIGIN": "https://gusi.dev",
-    "CONTACT_TO": "webmaster@gusi.dev",
+    "CONTACT_TO": "gusideveloper@gmail.com",
     "ENVIRONMENT": "production",
     // Dominios del frontend aceptados por Turnstile (nunca localhost en producción).
     // El secreto TURNSTILE_SECRET va como secret del Worker.
@@ -81,7 +89,15 @@
       "ai": {
         "binding": "AI",
       },
-      "send_email": [{ "name": "EMAIL" }],
+      "send_email": [
+        {
+          "name": "EMAIL",
+          // Plan gratuito: solo se puede enviar a direcciones de destino verificadas
+          // (Email Routing). Se restringe a ese único destinatario y remitente.
+          "destination_address": "gusideveloper@gmail.com",
+          "allowed_sender_addresses": ["contacto@gusi.dev"],
+        },
+      ],
       "ratelimits": [
         {
           "name": "CHAT_LIMITER",
@@ -101,7 +117,7 @@
       ],
       "vars": {
         "ALLOWED_ORIGIN": "https://dev.gusi.dev",
-        "CONTACT_TO": "webmaster@gusi.dev",
+        "CONTACT_TO": "gusideveloper@gmail.com",
         "ENVIRONMENT": "staging",
         "TURNSTILE_HOSTNAMES": "dev.gusi.dev",
       },

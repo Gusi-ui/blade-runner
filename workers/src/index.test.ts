@@ -177,6 +177,28 @@ describe('worker /api/contact', () => {
     }
   });
 
+  it('si el envío de correo falla registra el código y responde 502', async () => {
+    vi.stubGlobal('fetch', siteverify({}));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const env = makeEnv({
+      EMAIL: {
+        send: vi.fn(async () => {
+          throw Object.assign(new Error('destino no verificado'), {
+            code: 'E_RECIPIENT_NOT_ALLOWED',
+          });
+        }),
+      },
+    });
+    const res = await post('/api/contact', JSON.stringify(valid), env);
+    expect(res.status).toBe(502);
+    expect(error).toHaveBeenCalledWith(
+      'contact: envío de correo fallido',
+      'E_RECIPIENT_NOT_ALLOWED',
+      'destino no verificado'
+    );
+    error.mockRestore();
+  });
+
   it('el campo trampa sigue fingiendo éxito sin verificar ni enviar', async () => {
     const fetchMock = siteverify({});
     vi.stubGlobal('fetch', fetchMock);
