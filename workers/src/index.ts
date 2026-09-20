@@ -473,8 +473,40 @@ const verifyTurnstile = async (
   }
 };
 
+/**
+ * Content-Security-Policy de la web.
+ *
+ * No hace falta 'unsafe-inline' ni hashes en los scripts porque Astro ya no
+ * incrusta ninguno en el HTML (`vite.build.assetsInlineLimit: 0`): todos salen
+ * de /_astro/. Si algún día vuelve a aparecer un <script> inline, la consola del
+ * navegador lo dirá en la primera carga.
+ *
+ * - connect-src: la API propia y los servicios a los que el navegador llama
+ *   directamente cuando la API no responde (NASA, Wikimedia, arXiv, Guardian).
+ * - img-src https:: las fotos de la NASA y las de las noticias vienen de
+ *   dominios que cambian; limitarlas rompería esas vistas sin ganar gran cosa.
+ * - style-src 'unsafe-inline': Turnstile dibuja su widget con estilos en línea.
+ * - frame-src: el reto de Turnstile y los vídeos que publica la NASA.
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://challenges.cloudflare.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "font-src 'self'",
+  "connect-src 'self' https://api.nasa.gov https://api.wikimedia.org https://export.arxiv.org https://content.guardianapis.com https://challenges.cloudflare.com",
+  'frame-src https:',
+  "worker-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ');
+
 // Cabeceras de seguridad para la web (la API ya añade las suyas).
 const SECURITY_HEADERS: Record<string, string> = {
+  'Content-Security-Policy': CSP,
   'Strict-Transport-Security': 'max-age=31536000',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',

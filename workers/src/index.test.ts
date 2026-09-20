@@ -315,4 +315,20 @@ describe('worker: web estática', () => {
   ])('Cache-Control de %s', (path, expected) => {
     expect(cacheControlFor(path)).toBe(expected);
   });
+
+  it('la web se sirve con una CSP estricta', async () => {
+    const env = makeEnv();
+    const res = await worker.fetch(new Request('https://gusi.dev/'), env);
+    const csp = res.headers.get('Content-Security-Policy') ?? '';
+
+    expect(csp).toContain("default-src 'self'");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("base-uri 'none'");
+    expect(csp).toContain("form-action 'self'");
+    expect(csp).toContain("frame-ancestors 'none'");
+    // Turnstile: su script y las llamadas del widget.
+    expect(csp).toContain("script-src 'self' https://challenges.cloudflare.com");
+    // Nada de scripts en línea: Astro los emite todos como ficheros.
+    expect(csp).not.toContain("script-src 'self' 'unsafe-inline'");
+  });
 });
