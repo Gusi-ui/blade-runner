@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error — integración de build en JavaScript, sin tipos propios.
 import { problemasDe } from '../../../scripts/sin-scripts-en-linea.mjs';
 
 // Guarda de la CSP: el build falla si vuelve a colarse JavaScript dentro del
