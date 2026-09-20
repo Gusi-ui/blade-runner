@@ -7,6 +7,19 @@ test.describe('página', () => {
     expect(html).toContain('"@type":"ProfessionalService"');
     expect(html).toContain('<meta name="description"');
   });
+
+  test('el sitemap lleva lastmod y robots.txt apunta a él', async ({ request }) => {
+    const sitemap = await request.get('/sitemap.xml');
+    expect(sitemap.ok()).toBe(true);
+    const xml = await sitemap.text();
+    expect(xml).toContain('<loc>https://gusi.dev/</loc>');
+    expect(xml).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
+    // Las plantillas internas de la terminal no se anuncian.
+    expect(xml).not.toContain('terminal-vistas');
+
+    const robots = await (await request.get('/robots.txt')).text();
+    expect(robots).toContain('Sitemap: https://gusi.dev/sitemap.xml');
+  });
 });
 
 test.describe('presentación', () => {

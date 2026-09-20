@@ -135,27 +135,43 @@ REGLAS:
 - Si no sabes algo del portfolio, dilo y sugiere un comando de la terminal
 - No des consejos médicos, legales ni financieros`;
 
-// localhost siempre permitido (dev); en producción solo el origen configurado.
-const isAllowedOrigin = (origin: string, allowedOrigin: string): boolean =>
+/**
+ * Qué origen puede llamar a la API.
+ *
+ * En producción, solo el dominio configurado. localhost se acepta únicamente
+ * fuera de producción (`pnpm dev` contra staging): permitirlo en producción deja
+ * que cualquier página local use la API con las credenciales de quien la visite.
+ */
+export const isAllowedOrigin = (
+  origin: string,
+  allowedOrigin: string,
+  allowLocalhost: boolean
+): boolean =>
   allowedOrigin === '*' ||
   origin === allowedOrigin ||
-  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  (allowLocalhost && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
 
-const corsHeaders = (origin: string, allowedOrigin: string) => ({
-  'Access-Control-Allow-Origin': isAllowedOrigin(origin, allowedOrigin) ? origin : allowedOrigin,
-  Vary: 'Origin',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Max-Age': '86400',
-  'X-Content-Type-Options': 'nosniff',
-});
+const corsHeaders = (origin: string, env: Env) => {
+  const allowedOrigin = env.ALLOWED_ORIGIN || 'https://gusi.dev';
+  const allowLocalhost = env.ENVIRONMENT !== 'production';
+  return {
+    'Access-Control-Allow-Origin': isAllowedOrigin(origin, allowedOrigin, allowLocalhost)
+      ? origin
+      : allowedOrigin,
+    Vary: 'Origin',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+    'X-Content-Type-Options': 'nosniff',
+  };
+};
 
 const jsonResponse = (data: unknown, origin: string, env: Env, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      ...corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
+      ...corsHeaders(origin, env),
     },
   });
 
@@ -561,7 +577,7 @@ const handleApi = async (request: Request, env: Env, url: URL): Promise<Response
 
   if (request.method === 'OPTIONS') {
     return new Response(null, {
-      headers: corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
+      headers: corsHeaders(origin, env),
     });
   }
 
@@ -718,7 +734,7 @@ const handleApi = async (request: Request, env: Env, url: URL): Promise<Response
             headers: {
               'Content-Type': 'text/event-stream',
               'Cache-Control': 'no-cache',
-              ...corsHeaders(origin, env.ALLOWED_ORIGIN || 'https://gusi.dev'),
+              ...corsHeaders(origin, env),
             },
           });
         }
