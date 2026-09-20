@@ -83,4 +83,7 @@ feat/xxx ──PR──► develop ──► https://dev.gusi.dev
 - ESLint plano (`eslint.config.mjs`) + Prettier con los plugins de Astro y Tailwind.
 - Husky + lint-staged en el pre-commit (`pnpm exec lint-staged`).
 - Nunca `git add -A`: añade rutas explícitas (así se coló una vez `workers/.wrangler`).
+- **Nada de JavaScript dentro del HTML** (ni `is:inline`, ni `onclick`/`onerror`): la CSP de
+  producción usa `script-src 'self'` y lo bloquearía. `pnpm build` falla si aparece, gracias a
+  `scripts/sin-scripts-en-linea.mjs`; eso depende de `vite.build.assetsInlineLimit: 0`.
 - Los mensajes de commit van en español; usa heredoc si contienen backticks.

@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import sinScriptsEnLinea from './scripts/sin-scripts-en-linea.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -12,6 +13,9 @@ export default defineConfig({
       assetsInlineLimit: 0,
     },
   },
+  // Rompe el build si vuelve a colarse JavaScript dentro del HTML: la CSP de
+  // producción lo bloquearía (ver scripts/sin-scripts-en-linea.mjs).
+  integrations: [sinScriptsEnLinea()],
   output: 'static',
   site: 'https://gusi.dev',
   build: {
