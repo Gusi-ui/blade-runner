@@ -21,11 +21,7 @@ El Worker `blade-runner-api` sirve la web (`dist/` de Astro, como _static assets
 
 - Cabeceras de caché y seguridad: `serveStatic` en `workers/src/index.ts` (`/_astro/*` inmutable; HTML y `sw.js` sin caché).
 - `PUBLIC_API_BASE_URL` se fija en el workflow según el entorno (la API vive en el mismo dominio). Las variables `PUBLIC_*` se incrustan en el JS público: nunca pongas claves ahí.
-- **Vuelta atrás rápida:** quitar las rutas `gusi.dev/*` y `www.gusi.dev/*` del Worker (panel de Cloudflare → Workers → blade-runner-api → Settings → Domains & Routes). El tráfico vuelve al origen de GitHub Pages mientras siga activo.
-
-### GitHub Pages (en retirada)
-
-`.github/workflows/deploy.yml` sigue publicando en GitHub Pages durante la transición, solo como vuelta atrás. Se eliminará cuando el Worker lleve unos días sirviendo la web sin incidencias.
+- **Vuelta atrás:** despliega de nuevo una versión anterior del Worker (`pnpm exec wrangler rollback` o el panel → Workers → blade-runner-api → Deployments). GitHub Pages se retiró el 2026-09-20: ya no hay un origen alternativo detrás de las rutas.
 
 ## Cloudflare Worker (API + Chat IA)
 
