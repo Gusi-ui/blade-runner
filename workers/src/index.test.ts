@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import worker, { cacheControlFor, type Env } from './index';
+import worker, { cacheControlFor, isAllowedOrigin, type Env } from './index';
 
 const makeEnv = (overrides: Partial<Record<keyof Env, unknown>> = {}): Env => {
   const store = new Map<string, string>();
@@ -314,6 +314,40 @@ describe('worker: web estática', () => {
     ['/og.png', 'public, max-age=3600'],
   ])('Cache-Control de %s', (path, expected) => {
     expect(cacheControlFor(path)).toBe(expected);
+  });
+
+  describe('CORS', () => {
+    it('en producción localhost no vale como origen', () => {
+      expect(isAllowedOrigin('http://localhost:4321', 'https://gusi.dev', false)).toBe(false);
+      expect(isAllowedOrigin('https://gusi.dev', 'https://gusi.dev', false)).toBe(true);
+    });
+
+    it('fuera de producción sí, para desarrollar contra staging', () => {
+      expect(isAllowedOrigin('http://localhost:4321', 'https://dev.gusi.dev', true)).toBe(true);
+      expect(isAllowedOrigin('http://127.0.0.1:3000', 'https://dev.gusi.dev', true)).toBe(true);
+    });
+
+    it('un origen ajeno nunca se refleja', async () => {
+      const env = makeEnv({ ENVIRONMENT: 'production' });
+      const res = await worker.fetch(
+        new Request('https://gusi.dev/api/health', {
+          headers: { Origin: 'https://ejemplo-malicioso.test' },
+        }),
+        env
+      );
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://gusi.dev');
+    });
+
+    it('en producción la API no responde a una página en localhost', async () => {
+      const env = makeEnv({ ENVIRONMENT: 'production' });
+      const res = await worker.fetch(
+        new Request('https://gusi.dev/api/health', {
+          headers: { Origin: 'http://localhost:4321' },
+        }),
+        env
+      );
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://gusi.dev');
+    });
   });
 
   it('la web se sirve con una CSP estricta', async () => {
