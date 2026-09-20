@@ -158,8 +158,6 @@ export const install = (): void => {
                 style="display: block; height: auto;"
                 loading="lazy"
                 title="Clic para ver a pantalla completa"
-                onload="this.style.opacity='1'; this.classList.add('loaded')"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
               />
               <div style="display:none;" class="text-terminal-dim text-center p-4 border border-terminal-dim rounded">
                 ⚠️ Error al cargar la imagen. <a href="${safeUrl(data.url)}" target="_blank" rel="noopener noreferrer" class="text-terminal-bright hover:underline">Abrir imagen original →</a>
@@ -207,6 +205,23 @@ export const install = (): void => {
       `;
 
       apodContent.innerHTML = html;
+
+      // Los avisos de carga van aquí y no en atributos onload/onerror: la CSP
+      // bloquea el JavaScript escrito dentro del HTML.
+      const image = apodContent.querySelector<HTMLImageElement>('.apod-image');
+      if (image) {
+        const fallback = image.nextElementSibling;
+        const onLoad = (): void => {
+          image.style.opacity = '1';
+          image.classList.add('loaded');
+        };
+        image.addEventListener('load', onLoad);
+        image.addEventListener('error', () => {
+          image.style.display = 'none';
+          if (fallback instanceof HTMLElement) fallback.style.display = 'block';
+        });
+        if (image.complete && image.naturalWidth > 0) onLoad();
+      }
     }
 
     private displayError(): void {
