@@ -1,312 +1,106 @@
-# 🖥️ Blade Runner Terminal
+# gusi.dev
 
-Terminal retro-futurista interactiva con estética inspirada en Blade Runner. Una aplicación web completa desarrollada con Astro que simula una terminal antigua con efectos visuales CRT, texto verde fosforescente y múltiples funcionalidades interactivas.
+Web personal de Gusi (Jose Martínez), desarrollador full stack: una página pensada primero para el móvil con proyectos, servicios y contacto, y una **terminal interactiva** de estética Blade Runner que se abre encima y trae las funciones «de laboratorio» (noticias, foto de la NASA, chat con IA, juegos, calculadora cósmica).
 
-![Version](https://img.shields.io/badge/version-3.2.0-green.svg)
-![Astro](https://img.shields.io/badge/Astro-6-orange.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+- **En producción:** <https://gusi.dev>
+- **Staging:** <https://dev.gusi.dev> (no indexado)
 
-## 🆕 Novedades v3.2
+![Astro](https://img.shields.io/badge/Astro-7-orange.svg)
+![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-f38020.svg)
 
-- **Deep links compartibles**: `gusi.dev/#cv`, `#projects`, `#news`… abren la sección directamente y funcionan con atrás/adelante del navegador.
-- **Descarga del CV en PDF** (`cv --pdf` o botón en el CV) vía diálogo de impresión con hoja de estilos dedicada (blanco y negro, sin elementos de pantalla).
-- **Formulario de contacto** que envía email a través del Worker (`/api/contact`, binding `send_email` de Cloudflare Email Sending) con honeypot anti-bots y rate limit por IP. _Requiere onboarding del dominio en Cloudflare Email Sending._
+## Cómo está montado
 
-## 🆕 Novedades v3.1
+Un único Cloudflare Worker (`blade-runner-api`) sirve **la web** (los ficheros estáticos de `dist/`) **y la API** (`/api/*`), en `gusi.dev/*` y `www.gusi.dev/*` (que redirige al dominio sin www).
 
-- **Tarjeta Open Graph** (`/og.png`, 1200×630) con estética terminal para previsualización en redes; metadatos `og:image`/`og:url`/`twitter:image` completos.
-- **`sitemap.xml` y `robots.txt`** para mejorar la indexación SEO.
-- **Menú accesible por teclado**: los ítems del menú y de configuración ahora son `<button>` reales (Tab + Enter/Espacio, anunciados a lectores de pantalla).
-
-## 🆕 Novedades v3.0
-
-- **Secuencia de arranque animada** con efecto máquina de escribir (se salta con cualquier tecla; respeta `prefers-reduced-motion`).
-- **Easter eggs ocultos**: `matrix`, test `voight-kampff`, `tears`, `ls`/`cat`/`pwd`, `sudo` y el código Konami (↑↑↓↓←→←→BA).
-- **Lluvia Matrix** a pantalla completa y **sonido mecánico de teclas** (WebAudio, sin samples, con toggle persistente).
-- **Nuevo tema Phosphor** (CRT blanco) y comando directo `theme <classic|cyberpunk|retro|phosphor>`.
-- **Cursor reescrito** con técnica de espejo del input (sin medición de ancho ni `setInterval`).
-- **Mejoras de accesibilidad y rendimiento**: desactivado de partículas/scanlines y efectos con `prefers-reduced-motion`.
-- **Imagen APOD a todo el ancho** del panel en escritorio y móvil.
-- **Backend en Cloudflare Worker**: APOD, noticias agregadas (Guardian + arXiv + NASA RSS + Hacker News), traducción y chat IA con caché en KV; claves API protegidas como _secrets_ server-side.
-
-## ✨ Características
-
-### 🎨 Diseño Retro-Futurista
-
-- **Estética Blade Runner**: Fondo negro con texto verde fosforescente (#00ff41)
-- **Efectos CRT**: Scanlines, parpadeo sutil y efectos de pantalla antigua
-- **Tipografía Monospace**: Courier New para una experiencia auténtica
-- **Animaciones**: Efecto de escritura tipo máquina y cursor parpadeante
-
-### 🚀 Funcionalidades Principales
-
-#### 1. **Terminal Interactiva**
-
-- Sistema de comandos completo
-- Historial de comandos (flechas arriba/abajo)
-- Auto-completado y sugerencias
-- Comandos disponibles: `ayuda`, `menu`, `limpiar`, `fecha`, `whoami`, etc.
-
-#### 2. **Noticias Tecnológicas**
-
-- Integración con NewsAPI
-- Noticias sobre Inteligencia Artificial y Cosmos
-- Actualización automática cada 5-10 minutos
-- Filtrado por categorías
-
-#### 3. **Currículum Digital**
-
-- CV completo de Gusi en formato terminal
-- Secciones: Educación, Experiencia, Habilidades, Idiomas
-- Enlaces a perfiles profesionales
-- Diseño adaptativo
-
-#### 4. **Portafolio de Proyectos**
-
-- Catálogo de proyectos con descripciones detalladas
-- Enlaces a repositorios GitHub
-- Estado y tecnologías de cada proyecto
-- Organizado por categorías
-
-#### 5. **Juegos Retro**
-
-- **Snake**: Clásico juego de la serpiente con controles WASD o flechas
-- **El Ahorcado Cósmico**: Adivina palabras relacionadas con el espacio
-- **Tres en Raya**: Juega contra una IA con algoritmo Minimax
-
-#### 6. **Calculadora Cósmica**
-
-- Calcula tu edad en diferentes planetas del sistema solar
-- Integración con NASA API (APOD)
-- Muestra la imagen astronómica del día de tu nacimiento
-- Estadísticas personalizadas
-
-#### 7. **Asistente IA Nexus-7**
-
-- Chat contextual sobre CV, proyectos y comandos
-- Powered by Cloudflare Workers AI
-- Comandos: `chat`, `pregunta`, `ask`
-
-#### 8. **Consola Mobile-First**
-
-- Barra de acciones rápidas táctiles
-- Header colapsable en móvil
-- Controles táctiles para Snake y Tetris
-- PWA instalable con modo offline
-
-## 🛠️ Tecnologías
-
-- **Framework**: [Astro](https://astro.build) 6+
-- **Estilos**: [Tailwind CSS](https://tailwindcss.com) 4+ (`@tailwindcss/vite`)
-- **Lenguaje**: TypeScript
-- **APIs**:
-  - [NASA API](https://api.nasa.gov/) - APOD, NeoWs
-  - [NewsAPI](https://newsapi.org/) - Noticias tecnológicas
-- **Build**: SSG (Static Site Generation)
-- **Despliegue**: Compatible con Vercel, Netlify, GitHub Pages
-
-## 📦 Instalación
-
-### Requisitos Previos
-
-- Node.js 20+
-- pnpm 10+ (incluido en `packageManager` del proyecto)
-
-### Pasos de Instalación
-
-1. **Clonar el repositorio**
-
-```bash
-git clone https://github.com/gusi/blade-runner-terminal.git
-cd blade-runner-terminal
+```
+navegador ──► Worker blade-runner-api
+                ├── /api/*  → APOD, noticias, traducción, chat IA, contacto
+                └── resto   → web estática (dist/), con sus cabeceras de caché y seguridad
 ```
 
-2. **Instalar dependencias**
+- **Frontend:** Astro 7 (salida estática), Tailwind CSS 4, TypeScript.
+- **Backend:** Cloudflare Workers + KV (caché) + Workers AI (chat y traducción) + Email (formulario).
+- **Terminal bajo demanda:** la página carga ~5 KB de JavaScript; el código de la terminal y de sus vistas se descarga solo al abrirla, junto con sus plantillas (`/terminal-vistas/`).
+- **Datos de contenido:** `src/data/` (perfil, servicios y proyectos) alimenta a la vez la página y los comandos de la terminal.
+
+## Empezar
+
+Requisitos: Node 22+ y pnpm 10+.
 
 ```bash
 pnpm install
+pnpm dev        # web en http://localhost:4321
 ```
 
-3. **Configurar variables de entorno**
-
-Copia el archivo `.env.example` a `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Edita `.env` y añade tus claves API:
+Para que funcionen noticias, APOD, chat y contacto hace falta apuntar a una API. Copia `.env.example` a `.env` y define:
 
 ```env
-# NASA API Key (obtén una gratis en https://api.nasa.gov/)
-PUBLIC_NASA_API_KEY=tu_clave_nasa_aqui
-
-# Guardian API Key (opcional, https://open-platform.theguardian.com/)
-PUBLIC_GUARDIAN_API_KEY=test
-
-# URL del Cloudflare Worker (API proxy + chat IA)
-PUBLIC_API_BASE_URL=https://tu-worker.workers.dev
+# API del Worker: https://gusi.dev en producción, https://dev.gusi.dev para probar contra staging
+PUBLIC_API_BASE_URL=https://dev.gusi.dev
 ```
 
-**Nota**: Puedes usar `DEMO_KEY` para NASA API durante desarrollo, pero tiene límites de uso.
+Las claves de NASA, Guardian, Stripe y demás **no van aquí**: viven como _secrets_ del Worker. Cualquier variable `PUBLIC_*` acaba en el JavaScript que ve el visitante.
 
-4. **Iniciar servidor de desarrollo**
+## Comandos
 
-```bash
-pnpm dev
-```
+| Comando                 | Acción                                              |
+| ----------------------- | --------------------------------------------------- |
+| `pnpm dev`              | Servidor de desarrollo en `localhost:4321`          |
+| `pnpm build`            | Comprueba tipos y construye `dist/`                 |
+| `pnpm test`             | Tests unitarios (Vitest)                            |
+| `pnpm test:e2e`         | Tests de navegador (Playwright) con la API simulada |
+| `pnpm test:e2e:live`    | Los mismos contra una web real (`E2E_BASE_URL=…`)   |
+| `pnpm lint:check`       | ESLint sin corregir                                 |
+| `pnpm format:check`     | Prettier en modo comprobación                       |
+| `pnpm capture:projects` | Regenera las capturas de los proyectos              |
 
-La aplicación estará disponible en `http://localhost:4321`
+En macOS 13 los tests de navegador necesitan el Chrome instalado: `PW_CHANNEL=chrome pnpm test:e2e`.
 
-## 🚀 Comandos Disponibles
+## La terminal
 
-| Comando        | Acción                                            |
-| -------------- | ------------------------------------------------- |
-| `pnpm install` | Instala dependencias (raíz + workers)             |
-| `pnpm dev`     | Inicia servidor de desarrollo en `localhost:4321` |
-| `pnpm build`   | Construye el sitio en `./dist/`                   |
-| `pnpm preview` | Previsualiza el build localmente                  |
-| `pnpm test`    | Ejecuta tests unitarios                           |
-| `pnpm astro`   | Ejecuta comandos de Astro CLI                     |
+Se abre tocando la terminal «viva» de la portada, o con un enlace directo: `gusi.dev/#apod`, `#news`, `#chat`, `#juegos`, `#calculadora`. Se cierra con ✕, `Esc` o el botón «atrás».
 
-## 🎮 Comandos de Terminal
+- **Destacados:** `proyectos`, `sobre-mi` (alias `cv`), `contacto`.
+- **Laboratorio:** `news [ai|cosmos|all]`, `apod [fecha|random]`, `chat`, `ask <pregunta>`, `juegos [1-4]`, `guess`, `edad <fecha>`, `calculadora`, `theme`, `config`, `status`, `history`, `clear`, `exit`.
+- Autocompletado con Tab, historial con ↑/↓ y atajos táctiles según la vista.
+- Hay algún easter egg escondido.
 
-Una vez en la aplicación, puedes usar estos comandos:
-
-- `ayuda` / `help` - Muestra todos los comandos disponibles
-- `menu` - Abre el menú principal
-- `limpiar` / `clear` - Limpia la pantalla
-- `fecha` / `date` - Muestra la fecha actual
-- `noticias` / `news` - Ver noticias tecnológicas
-- `curriculum` / `cv` - Ver currículum de Gusi
-- `proyectos` / `projects` - Ver portafolio de proyectos
-- `juegos` / `games` - Acceder a juegos retro
-- `calculadora` / `calculator` - Abrir calculadora cósmica
-- `apod` / `foto nasa` - Imagen astronómica del día
-- `chat` / `pregunta` - Asistente IA Nexus-7
-- `contacto` / `status` - Info de contacto y diagnóstico
-- `salir` / `exit` - Cerrar sesión
-
-También puedes usar números (1-6) para acceder directamente a las secciones del menú.
-
-## 📱 Diseño Responsivo
-
-La aplicación está optimizada para diferentes tamaños de pantalla:
-
-- **Móvil** (hasta 480px): Terminal full-screen con controles táctiles
-- **Tablet** (481-1024px): Menú plegable y diseño adaptativo
-- **Escritorio** (1025px+): Experiencia completa con sidebar opcional
-
-## 🎨 Personalización
-
-### Colores
-
-Edita `tailwind.config.mjs` para cambiar el esquema de colores:
-
-```javascript
-colors: {
-  terminal: {
-    bg: '#000000',      // Fondo
-    text: '#00ff41',    // Texto principal
-    dim: '#008f11',     // Texto secundario
-    bright: '#39ff14'   // Resaltados
-  }
-}
-```
-
-### Contenido
-
-- **CV**: Edita `src/components/CV.astro`
-- **Proyectos**: Edita `src/components/Projects.astro`
-- **Palabras del Ahorcado**: Edita `src/scripts/hangman.ts`
-
-## 🌐 Despliegue
-
-### Vercel (Recomendado)
-
-1. Push a GitHub
-2. Importa el proyecto en [Vercel](https://vercel.com)
-3. Configura las variables de entorno
-4. Despliega
-
-### Netlify
-
-1. Push a GitHub
-2. Conecta tu repositorio en [Netlify](https://netlify.com)
-3. Build command: `pnpm build`
-4. Publish directory: `dist`
-5. Configura variables de entorno
-
-### GitHub Pages
-
-```bash
-pnpm build
-# Despliega la carpeta dist/ a GitHub Pages
-```
-
-## 📁 Estructura del Proyecto
+## Estructura
 
 ```
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── components/
-│   │   ├── Terminal.astro       # Componente principal
-│   │   ├── Menu.astro            # Menú principal
-│   │   ├── NewsFeed.astro        # Noticias
-│   │   ├── CV.astro              # Currículum
-│   │   ├── Projects.astro        # Proyectos
-│   │   ├── Games.astro           # Selector de juegos
-│   │   ├── CosmicCalculator.astro # Calculadora
-│   │   └── Chat.astro             # Asistente IA
-│   ├── lib/
-│   │   ├── api/                   # Cliente API unificado
-│   │   ├── terminal/              # Comandos y utilidades
-│   │   └── ai/                    # Contexto del chat
-│   ├── scripts/
-│   │   ├── snake.ts              # Juego Snake
-│   │   ├── hangman.ts            # Juego Ahorcado
-│   │   └── tictactoe.ts          # Tres en Raya
-│   ├── styles/
-│   │   └── terminal.css          # Estilos retro
-│   └── pages/
-│       └── index.astro           # Página principal
-├── workers/                      # Cloudflare Worker (API + IA)
-├── astro.config.mjs              # Configuración Astro
-├── tailwind.config.mjs           # Configuración Tailwind
-├── tsconfig.json                 # Configuración TypeScript
-└── package.json
+src/
+├── data/            # perfil, servicios y proyectos (fuente única de contenido)
+├── components/
+│   ├── site/        # secciones de la página (cabecera, portada, proyectos…)
+│   ├── TerminalSheet.astro  # capa a pantalla completa
+│   └── …            # plantillas de las vistas de la terminal
+├── lib/
+│   ├── terminal/    # controlador, comandos, capa, atajos
+│   ├── views/       # código de cada vista (se carga al abrir la terminal)
+│   ├── calculator/  # calculadora cósmica, en módulos probados
+│   ├── api/ contact/ site/ games/ ai/
+├── pages/
+│   ├── index.astro          # la web
+│   └── terminal-vistas.astro # plantillas que descarga la terminal
+└── styles/          # tokens.css (colores y fuentes), site.css, terminal.css
+workers/             # el Worker: web estática + API
+e2e/                 # tests de navegador
+docs/superpowers/    # especificación y plan del rediseño
 ```
 
-## 🤝 Contribuciones
+## Despliegue y flujo de trabajo
 
-Las contribuciones son bienvenidas. Por favor:
+```
+feat/xxx ──PR──► develop ──► https://dev.gusi.dev
+                    └──PR «release»──► main ──► https://gusi.dev
+```
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+Cada merge despliega el Worker correspondiente y ejecuta los tests de navegador contra la URL ya desplegada. `main` y `develop` están protegidas: se entra por PR y con el check `verify` en verde. Los detalles están en [DEPLOYMENT.md](DEPLOYMENT.md).
 
-## 📄 Licencia
+## Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+Sin licencia abierta: © Jose Martínez (Gusi). Todos los derechos reservados. El código está publicado para consulta; si quieres reutilizar alguna parte, escríbeme.
 
-## 🙏 Agradecimientos
+## Contacto
 
-- Inspirado en la estética de [Blade Runner](https://www.imdb.com/title/tt0083658/)
-- Construido con [Astro](https://astro.build)
-- APIs proporcionadas por [NASA](https://api.nasa.gov/) y [NewsAPI](https://newsapi.org/)
-
-## 📧 Contacto
-
-**Gusi** - [@gusi](https://github.com/gusi)
-
-Project Link: [https://github.com/gusi/blade-runner-terminal](https://github.com/gusi/blade-runner-terminal)
-
----
-
-⭐ Si te gusta este proyecto, ¡dale una estrella en GitHub!
-
-🖥️ Desarrollado con ❤️ y mucho café en una terminal retro
+[gusi.dev](https://gusi.dev) · [github.com/Gusi-ui](https://github.com/Gusi-ui)
