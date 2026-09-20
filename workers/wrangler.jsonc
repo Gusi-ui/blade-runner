@@ -14,7 +14,7 @@
     "run_worker_first": true,
   },
   // Producción (rama main). El DNS de gusi.dev no cambia: estas rutas tienen
-  // prioridad sobre el origen (GitHub Pages). Para volver atrás, quitar las rutas.
+  // prioridad sobre cualquier origen. Sin estas rutas el dominio se queda sin web.
   "routes": [
     { "pattern": "gusi.dev/*", "zone_name": "gusi.dev" },
     { "pattern": "www.gusi.dev/*", "zone_name": "gusi.dev" },
