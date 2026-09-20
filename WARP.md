@@ -1,104 +1,86 @@
-`
-
 # WARP.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
-``
+Guía para WARP (warp.dev) —y para cualquier agente— al trabajar en este repositorio.
 
-Project overview
+## Qué es este proyecto
 
-- Stack: Astro 5 (SSG, static output) + Tailwind CSS + TypeScript (strict), ESM modules.
-- Purpose: Retro-futuristic “Blade Runner” interactive terminal UI with command-driven views: news (NewsAPI), CV, projects, games (snake, tetris, tictactoe, hangman), and a “Cosmic Calculator” that uses NASA APOD.
-- Deployment targets: Static hosting (dist/) — GitHub Pages workflow provided; README mentions Vercel/Netlify as options.
+Web personal de Gusi (<https://gusi.dev>): página estática pensada primero para móvil
+(proyectos, servicios, contacto) con una **terminal interactiva** que se abre en una capa
+encima y contiene las funciones de laboratorio (noticias, APOD de la NASA, chat con IA,
+juegos, calculadora cósmica).
 
-Commands
+- **Frontend:** Astro 7 (salida estática), Tailwind CSS 4 (tokens en `src/styles/tokens.css`,
+  no hay `tailwind.config`), TypeScript estricto, ESM.
+- **Backend y hosting:** un único Cloudflare Worker (`workers/src/index.ts`) sirve la web
+  (`dist/` como static assets) **y** la API en `/api/*`. No hay GitHub Pages, Vercel ni Netlify.
+- **Servicios:** KV (caché), Workers AI (chat y traducción), Email (formulario de contacto)
+  y Turnstile (anti-bots del formulario).
 
-- Dev server (port 4321 by default)
-  ```bash path=null start=null
-  pnpm dev
+## Comandos
+
+```bash
+pnpm dev            # servidor de desarrollo en http://localhost:4321
+pnpm build          # type-check + build a dist/
+pnpm preview        # previsualiza dist/
+pnpm lint           # ESLint con --fix     | pnpm lint:check
+pnpm format         # Prettier             | pnpm format:check
+pnpm type-check     # astro check
+pnpm test           # Vitest (unitarios)
+pnpm test:e2e       # Playwright con la API simulada
+pnpm test:e2e:live  # Playwright contra una web real (E2E_BASE_URL=…)
+```
+
+- Un solo test unitario: `pnpm test -- src/lib/calculator/calculator.test.ts`
+  (o `pnpm test -- -t "nombre del caso"`).
+- Un solo test de navegador: `pnpm test:e2e -- e2e/site.spec.ts -g "contacto"`.
+- En macOS 13 no hay Chromium de Playwright: usa `PW_CHANNEL=chrome pnpm test:e2e`.
+- Worker: `pnpm --filter ./workers dev` para levantarlo en local; despliegues, en CI.
+
+## Entorno
+
+- Node 22+ y pnpm 10+ (CI usa la misma versión; conviene igualarla en local).
+- `.env` (copia de `.env.example`) solo necesita apuntar a la API:
+  ```env
+  PUBLIC_API_BASE_URL=https://dev.gusi.dev
   ```
-- Build (type-check + build) and local preview
-  ```bash path=null start=null
-  pnpm build
-  pnpm preview
-  ```
-- Linting, formatting, and type checks
+- Las claves (NASA, Guardian, Turnstile, correo) son **secrets del Worker**, nunca `.env`:
+  todo lo que empieza por `PUBLIC_` acaba en el JavaScript del visitante.
 
-  ```bash path=null start=null
-  # Lint & auto-fix
-  pnpm lint
+## Arquitectura
 
-  # Lint without fixing
-  pnpm lint:check
+- `src/data/` — perfil, servicios y proyectos: fuente única de contenido para la página y
+  para los comandos de la terminal.
+- `src/pages/index.astro` — la web. `src/pages/terminal-vistas.astro` — plantillas que la
+  terminal descarga bajo demanda (excluida de `robots.txt`).
+- `src/components/site/` — secciones de la página; `TerminalSheet.astro` — la capa.
+- `src/lib/terminal/` — controlador, registro de comandos, rutas por hash, carga perezosa.
+  La página envía ~5 KB de JS; el código de la terminal solo se descarga al abrirla.
+- `src/lib/views/` — una vista por función (news, apod, chat, games, calculator), cada una
+  con un `install()` idempotente.
+- `src/lib/calculator/` — la calculadora cósmica en módulos pequeños con tests.
+- `src/lib/{api,contact,site,games,ai}/` — cliente de la API, formulario + Turnstile, etc.
+- `src/styles/` — `global.css` es la única entrada de Tailwind; `tokens.css` define colores
+  y fuentes; `site.css` y `terminal.css` el resto.
+- `workers/` — el Worker: rutas estáticas + `/api/*`, cabeceras de caché y seguridad,
+  redirección www → apex. Configuración en `workers/wrangler.jsonc`.
+- `e2e/` — tests de navegador con la API simulada (`e2e/fixtures.ts`).
 
-  # Format (Prettier) and check mode
-  pnpm format
-  pnpm format:check
+## Flujo de trabajo
 
-  # Type check via Astro
-  pnpm type-check
-  ```
+```
+feat/xxx ──PR──► develop ──► https://dev.gusi.dev
+                    └──PR «release»──► main ──► https://gusi.dev
+```
 
-- Astro CLI passthrough
-  ```bash path=null start=null
-  pnpm astro -- <subcommand>
-  # examples
-  pnpm astro -- add
-  pnpm astro -- check
-  ```
-- Tests: No test runner/config detected in this repository. If tests are added later, document the single-test invocation here.
+- `main` y `develop` están protegidas: se entra por PR y con el check `verify` en verde
+  (lint, formato, tipos, tests, build, e2e y dry-run del Worker).
+- Cada merge despliega el Worker del entorno y pasa los e2e contra la URL ya desplegada.
+- Los merges y los despliegues requieren autorización explícita del propietario.
+- Detalles en [DEPLOYMENT.md](DEPLOYMENT.md).
 
-Environment and configuration
+## Convenciones
 
-- Node: README requires Node.js 18+; CI uses Node 20. Prefer Node 20 locally for parity.
-- Env vars (.env):
-  - PUBLIC_NASA_API_KEY — used by Cosmic Calculator (falls back to DEMO_KEY if absent).
-  - PUBLIC_NEWS_API_KEY — used by NewsFeed (has enhanced demo fallback when absent or CORS-limited).
-  ```bash path=null start=null
-  cp .env.example .env
-  # then edit .env to add real keys
-  ```
-- Astro config: static output; site is set to https://gusi.dev. If deploying to GitHub Pages under a subpath, set site/base in astro.config.mjs accordingly.
-
-CI/CD
-
-- GitHub Actions: .github/workflows/deploy.yml
-  - Triggers: push to main, manual dispatch.
-  - Node 20, pnpm install --frozen-lockfile, pnpm build; uploads ./dist as Pages artifact; deploys with actions/deploy-pages.
-
-Code architecture (high level)
-
-- Page entrypoint
-  - src/pages/index.astro orchestrates the UI: imports components, includes global styles (src/styles/terminal.css), sets meta tags, preconnects to external APIs, and mounts UI components.
-- Terminal core and event model
-  - src/components/Terminal.astro contains the interactive terminal UI and the TerminalController class.
-    - Captures input, maintains history, renders output via printOutput, and maintains a command registry (help, menu, clear, date, whoami, numeric shortcuts, news/resume/cv/projects/games/calculator, exit, config).
-    - Switches "views" by dispatching CustomEvent('loadView', { detail: { view } }).
-    - Exposes window.terminal to allow other components to print into the terminal area.
-- Feature components (render-on-demand via events)
-  - NewsFeed (src/components/NewsFeed.astro):
-    - Listens for loadView('news'), then uses window.terminal.printOutput to render content.
-    - Fetches via NewsAPI using import.meta.env.PUBLIC_NEWS_API_KEY with resilient fallbacks (enhanced demo content; generalized queries; basic category filters: ai/cosmos/all). Regular auto-refresh interval.
-  - CosmicCalculator (src/components/CosmicCalculator.astro):
-    - Listens for loadView('calculator').
-    - Computes planetary “ages” and shows a canvas-based solar-system visualization.
-    - Retrieves NASA APOD for the birthdate when PUBLIC_NASA_API_KEY is set; otherwise shows alternative astronomy content without throwing.
-  - Other sections (CV, Projects, Games) follow the same pattern: the terminal triggers the view by command; the component injects markup through the terminal.
-- Client-side scripts and games
-  - src/scripts/ contains game logic (snake, tetris, tictactoe, hangman). Games manage their own inputs to avoid interfering with the terminal input.
-- Styling and theme
-  - Tailwind config (tailwind.config.mjs) defines a terminal color palette (bg, text, dim, bright), mono font family, and keyframes (blink/typewriter). Component styles are augmented by src/styles/terminal.css. Themes can be toggled at runtime by applying body classes.
-- Build output & assets
-  - Static build to dist/. Public assets live under public/ (e.g., public/images/... for project tiles).
-
-Linting & formatting policy
-
-- ESLint (.eslintrc.cjs): recommended + plugin:astro + plugin:tailwindcss; TS parser enabled. Dist/.astro/node_modules are ignored. Enforces prefer-const/no-var and TS-specific unused-vars rules; tailwind class conflict/order checks.
-- Prettier (.prettierrc): includes prettier-plugin-astro and prettier-plugin-tailwindcss.
-- Husky/lint-staged are listed as dev dependencies; a pre-commit pnpm script is defined (lint:check, format:check, type-check, test). Husky runs `pnpm exec lint-staged` in .husky/pre-commit.
-
-Operational notes for Warp
-
-- Use pnpm dev for interactive iteration; components render into the terminal via events — inspect console logs when working on NewsFeed and API calls, as they implement verbose diagnostics and fallbacks.
-- For GitHub Pages deployments, ensure site/base in astro.config.mjs matches the final URL structure to avoid broken asset paths.
-- If API keys are redacted in commands, replace with {{PUBLIC_NASA_API_KEY}} / {{PUBLIC_NEWS_API_KEY}} placeholders and source from environment variables rather than inlining.
+- ESLint plano (`eslint.config.mjs`) + Prettier con los plugins de Astro y Tailwind.
+- Husky + lint-staged en el pre-commit (`pnpm exec lint-staged`).
+- Nunca `git add -A`: añade rutas explícitas (así se coló una vez `workers/.wrangler`).
+- Los mensajes de commit van en español; usa heredoc si contienen backticks.
