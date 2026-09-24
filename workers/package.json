@@ -10,8 +10,8 @@
     "release:staging": "wrangler deploy --env staging"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260917.1",
+    "@cloudflare/workers-types": "^5.20260919.1",
     "typescript": "^6.0.3",
-    "wrangler": "^4.133.0"
+    "wrangler": "^4.135.0"
   }
 }
